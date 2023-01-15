@@ -72,6 +72,18 @@ extension PointSede on Point {
       'p': p,
     };
   }
+
+  Point copyWith({
+    double? x,
+    double? y,
+    double? p,
+  }) {
+    return Point(
+      x ?? this.x,
+      y ?? this.y,
+      p ?? this.p,
+    );
+  }
 }
 
 enum PenType {
@@ -112,7 +124,9 @@ class BroadcastData extends Equatable {
   final int limitCursor;
   final BroadcastCommand command;
   final int? removeStrokeIndex;
+  final Size boardSize;
   const BroadcastData({
+    required this.boardSize,
     required this.drawingData,
     required this.limitCursor,
     required this.command,
@@ -125,6 +139,7 @@ class BroadcastData extends Equatable {
       'limitCursor': limitCursor,
       'command': command.toMap(),
       'removeStrokeIndex': removeStrokeIndex,
+      'boardSize': boardSize,
     };
   }
 
@@ -136,6 +151,7 @@ class BroadcastData extends Equatable {
       limitCursor: map['limitCursor']?.toInt() ?? 0,
       command: BroadcastCommand.fromMap(map['command']),
       removeStrokeIndex: map['removeStrokeIndex']?.toInt(),
+      boardSize: map['boardSize'] ?? Size.zero,
     );
   }
 
@@ -150,6 +166,7 @@ class BroadcastData extends Equatable {
       drawingData,
       limitCursor,
       command,
+      removeStrokeIndex,
     ];
   }
 }

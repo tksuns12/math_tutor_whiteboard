@@ -56,9 +56,12 @@ class _MathTutorWhiteboardState extends ConsumerState<MathTutorWhiteboardImpl> {
   Timer? timer;
   final Map<int, int> deletedStrokes = {};
   StreamSubscription<BroadcastData>? _inputStreamSubscription;
+  late final Size boardSize;
 
   @override
   void initState() {
+    boardSize = Size(MediaQuery.of(context).size.width,
+        MediaQuery.of(context).size.height * 16 / 9);
     if (widget.inputDrawingStream != null) {
       /// 여기서는 서버의 데이터를 받습니다.
       /// 서버에서 주는 데이터의 형식에 따라 지우고, 그리는 동작을
@@ -90,16 +93,28 @@ class _MathTutorWhiteboardState extends ConsumerState<MathTutorWhiteboardImpl> {
           /// 선 지우기 인덱스가 null인 경우에는
           /// 그리기 동작이거나 Redo Undo 동작입니다.
           /// 그리기 동작이 아닐 경우에는 drawingData가 null입니다.
+          /// darwingData가 null이 아닐 경우에는
+          /// 호스트의 보드 크기를 참조해 좌표를 조정합니다.
           else {
+            final heightCoefficient = boardSize.height / event.boardSize.height;
+            final widthCoefficient = boardSize.width / event.boardSize.width;
             setState(() {
               if (event.limitCursor == limitCursor) {
                 if (event.drawingData != null) {
-                  drawingData.last.add(event.drawingData!);
+                  drawingData.last.add(event.drawingData!.copyWith(
+                      point: event.drawingData!.point.copyWith(
+                          x: event.drawingData!.point.x * widthCoefficient,
+                          y: event.drawingData!.point.y * heightCoefficient)));
                 }
               } else {
                 limitCursor = event.limitCursor;
                 if (event.drawingData != null) {
-                  drawingData.add([event.drawingData!]);
+                  drawingData.add([
+                    event.drawingData!.copyWith(
+                        point: event.drawingData!.point.copyWith(
+                            x: event.drawingData!.point.x * widthCoefficient,
+                            y: event.drawingData!.point.y * heightCoefficient))
+                  ]);
                 }
               }
             });
@@ -213,10 +228,10 @@ class _MathTutorWhiteboardState extends ConsumerState<MathTutorWhiteboardImpl> {
       deletedStrokes.clear();
       limitCursor = 0;
       widget.outputDrawingStream.add(BroadcastData(
-        drawingData: null,
-        command: BroadcastCommand.clear,
-        limitCursor: limitCursor,
-      ));
+          drawingData: null,
+          command: BroadcastCommand.clear,
+          limitCursor: limitCursor,
+          boardSize: boardSize));
       log('clear');
     });
   }
@@ -226,10 +241,10 @@ class _MathTutorWhiteboardState extends ConsumerState<MathTutorWhiteboardImpl> {
       if (limitCursor > 0) {
         limitCursor--;
         widget.outputDrawingStream.add(BroadcastData(
-          drawingData: null,
-          command: BroadcastCommand.draw,
-          limitCursor: limitCursor,
-        ));
+            drawingData: null,
+            command: BroadcastCommand.draw,
+            limitCursor: limitCursor,
+            boardSize: boardSize));
       }
       log('undo: $limitCursor');
     });
@@ -268,10 +283,10 @@ class _MathTutorWhiteboardState extends ConsumerState<MathTutorWhiteboardImpl> {
       setState(() {
         limitCursor++;
         widget.outputDrawingStream.add(BroadcastData(
-          drawingData: null,
-          command: BroadcastCommand.draw,
-          limitCursor: limitCursor,
-        ));
+            drawingData: null,
+            command: BroadcastCommand.draw,
+            limitCursor: limitCursor,
+            boardSize: boardSize));
       });
       log('redo: $limitCursor');
     }
@@ -337,10 +352,10 @@ class _MathTutorWhiteboardState extends ConsumerState<MathTutorWhiteboardImpl> {
             penType: penType,
             strokeWidth: strokeWidth));
         widget.outputDrawingStream.add(BroadcastData(
-          drawingData: drawingData.last.last,
-          command: BroadcastCommand.draw,
-          limitCursor: limitCursor,
-        ));
+            drawingData: drawingData.last.last,
+            command: BroadcastCommand.draw,
+            limitCursor: limitCursor,
+            boardSize: boardSize));
       } else if (penType == PenType.strokeEraser) {
         /// 선지우기 모드일 때에는 좌표가 해당 선을 스칠 때 선을 통째로 지웁니다.
         /// 지우는 방식은 undo와 redo를 위해서 실제로 지우지 않습니다.
@@ -360,6 +375,7 @@ class _MathTutorWhiteboardState extends ConsumerState<MathTutorWhiteboardImpl> {
                   drawingData: null,
                   command: BroadcastCommand.removeStroke,
                   limitCursor: limitCursor,
+                  boardSize: boardSize,
                   removeStrokeIndex: i));
 
               setState(() {
@@ -379,6 +395,7 @@ class _MathTutorWhiteboardState extends ConsumerState<MathTutorWhiteboardImpl> {
             strokeWidth: strokeWidth));
         widget.outputDrawingStream.add(BroadcastData(
             drawingData: drawingData.last.last,
+            boardSize: boardSize,
             command: BroadcastCommand.draw,
             limitCursor: limitCursor));
       }
