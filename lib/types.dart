@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:ui';
 
 import 'package:equatable/equatable.dart';
+import 'package:flutter/material.dart';
 import 'package:perfect_freehand/perfect_freehand.dart';
 
 class DrawingData extends Equatable {
@@ -119,6 +120,25 @@ enum BroadcastCommand {
   }
 }
 
+extension SizeSerde on Size {
+  Map<String, dynamic> toMap() {
+    return {
+      'width': width,
+      'height': height,
+    };
+  }
+
+  Size copyWith({
+    double? width,
+    double? height,
+  }) {
+    return Size(
+      width ?? this.width,
+      height ?? this.height,
+    );
+  }
+}
+
 class BroadcastData extends Equatable {
   final DrawingData? drawingData;
   final int limitCursor;
@@ -139,7 +159,7 @@ class BroadcastData extends Equatable {
       'limitCursor': limitCursor,
       'command': command.toMap(),
       'removeStrokeIndex': removeStrokeIndex,
-      'boardSize': boardSize,
+      'boardSize': boardSize.toMap(),
     };
   }
 
@@ -151,7 +171,7 @@ class BroadcastData extends Equatable {
       limitCursor: map['limitCursor']?.toInt() ?? 0,
       command: BroadcastCommand.fromMap(map['command']),
       removeStrokeIndex: map['removeStrokeIndex']?.toInt(),
-      boardSize: map['boardSize'] ?? Size.zero,
+      boardSize: Size(map['boardSize']['width'], map['boardSize']['height']),
     );
   }
 
