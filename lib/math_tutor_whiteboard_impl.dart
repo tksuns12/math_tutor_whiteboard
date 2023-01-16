@@ -60,8 +60,10 @@ class _MathTutorWhiteboardState extends ConsumerState<MathTutorWhiteboardImpl> {
 
   @override
   void initState() {
-    boardSize = Size(MediaQuery.of(context).size.width,
-        MediaQuery.of(context).size.height * 16 / 9);
+    WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
+      boardSize = Size(MediaQuery.of(context).size.width,
+          MediaQuery.of(context).size.height * 16 / 9);
+    });
     if (widget.inputDrawingStream != null) {
       /// 여기서는 서버의 데이터를 받습니다.
       /// 서버에서 주는 데이터의 형식에 따라 지우고, 그리는 동작을
