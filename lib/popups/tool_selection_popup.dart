@@ -123,15 +123,16 @@ class _ToolSelectionPopupState extends State<ToolSelectionPopup> {
                   SizedBox(
                     height: 30,
                     child: Center(
-                      child: Container(
-                          height: _width, width: 150, color: Colors.black),
+                      child:
+                          Container(height: _width, width: 150, color: _color),
                     ),
                   ),
                   Slider(
                     value: _width,
                     min: 1,
                     max: 20,
-                    thumbColor: Colors.black,
+                    thumbColor: _color,
+                    activeColor: const Color(0xff446d8c),
                     onChanged: (value) {
                       setState(() {
                         _width = value;
