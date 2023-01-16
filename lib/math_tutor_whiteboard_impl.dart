@@ -364,9 +364,12 @@ class _MathTutorWhiteboardState extends ConsumerState<MathTutorWhiteboardImpl> {
         /// 대신 [deletedStrokes] 라는 [Map]에 key-value로 {지워진 cursor}-{지워진 stroke의 index}를 저장합니다.
         /// 그리고 limitCursor의 정합성을 위해 [limitCursor]를 1 증가시키면서 drawingData에는 빈 스트로크를 채워줍니다.
         /// 그러나 deletedStrokes에 이미 지워진 stroke의 index가 있으면 지우지 않습니다.
+        /// 또한 흰색은 펜 지우개 모드가 아니면 선택할 수가 없는 색상이므로
+        /// 흰색은 지우개 모드에서 그린 선으로 간주하고 지우지 않습니다.
         for (int i = 0; i < drawingData.length; i++) {
           for (int j = 0; j < drawingData[i].length; j++) {
-            if (deletedStrokes.containsValue(i)) {
+            if (deletedStrokes.containsValue(i) ||
+                drawingData[i][j].color == Colors.white) {
               continue;
             }
             final distance = sqrt(
