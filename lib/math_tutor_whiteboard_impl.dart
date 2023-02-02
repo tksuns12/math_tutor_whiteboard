@@ -432,18 +432,15 @@ class _WhiteBoard extends StatelessWidget {
     return Container(
       color: Colors.black,
       child: Center(
-        child: ConstrainedBox(
-          constraints: BoxConstraints(
-              minWidth: MediaQuery.of(context).size.width,
-              minHeight: MediaQuery.of(context).size.width * 16 / 9,
-              maxHeight: MediaQuery.of(context).size.width * 16 / 9,
-              maxWidth: MediaQuery.of(context).size.width),
-          child: Listener(
-            onPointerDown: (event) {
-              onStartDrawing();
-            },
-            onPointerMove: onDrawing,
-            onPointerUp: onEndDrawing,
+        child: Listener(
+          onPointerDown: (event) {
+            onStartDrawing();
+          },
+          onPointerMove: onDrawing,
+          onPointerUp: onEndDrawing,
+          child: SizedBox(
+            height: MediaQuery.of(context).size.width * 16 / 9,
+            width: MediaQuery.of(context).size.width,
             child: Stack(
               children: [
                 Positioned.fill(
@@ -452,12 +449,12 @@ class _WhiteBoard extends StatelessWidget {
                   ),
                 ),
                 if (preloadImage != null)
-                  Positioned(
-                      top: 0,
+                  Positioned.fill(
                       child: Image(
-                        image: preloadImage!,
-                        fit: BoxFit.fitWidth,
-                      )),
+                    image: preloadImage!,
+                    fit: BoxFit.fitWidth,
+                    alignment: Alignment.topCenter,
+                  )),
                 Positioned.fill(
                     child: CustomPaint(
                   painter: _WhiteboardPainter((() {
