@@ -40,14 +40,14 @@ class RecordingState extends Equatable {
 
 class RecordingStateNotifier extends StateNotifier<RecordingState> {
   RecordingStateNotifier({
-    required this.totalDuration,
+    required this.maxDuration,
   }) : super(RecordingState(
             isRecording: false,
-            remainingTime: totalDuration,
-            totalDuration: totalDuration,
+            remainingTime: maxDuration,
+            totalDuration: maxDuration,
             precessing: false));
 
-  final int totalDuration;
+  final int maxDuration;
 
   void setProcessing(bool processing) {
     state = state.copyWith(precessing: processing);
@@ -77,5 +77,5 @@ class RecordingStateNotifier extends StateNotifier<RecordingState> {
 
 final recordingStateProvider =
     StateNotifierProvider<RecordingStateNotifier, RecordingState>((ref) {
-  return RecordingStateNotifier(totalDuration: 20 * 60);
+  return RecordingStateNotifier(maxDuration: 20 * 60);
 });
