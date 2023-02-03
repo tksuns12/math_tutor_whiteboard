@@ -35,6 +35,7 @@ class RecordingState extends Equatable {
       result: result ?? this.result,
     );
   }
+
 }
 
 class RecordingStateNotifier extends StateNotifier<RecordingState> {

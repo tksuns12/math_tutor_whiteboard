@@ -3,7 +3,7 @@ import 'dart:developer';
 import 'dart:io';
 import 'dart:math' hide log;
 
-import 'package:ed_screen_recorder_v3/ed_screen_recorder.dart';
+import 'package:ed_screen_recorder/ed_screen_recorder.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:fluttertoast/fluttertoast.dart';
@@ -163,6 +163,7 @@ class _MathTutorWhiteboardState extends ConsumerState<MathTutorWhiteboardImpl> {
     if (_inputStreamSubscription != null) {
       _inputStreamSubscription!.cancel();
     }
+    ref.read(recordingStateProvider.notifier).dispose();
     super.dispose();
   }
 
@@ -314,6 +315,7 @@ class _MathTutorWhiteboardState extends ConsumerState<MathTutorWhiteboardImpl> {
     log('stop recording: ${res['file']}');
     ref.read(recordingStateProvider.notifier).finishRecording(res['file']);
     timer?.cancel();
+    widget.onRecordingFinished?.call(res['file']);
   }
 
   Future<void> _startRecording() async {
