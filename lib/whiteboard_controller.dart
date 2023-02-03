@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/svg.dart';
@@ -6,9 +8,11 @@ import 'package:math_tutor_whiteboard/states/chat_message_state.dart';
 import 'package:math_tutor_whiteboard/states/recording_state.dart';
 import 'package:math_tutor_whiteboard/states/user_list_state.dart';
 import 'popups/chat_message_bottom_sheet.dart';
+import 'popups/media_source_selection_bottom_sheet.dart';
 import 'popups/tool_selection_popup.dart';
 import 'popups/user_list_bottom_sheet.dart';
 import 'types.dart';
+import 'dart:ui' as ui;
 
 class WhiteboardController extends ConsumerStatefulWidget {
   final bool isLive;
@@ -27,9 +31,11 @@ class WhiteboardController extends ConsumerStatefulWidget {
   final void Function(double strokeWidth) onStrokeWidthChanged;
   final VoidCallback onTapRecord;
   final VoidCallback onTapStrokeEraser;
+  final void Function(ui.Image file) onLoadImage;
 
   const WhiteboardController(
-      {required this.onTapStrokeEraser,
+      {required this.onLoadImage,
+      required this.onTapStrokeEraser,
       super.key,
       required this.onPenSelected,
       required this.onTapEraser,
@@ -94,6 +100,22 @@ class _WhiteboardControllerState extends ConsumerState<WhiteboardController> {
                       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                       mainAxisSize: MainAxisSize.min,
                       children: [
+                        if (widget.isLive)
+                          InkWell(
+                            onTap: () {
+                              // Show modal bottom sheet to choose camera or gallery
+                              showModalBottomSheet(
+                                context: context,backgroundColor: Colors.transparent,
+                                builder: (context) =>
+                                    MediaSourceSelectionBottomSheet(
+                                        onImageSelected: widget.onLoadImage),
+                              );
+                            },
+                            child: SvgPicture.asset(
+                              'assets/file.svg',
+                              package: 'math_tutor_whiteboard',
+                            ),
+                          ),
                         GestureDetector(
                           behavior: HitTestBehavior.opaque,
                           child: _toolButtonBuilder(),
@@ -216,7 +238,8 @@ class _WhiteboardControllerState extends ConsumerState<WhiteboardController> {
 
   showUserlistModalBottomSheet(BuildContext context) {
     showModalBottomSheet(
-      context: context,backgroundColor: Colors.transparent,
+      context: context,
+      backgroundColor: Colors.transparent,
       builder: (context) => UserListBottomSheet(ref),
       isScrollControlled: true,
     );
@@ -224,7 +247,8 @@ class _WhiteboardControllerState extends ConsumerState<WhiteboardController> {
 
   showChatModalBottomSheet(BuildContext context) {
     showModalBottomSheet(
-      context: context,backgroundColor: Colors.transparent,
+      context: context,
+      backgroundColor: Colors.transparent,
       builder: (context) => ChatMessageBottomSheet(ref),
       isScrollControlled: true,
     );

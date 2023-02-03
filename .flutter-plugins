@@ -1,6 +1,15 @@
 # This is a generated file; do not edit or check into version control.
+camera=/Users/hyungilkang/.pub-cache/hosted/pub.dev/camera-0.10.3/
+camera_android=/Users/hyungilkang/.pub-cache/git/plugins-8550e0e698f3d358f42d60b090320dea7c3c0775/packages/camera/camera_android/
+camera_avfoundation=/Users/hyungilkang/.pub-cache/hosted/pub.dev/camera_avfoundation-0.9.11/
+camera_web=/Users/hyungilkang/.pub-cache/hosted/pub.dev/camera_web-0.3.1+1/
 ed_screen_recorder=/Users/hyungilkang/.pub-cache/hosted/pub.dev/ed_screen_recorder-0.0.12/
+flutter_plugin_android_lifecycle=/Users/hyungilkang/.pub-cache/hosted/pub.dev/flutter_plugin_android_lifecycle-2.0.7/
 fluttertoast=/Users/hyungilkang/.pub-cache/hosted/pub.dev/fluttertoast-8.1.2/
+image_picker=/Users/hyungilkang/.pub-cache/hosted/pub.dev/image_picker-0.8.6+1/
+image_picker_android=/Users/hyungilkang/.pub-cache/hosted/pub.dev/image_picker_android-0.8.5+5/
+image_picker_for_web=/Users/hyungilkang/.pub-cache/hosted/pub.dev/image_picker_for_web-2.1.10/
+image_picker_ios=/Users/hyungilkang/.pub-cache/hosted/pub.dev/image_picker_ios-0.8.6+6/
 path_provider=/Users/hyungilkang/.pub-cache/hosted/pub.dev/path_provider-2.0.12/
 path_provider_android=/Users/hyungilkang/.pub-cache/hosted/pub.dev/path_provider_android-2.0.22/
 path_provider_foundation=/Users/hyungilkang/.pub-cache/hosted/pub.dev/path_provider_foundation-2.1.1/

@@ -2,8 +2,10 @@ import 'dart:async';
 import 'dart:developer';
 import 'dart:io';
 import 'dart:math' hide log;
+import 'dart:ui' as ui;
 
 import 'package:ed_screen_recorder/ed_screen_recorder.dart';
+import 'package:crop_image/crop_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:fluttertoast/fluttertoast.dart';
@@ -22,14 +24,18 @@ class MathTutorWhiteboardImpl extends ConsumerStatefulWidget {
   final Duration? recordDuration;
   final WhiteboardMode mode;
   final StreamController<BroadcastData> outputDrawingStream;
+  final StreamController<File>? outputImageStream;
   final void Function(File file)? onRecordingFinished;
   final Stream<BroadcastData>? inputDrawingStream;
+  final Stream<File>? inputImageStream;
   final Stream<WhiteboardChatMessage>? chatStream;
   final Stream<WhiteboardUser>? userJoinStream;
   final Stream<WhiteboardUser>? userLeaveStream;
   final String myID;
   const MathTutorWhiteboardImpl(
-      {required this.outputDrawingStream,
+      {this.outputImageStream,
+      this.inputImageStream,
+      required this.outputDrawingStream,
       required this.myID,
       this.chatStream,
       this.userJoinStream,
@@ -56,16 +62,23 @@ class _MathTutorWhiteboardState extends ConsumerState<MathTutorWhiteboardImpl> {
   Timer? timer;
   final Map<int, int> deletedStrokes = {};
   StreamSubscription<BroadcastData>? _inputStreamSubscription;
+  StreamSubscription<File>? _inputImageStreamSubscription;
   late final Size boardSize;
+  ImageProvider? image;
 
   @override
   void initState() {
-    if (widget.recordDuration != null) {
-      ref
-          .read(recordingStateProvider.notifier)
-          .updateDuration(widget.recordDuration!);
+    /// 만약 미리 주입된 이미지가 있다면, 그 이미지를 미리 불러옵니다.
+    if (widget.preloadImage != null) {
+      image = widget.preloadImage;
     }
+
     WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
+      if (widget.recordDuration != null) {
+        ref
+            .read(recordingStateProvider.notifier)
+            .updateDuration(widget.recordDuration!);
+      }
       boardSize = Size(MediaQuery.of(context).size.width,
           MediaQuery.of(context).size.height * 16 / 9);
     });
@@ -75,6 +88,11 @@ class _MathTutorWhiteboardState extends ConsumerState<MathTutorWhiteboardImpl> {
       /// 호스트의 동작대로 흉내냅니다.
       _inputStreamSubscription =
           widget.inputDrawingStream!.listen(_inputStreamListener);
+    }
+
+    if (widget.inputImageStream != null) {
+      _inputImageStreamSubscription =
+          widget.inputImageStream!.listen(_inputImageStreamListener);
     }
     if (widget.userJoinStream != null) {
       widget.userJoinStream!.listen((event) {
@@ -198,6 +216,7 @@ class _MathTutorWhiteboardState extends ConsumerState<MathTutorWhiteboardImpl> {
             onStrokeWidthChanged: _onStrokeWidthChanged,
             onTapRecord: _onTapRecord,
             onTapStrokeEraser: _onTapStrokeEraswer,
+            onLoadImage: _onLoadImage,
           ),
           Expanded(
             child: _WhiteBoard(
@@ -207,7 +226,7 @@ class _MathTutorWhiteboardState extends ConsumerState<MathTutorWhiteboardImpl> {
                 onEndDrawing: _onEndDrawing,
                 drawingData: drawingData,
                 limitCursor: limitCursor,
-                preloadImage: widget.preloadImage),
+                preloadImage: image),
           )
         ],
       )),
@@ -414,6 +433,23 @@ class _MathTutorWhiteboardState extends ConsumerState<MathTutorWhiteboardImpl> {
             command: BroadcastCommand.draw,
             limitCursor: limitCursor));
       }
+    });
+  }
+
+  Future<void> _onLoadImage(ui.Image uiImage) async {
+    setState(() {
+      image = UiImageProvider(uiImage);
+    });
+    final file = File('${(await getTemporaryDirectory()).path}/image.png');
+    final imageFile = await file.create();
+    final imageByte = await uiImage.toByteData(format: ui.ImageByteFormat.png);
+    await imageFile.writeAsBytes(imageByte!.buffer.asUint8List());
+    widget.outputImageStream?.add(imageFile);
+  }
+
+  void _inputImageStreamListener(File event) {
+    setState(() {
+      image = FileImage(event);
     });
   }
 }
