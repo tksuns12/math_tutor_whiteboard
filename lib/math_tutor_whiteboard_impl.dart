@@ -60,6 +60,11 @@ class _MathTutorWhiteboardState extends ConsumerState<MathTutorWhiteboardImpl> {
 
   @override
   void initState() {
+    if (widget.recordDuration != null) {
+      ref
+          .read(recordingStateProvider.notifier)
+          .updateDuration(widget.recordDuration!);
+    }
     WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
       boardSize = Size(MediaQuery.of(context).size.width,
           MediaQuery.of(context).size.height * 16 / 9);
@@ -68,61 +73,8 @@ class _MathTutorWhiteboardState extends ConsumerState<MathTutorWhiteboardImpl> {
       /// 여기서는 서버의 데이터를 받습니다.
       /// 서버에서 주는 데이터의 형식에 따라 지우고, 그리는 동작을
       /// 호스트의 동작대로 흉내냅니다.
-      _inputStreamSubscription = widget.inputDrawingStream!.listen((event) {
-        /// Command가 clear면 모든 데이터를 지웁니다.
-        if (event.command == BroadcastCommand.clear) {
-          _onTapClear();
-        } else {
-          /// 중간에 들어온 경우에는 현재의 limitCursor와 서버에서 내려준 limitCursor가 차이가 납니다.
-          /// 정합성을 위해서 부족한 limitCursor 만큼 빈 스트로크를 추가합니다.
-          if (limitCursor == 0 && event.limitCursor > 1) {
-            drawingData.addAll(List.generate(
-                event.limitCursor - limitCursor - 1, (index) => []));
-            limitCursor += event.limitCursor - limitCursor - 1;
-          }
-
-          /// 선 지우기 인덱스가 null이 아닌 경우에는
-          /// 선을 지우는 동작을 합니다.
-          /// 이 경우에는 drawingData가 null입니다.
-          if (event.removeStrokeIndex != null) {
-            setState(() {
-              deletedStrokes[event.limitCursor] = event.removeStrokeIndex!;
-              limitCursor = event.limitCursor;
-              drawingData.add([]);
-            });
-          }
-
-          /// 선 지우기 인덱스가 null인 경우에는
-          /// 그리기 동작이거나 Redo Undo 동작입니다.
-          /// 그리기 동작이 아닐 경우에는 drawingData가 null입니다.
-          /// darwingData가 null이 아닐 경우에는
-          /// 호스트의 보드 크기를 참조해 좌표를 조정합니다.
-          else {
-            final heightCoefficient = boardSize.height / event.boardSize.height;
-            final widthCoefficient = boardSize.width / event.boardSize.width;
-            setState(() {
-              if (event.limitCursor == limitCursor) {
-                if (event.drawingData != null) {
-                  drawingData.last.add(event.drawingData!.copyWith(
-                      point: event.drawingData!.point.copyWith(
-                          x: event.drawingData!.point.x * widthCoefficient,
-                          y: event.drawingData!.point.y * heightCoefficient)));
-                }
-              } else {
-                limitCursor = event.limitCursor;
-                if (event.drawingData != null) {
-                  drawingData.add([
-                    event.drawingData!.copyWith(
-                        point: event.drawingData!.point.copyWith(
-                            x: event.drawingData!.point.x * widthCoefficient,
-                            y: event.drawingData!.point.y * heightCoefficient))
-                  ]);
-                }
-              }
-            });
-          }
-        }
-      });
+      _inputStreamSubscription =
+          widget.inputDrawingStream!.listen(_inputStreamListener);
     }
     if (widget.userJoinStream != null) {
       widget.userJoinStream!.listen((event) {
@@ -153,6 +105,62 @@ class _MathTutorWhiteboardState extends ConsumerState<MathTutorWhiteboardImpl> {
       });
     }
     super.initState();
+  }
+
+  void _inputStreamListener(BroadcastData event) {
+    /// Command가 clear면 모든 데이터를 지웁니다.
+    if (event.command == BroadcastCommand.clear) {
+      _onTapClear();
+    } else {
+      /// 중간에 들어온 경우에는 현재의 limitCursor와 서버에서 내려준 limitCursor가 차이가 납니다.
+      /// 정합성을 위해서 부족한 limitCursor 만큼 빈 스트로크를 추가합니다.
+      if (limitCursor == 0 && event.limitCursor > 1) {
+        drawingData.addAll(
+            List.generate(event.limitCursor - limitCursor - 1, (index) => []));
+        limitCursor += event.limitCursor - limitCursor - 1;
+      }
+
+      /// 선 지우기 인덱스가 null이 아닌 경우에는
+      /// 선을 지우는 동작을 합니다.
+      /// 이 경우에는 drawingData가 null입니다.
+      if (event.removeStrokeIndex != null) {
+        setState(() {
+          deletedStrokes[event.limitCursor] = event.removeStrokeIndex!;
+          limitCursor = event.limitCursor;
+          drawingData.add([]);
+        });
+      }
+
+      /// 선 지우기 인덱스가 null인 경우에는
+      /// 그리기 동작이거나 Redo Undo 동작입니다.
+      /// 그리기 동작이 아닐 경우에는 drawingData가 null입니다.
+      /// darwingData가 null이 아닐 경우에는
+      /// 호스트의 보드 크기를 참조해 좌표를 조정합니다.
+      else {
+        final heightCoefficient = boardSize.height / event.boardSize.height;
+        final widthCoefficient = boardSize.width / event.boardSize.width;
+        setState(() {
+          if (event.limitCursor == limitCursor) {
+            if (event.drawingData != null) {
+              drawingData.last.add(event.drawingData!.copyWith(
+                  point: event.drawingData!.point.copyWith(
+                      x: event.drawingData!.point.x * widthCoefficient,
+                      y: event.drawingData!.point.y * heightCoefficient)));
+            }
+          } else {
+            limitCursor = event.limitCursor;
+            if (event.drawingData != null) {
+              drawingData.add([
+                event.drawingData!.copyWith(
+                    point: event.drawingData!.point.copyWith(
+                        x: event.drawingData!.point.x * widthCoefficient,
+                        y: event.drawingData!.point.y * heightCoefficient))
+              ]);
+            }
+          }
+        });
+      }
+    }
   }
 
   @override
