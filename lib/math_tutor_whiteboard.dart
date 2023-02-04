@@ -21,6 +21,7 @@ class MathTutorWhiteBoard extends StatelessWidget {
   final Stream<WhiteboardUser>? userJoinStream;
   final Stream<WhiteboardUser>? userLeaveStream;
   final void Function(File file)? onRecordingFinished;
+  final Future<bool> Function() onAttemptToClose;
   MathTutorWhiteBoard({
     Key? key,
     this.preloadImage,
@@ -32,6 +33,7 @@ class MathTutorWhiteBoard extends StatelessWidget {
     this.chatStream,
     this.userJoinStream,
     this.userLeaveStream,
+    required this.onAttemptToClose,
   }) : super(key: key);
 
   @override
@@ -48,6 +50,7 @@ class MathTutorWhiteBoard extends StatelessWidget {
       preloadImage: preloadImage,
       recordDuration: recordDuration,
       outputDrawingStream: drawingStream,
+      onAttemptToClose: onAttemptToClose,
     ));
   }
 }

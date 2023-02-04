@@ -32,8 +32,10 @@ class MathTutorWhiteboardImpl extends ConsumerStatefulWidget {
   final Stream<WhiteboardUser>? userJoinStream;
   final Stream<WhiteboardUser>? userLeaveStream;
   final String myID;
+  final Future<bool> Function() onAttemptToClose;
   const MathTutorWhiteboardImpl(
-      {this.outputImageStream,
+      {required this.onAttemptToClose,
+      this.outputImageStream,
       this.inputImageStream,
       required this.outputDrawingStream,
       required this.myID,
@@ -189,47 +191,53 @@ class _MathTutorWhiteboardState extends ConsumerState<MathTutorWhiteboardImpl> {
     if (_inputStreamSubscription != null) {
       _inputStreamSubscription!.cancel();
     }
+    if (_inputImageStreamSubscription != null) {
+      _inputImageStreamSubscription!.cancel();
+    }
     ref.read(recordingStateProvider.notifier).dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    return Material(
-      child: SafeArea(
-          child: Column(
-        children: [
-          WhiteboardController(
-            onPenSelected: _onPenSelected,
-            onTapEraser: _onTapEraser,
-            onTapUndo: _onTapUndo,
-            onTapClear: _onTapClear,
-            onTapClose: _onTapClose,
-            onColorSelected: _onColorSelected,
-            isLive: widget.mode == WhiteboardMode.liveTeaching,
-            onTapRedo: _onTapRedo,
-            penType: penType,
-            selectedColor: color,
-            isRedoable: limitCursor < drawingData.length,
-            isUndoable: limitCursor > 0,
-            strokeWidth: strokeWidth,
-            onStrokeWidthChanged: _onStrokeWidthChanged,
-            onTapRecord: _onTapRecord,
-            onTapStrokeEraser: _onTapStrokeEraswer,
-            onLoadImage: _onLoadImage,
-          ),
-          Expanded(
-            child: _WhiteBoard(
-                onStartDrawing: _onStartDrawing,
-                deletedStrokes: deletedStrokes,
-                onDrawing: _onDrawing,
-                onEndDrawing: _onEndDrawing,
-                drawingData: drawingData,
-                limitCursor: limitCursor,
-                preloadImage: image),
-          )
-        ],
-      )),
+    return WillPopScope(
+      onWillPop: widget.onAttemptToClose,
+      child: Material(
+        child: SafeArea(
+            child: Column(
+          children: [
+            WhiteboardController(
+              onPenSelected: _onPenSelected,
+              onTapEraser: _onTapEraser,
+              onTapUndo: _onTapUndo,
+              onTapClear: _onTapClear,
+              onTapClose: _onTapClose,
+              onColorSelected: _onColorSelected,
+              isLive: widget.mode == WhiteboardMode.liveTeaching,
+              onTapRedo: _onTapRedo,
+              penType: penType,
+              selectedColor: color,
+              isRedoable: limitCursor < drawingData.length,
+              isUndoable: limitCursor > 0,
+              strokeWidth: strokeWidth,
+              onStrokeWidthChanged: _onStrokeWidthChanged,
+              onTapRecord: _onTapRecord,
+              onTapStrokeEraser: _onTapStrokeEraswer,
+              onLoadImage: _onLoadImage,
+            ),
+            Expanded(
+              child: _WhiteBoard(
+                  onStartDrawing: _onStartDrawing,
+                  deletedStrokes: deletedStrokes,
+                  onDrawing: _onDrawing,
+                  onEndDrawing: _onEndDrawing,
+                  drawingData: drawingData,
+                  limitCursor: limitCursor,
+                  preloadImage: image),
+            )
+          ],
+        )),
+      ),
     );
   }
 
@@ -250,7 +258,12 @@ class _MathTutorWhiteboardState extends ConsumerState<MathTutorWhiteboardImpl> {
     _draw(event);
   }
 
-  void _onTapClose() {}
+  void _onTapClose() {
+    final result = widget.onAttemptToClose();
+    if (result == true) {
+      Navigator.of(context).pop();
+    }
+  }
 
   void _onTapClear() {
     setState(() {
