@@ -23,7 +23,7 @@ class MathTutorWhiteboardImpl extends ConsumerStatefulWidget {
   final ImageProvider? preloadImage;
   final Duration? recordDuration;
   final WhiteboardMode mode;
-  final StreamController<BroadcastData> outputDrawingStream;
+  final StreamController<BroadcastData>? outputDrawingStream;
   final StreamController<File>? outputImageStream;
   final void Function(File file)? onRecordingFinished;
   final Stream<BroadcastData>? inputDrawingStream;
@@ -258,10 +258,11 @@ class _MathTutorWhiteboardState extends ConsumerState<MathTutorWhiteboardImpl> {
     _draw(event);
   }
 
-  void _onTapClose() {
-    final result = widget.onAttemptToClose();
+  Future<void> _onTapClose() async {
+    final navigator = Navigator.of(context);
+    final result = await widget.onAttemptToClose();
     if (result == true) {
-      Navigator.of(context).pop();
+      navigator.pop();
     }
   }
 
@@ -270,7 +271,7 @@ class _MathTutorWhiteboardState extends ConsumerState<MathTutorWhiteboardImpl> {
       drawingData.clear();
       deletedStrokes.clear();
       limitCursor = 0;
-      widget.outputDrawingStream.add(BroadcastData(
+      widget.outputDrawingStream?.add(BroadcastData(
           drawingData: null,
           command: BroadcastCommand.clear,
           limitCursor: limitCursor,
@@ -283,7 +284,7 @@ class _MathTutorWhiteboardState extends ConsumerState<MathTutorWhiteboardImpl> {
     setState(() {
       if (limitCursor > 0) {
         limitCursor--;
-        widget.outputDrawingStream.add(BroadcastData(
+        widget.outputDrawingStream?.add(BroadcastData(
             drawingData: null,
             command: BroadcastCommand.draw,
             limitCursor: limitCursor,
@@ -325,7 +326,7 @@ class _MathTutorWhiteboardState extends ConsumerState<MathTutorWhiteboardImpl> {
     if (limitCursor < drawingData.length) {
       setState(() {
         limitCursor++;
-        widget.outputDrawingStream.add(BroadcastData(
+        widget.outputDrawingStream?.add(BroadcastData(
             drawingData: null,
             command: BroadcastCommand.draw,
             limitCursor: limitCursor,
@@ -395,7 +396,7 @@ class _MathTutorWhiteboardState extends ConsumerState<MathTutorWhiteboardImpl> {
             color: Colors.white,
             penType: penType,
             strokeWidth: strokeWidth));
-        widget.outputDrawingStream.add(BroadcastData(
+        widget.outputDrawingStream?.add(BroadcastData(
             drawingData: drawingData.last.last,
             command: BroadcastCommand.draw,
             limitCursor: limitCursor,
@@ -418,7 +419,7 @@ class _MathTutorWhiteboardState extends ConsumerState<MathTutorWhiteboardImpl> {
                 pow(drawingData[i][j].point.x - event.localPosition.dx, 2) +
                     pow(drawingData[i][j].point.y - event.localPosition.dy, 2));
             if (distance < strokeWidth) {
-              widget.outputDrawingStream.add(BroadcastData(
+              widget.outputDrawingStream?.add(BroadcastData(
                   drawingData: null,
                   command: BroadcastCommand.removeStroke,
                   limitCursor: limitCursor,
@@ -440,7 +441,7 @@ class _MathTutorWhiteboardState extends ConsumerState<MathTutorWhiteboardImpl> {
             color: color,
             penType: penType,
             strokeWidth: strokeWidth));
-        widget.outputDrawingStream.add(BroadcastData(
+        widget.outputDrawingStream?.add(BroadcastData(
             drawingData: drawingData.last.last,
             boardSize: boardSize,
             command: BroadcastCommand.draw,
