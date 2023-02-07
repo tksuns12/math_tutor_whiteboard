@@ -33,8 +33,10 @@ class MathTutorWhiteboardImpl extends ConsumerStatefulWidget {
   final Stream<WhiteboardUser>? userLeaveStream;
   final String myID;
   final Future<bool> Function() onAttemptToClose;
+  final Future<bool> Function() onAttemptToCompleteRecording;
   const MathTutorWhiteboardImpl(
-      {required this.onAttemptToClose,
+      {required this.onAttemptToCompleteRecording,
+      required this.onAttemptToClose,
       this.outputImageStream,
       this.inputImageStream,
       required this.outputDrawingStream,

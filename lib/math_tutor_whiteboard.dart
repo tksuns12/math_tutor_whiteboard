@@ -23,6 +23,7 @@ class MathTutorWhiteBoard extends StatelessWidget {
   final Future<bool> Function() onAttemptToClose;
   final Stream<File>? inputImageStream;
   final StreamController<File>? outputImageStream;
+  final Future<bool> Function() onAttemptToCompleteRecording;
   const MathTutorWhiteBoard({
     Key? key,
     this.preloadImage,
@@ -35,9 +36,10 @@ class MathTutorWhiteBoard extends StatelessWidget {
     this.userJoinStream,
     this.userLeaveStream,
     required this.onAttemptToClose,
-     this.drawingStream,
-     this.inputImageStream,
-     this.outputImageStream,
+    this.drawingStream,
+    this.inputImageStream,
+    this.outputImageStream,
+    required this.onAttemptToCompleteRecording,
   }) : super(key: key);
 
   @override
@@ -57,6 +59,7 @@ class MathTutorWhiteBoard extends StatelessWidget {
       recordDuration: recordDuration,
       outputDrawingStream: drawingStream,
       onAttemptToClose: onAttemptToClose,
+      onAttemptToCompleteRecording: onAttemptToCompleteRecording,
     ));
   }
 }
