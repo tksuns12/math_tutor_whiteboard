@@ -347,12 +347,13 @@ class _MathTutorWhiteboardState extends ConsumerState<MathTutorWhiteboardImpl> {
 
   Future<void> _onTapRecord() async {
     if (ref.read(recordingStateProvider).isRecording) {
-      await screenRecorder.pauseRecord();
+      screenRecorder.pauseRecord();
       timer?.cancel();
       final result = await widget.onAttemptToCompleteRecording();
-      if (result == true){
-      _stopRecording();} else {
-        await screenRecorder.resumeRecord();
+      if (result == true) {
+        _stopRecording();
+      } else {
+        screenRecorder.resumeRecord();
         timer = Timer.periodic(const Duration(seconds: 1), (timer) {
           ref.read(recordingStateProvider.notifier).tick();
         });
