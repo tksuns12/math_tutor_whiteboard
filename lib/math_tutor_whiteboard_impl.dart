@@ -364,10 +364,12 @@ class _MathTutorWhiteboardState extends ConsumerState<MathTutorWhiteboardImpl> {
   }
 
   Future<void> _stopRecording() async {
+    final navigator = Navigator.of(context);
     final res = await screenRecorder.stopRecord();
     log('stop recording: ${res['file']}');
     ref.read(recordingStateProvider.notifier).finishRecording(res['file']);
     widget.onRecordingFinished?.call(res['file']);
+    navigator.pop();
   }
 
   Future<void> _startRecording() async {
