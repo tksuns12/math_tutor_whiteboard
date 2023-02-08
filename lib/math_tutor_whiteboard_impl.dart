@@ -345,9 +345,18 @@ class _MathTutorWhiteboardState extends ConsumerState<MathTutorWhiteboardImpl> {
     });
   }
 
-  void _onTapRecord() {
+  Future<void> _onTapRecord() async {
     if (ref.read(recordingStateProvider).isRecording) {
-      _stopRecording();
+      await screenRecorder.pauseRecord();
+      timer?.cancel();
+      final result = await widget.onAttemptToCompleteRecording();
+      if (result == true){
+      _stopRecording();} else {
+        await screenRecorder.resumeRecord();
+        timer = Timer.periodic(const Duration(seconds: 1), (timer) {
+          ref.read(recordingStateProvider.notifier).tick();
+        });
+      }
     } else {
       _startRecording();
     }
@@ -357,7 +366,6 @@ class _MathTutorWhiteboardState extends ConsumerState<MathTutorWhiteboardImpl> {
     final res = await screenRecorder.stopRecord();
     log('stop recording: ${res['file']}');
     ref.read(recordingStateProvider.notifier).finishRecording(res['file']);
-    timer?.cancel();
     widget.onRecordingFinished?.call(res['file']);
   }
 
