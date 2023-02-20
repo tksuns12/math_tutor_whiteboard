@@ -513,15 +513,16 @@ class _WhiteBoardState extends State<_WhiteBoard> {
   @override
   void initState() {
     WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
+      SystemChrome.setEnabledSystemUIMode(SystemUiMode.manual, overlays: [
+        SystemUiOverlay.bottom, //This line is used for showing the bottom bar
+      ]);
+      final query = MediaQuery.of(context);
       final height = MediaQuery.of(context).size.height;
       final width = MediaQuery.of(context).size.width;
       final scale = (64 * width) / (9 * height);
       transformationController.value = Matrix4.identity()
         ..scale(scale)
         ..translate(-(-9 * height / 64 + width) / 2);
-      SystemChrome.setEnabledSystemUIMode(SystemUiMode.manual, overlays: [
-        SystemUiOverlay.bottom, //This line is used for showing the bottom bar
-      ]);
     });
     super.initState();
   }
