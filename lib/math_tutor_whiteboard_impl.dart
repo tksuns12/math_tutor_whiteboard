@@ -512,9 +512,6 @@ class _WhiteBoardState extends State<_WhiteBoard> {
 
   @override
   void initState() {
-    transformationController.addListener(() {
-      print(transformationController.value);
-    });
     WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
       final height = MediaQuery.of(context).size.height;
       final width = MediaQuery.of(context).size.width;
