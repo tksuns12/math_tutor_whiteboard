@@ -3,6 +3,7 @@ import 'dart:developer';
 import 'dart:io';
 import 'dart:math' hide log;
 import 'dart:ui' as ui;
+import 'package:flutter/services.dart';
 import 'package:vector_math/vector_math_64.dart' show Quad;
 
 import 'package:ed_screen_recorder/ed_screen_recorder.dart';
@@ -521,6 +522,9 @@ class _WhiteBoardState extends State<_WhiteBoard> {
       transformationController.value = Matrix4.identity()
         ..scale(scale)
         ..translate(-(-9 * height / 64 + width) / 2);
+      SystemChrome.setEnabledSystemUIMode(SystemUiMode.manual, overlays: [
+        SystemUiOverlay.bottom, //This line is used for showing the bottom bar
+      ]);
     });
     super.initState();
   }
