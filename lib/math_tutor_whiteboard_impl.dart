@@ -3,6 +3,7 @@ import 'dart:developer';
 import 'dart:io';
 import 'dart:math' hide log;
 import 'dart:ui' as ui;
+import 'package:vector_math/vector_math_64.dart' show Quad;
 
 import 'package:ed_screen_recorder/ed_screen_recorder.dart';
 import 'package:crop_image/crop_image.dart';
@@ -59,7 +60,7 @@ class MathTutorWhiteboardImpl extends ConsumerStatefulWidget {
 class _MathTutorWhiteboardState extends ConsumerState<MathTutorWhiteboardImpl> {
   List<List<DrawingData>> drawingData = [];
   PenType penType = PenType.pen;
-  double strokeWidth = 5;
+  double strokeWidth = 2;
   Color color = Colors.black;
   int limitCursor = 0;
   final screenRecorder = EdScreenRecorder();
@@ -221,7 +222,7 @@ class _MathTutorWhiteboardState extends ConsumerState<MathTutorWhiteboardImpl> {
               selectedColor: color,
               isRedoable: limitCursor < drawingData.length,
               isUndoable: limitCursor > 0,
-              strokeWidth: strokeWidth,
+              strokeWidth: strokeWidth * 3,
               onStrokeWidthChanged: _onStrokeWidthChanged,
               onTapRecord: _onTapRecord,
               onTapStrokeEraser: _onTapStrokeEraswer,
@@ -340,7 +341,7 @@ class _MathTutorWhiteboardState extends ConsumerState<MathTutorWhiteboardImpl> {
 
   void _onStrokeWidthChanged(double strokeWidth) {
     setState(() {
-      this.strokeWidth = strokeWidth;
+      this.strokeWidth = max(1.0, strokeWidth / 3);
       log('stroke width changed: $strokeWidth');
     });
   }
@@ -364,7 +365,6 @@ class _MathTutorWhiteboardState extends ConsumerState<MathTutorWhiteboardImpl> {
   }
 
   Future<void> _stopRecording() async {
-    final navigator = Navigator.of(context);
     final res = await screenRecorder.stopRecord();
     log('stop recording: ${res['file']}');
     ref.read(recordingStateProvider.notifier).finishRecording(res['file']);
@@ -480,7 +480,7 @@ class _MathTutorWhiteboardState extends ConsumerState<MathTutorWhiteboardImpl> {
   }
 }
 
-class _WhiteBoard extends StatelessWidget {
+class _WhiteBoard extends StatefulWidget {
   final void Function() onStartDrawing;
   final void Function(PointerMoveEvent event) onDrawing;
   final void Function(PointerUpEvent event) onEndDrawing;
@@ -500,59 +500,140 @@ class _WhiteBoard extends StatelessWidget {
       : super(key: key);
 
   @override
+  State<_WhiteBoard> createState() => _WhiteBoardState();
+}
+
+class _WhiteBoardState extends State<_WhiteBoard> {
+  bool panMode = false;
+  Set<int> pointers = {};
+  final TransformationController transformationController =
+      TransformationController();
+
+  @override
+  void initState() {
+    transformationController.addListener(() {
+      print(transformationController.value);
+    });
+    WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
+      final height = MediaQuery.of(context).size.height;
+      final width = MediaQuery.of(context).size.width;
+      final scale = (64 * width) / (9 * height);
+      transformationController.value = Matrix4.identity()
+        ..scale(scale)
+        ..translate(-(-9 * height / 64 + width) / 2);
+    });
+    super.initState();
+  }
+
+  @override
+  void dispose() {
+    transformationController.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
-    return Container(
-      color: Colors.black,
-      child: Center(
-        child: Listener(
-          onPointerDown: (event) {
-            onStartDrawing();
+    return LayoutBuilder(builder: (context, constraints) {
+      return Scaffold(
+        floatingActionButton: FloatingActionButton.small(
+          onPressed: () {
+            setState(() {
+              panMode = !panMode;
+            });
           },
-          onPointerMove: onDrawing,
-          onPointerUp: onEndDrawing,
-          child: SizedBox(
-            height: MediaQuery.of(context).size.width * 16 / 9,
-            width: MediaQuery.of(context).size.width,
-            child: Stack(
-              children: [
-                Positioned.fill(
-                  child: Container(
-                    color: Colors.white,
+          backgroundColor: Colors.black,
+          child: Center(child: Icon(!panMode ? Icons.pan_tool : Icons.edit)),
+        ),
+        body: InteractiveViewer.builder(
+          panEnabled: panMode,
+          scaleEnabled: panMode,
+          minScale: 1.0,
+          maxScale: 4.5,
+          transformationController: transformationController,
+          builder: (BuildContext context, Quad viewport) {
+            return Container(
+              color: Colors.black,
+              height: constraints.maxHeight,
+              width: constraints.maxWidth,
+              child: Center(
+                child: Listener(
+                  onPointerDown: (event) {
+                    pointers.add(event.pointer);
+                    if (pointers.length > 1) {
+                      setState(() {
+                        panMode = true;
+                      });
+                    }
+                    if (panMode) {
+                      return;
+                    }
+                    widget.onStartDrawing();
+                  },
+                  onPointerMove: (event) {
+                    if (panMode) {
+                      return;
+                    }
+                    widget.onDrawing(event);
+                  },
+                  onPointerUp: (event) {
+                    pointers.clear();
+                    if (panMode) {
+                      return;
+                    }
+                    widget.onEndDrawing(event);
+                  },
+                  child: SizedBox(
+                    height: MediaQuery.of(context).size.height,
+                    width: MediaQuery.of(context).size.height * 9 / (16 * 4),
+                    child: Stack(
+                      children: [
+                        Positioned.fill(
+                          child: Container(
+                            color: Colors.white,
+                          ),
+                        ),
+                        if (widget.preloadImage != null)
+                          Positioned.fill(
+                              child: Image(
+                            image: widget.preloadImage!,
+                            fit: BoxFit.fitWidth,
+                            alignment: Alignment.topCenter,
+                          )),
+                        Positioned.fill(
+                            child: CustomPaint(
+                          painter: _WhiteboardPainter((() {
+                            /// limitCursor 이전의 스트로크들만 그리되
+                            /// limitCursor 이전의 key값이 [deletedStrokes]에 존재한다면
+                            /// [deletedStrokes]의 value값에 해당하는 index를 지워줍니다.
+                            final drawingBeforeLimitCursor = widget.drawingData
+                                .sublist(0, widget.limitCursor);
+                            for (int i = 0;
+                                i < drawingBeforeLimitCursor.length;
+                                i++) {
+                              for (final deleteStroke
+                                  in widget.deletedStrokes.entries) {
+                                if (deleteStroke.key <= widget.limitCursor) {
+                                  drawingBeforeLimitCursor[deleteStroke.value] =
+                                      [];
+                                }
+                              }
+                            }
+                            return drawingBeforeLimitCursor;
+                          })()),
+                          size: Size(
+                              MediaQuery.of(context).size.height * 9 / (16 * 4),
+                              MediaQuery.of(context).size.height),
+                        ))
+                      ],
+                    ),
                   ),
                 ),
-                if (preloadImage != null)
-                  Positioned.fill(
-                      child: Image(
-                    image: preloadImage!,
-                    fit: BoxFit.fitWidth,
-                    alignment: Alignment.topCenter,
-                  )),
-                Positioned.fill(
-                    child: CustomPaint(
-                  painter: _WhiteboardPainter((() {
-                    /// limitCursor 이전의 스트로크들만 그리되
-                    /// limitCursor 이전의 key값이 [deletedStrokes]에 존재한다면
-                    /// [deletedStrokes]의 value값에 해당하는 index를 지워줍니다.
-                    final drawingBeforeLimitCursor =
-                        drawingData.sublist(0, limitCursor);
-                    for (int i = 0; i < drawingBeforeLimitCursor.length; i++) {
-                      for (final deleteStroke in deletedStrokes.entries) {
-                        if (deleteStroke.key <= limitCursor) {
-                          drawingBeforeLimitCursor[deleteStroke.value] = [];
-                        }
-                      }
-                    }
-                    return drawingBeforeLimitCursor;
-                  })()),
-                  size: Size(MediaQuery.of(context).size.width,
-                      MediaQuery.of(context).size.width * 16 / 9),
-                ))
-              ],
-            ),
-          ),
+              ),
+            );
+          },
         ),
-      ),
-    );
+      );
+    });
   }
 }
 
