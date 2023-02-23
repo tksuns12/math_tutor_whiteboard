@@ -25,28 +25,18 @@ class MathTutorWhiteboardImpl extends ConsumerStatefulWidget {
   final ImageProvider? preloadImage;
   final Duration? recordDuration;
   final WhiteboardMode mode;
-  final StreamController<BroadcastData>? outputDrawingStream;
-  final StreamController<File>? outputImageStream;
+  final Stream? inputStream;
+  final StreamController? outputStream;
   final void Function(File file)? onRecordingFinished;
-  final Stream<BroadcastData>? inputDrawingStream;
-  final Stream<File>? inputImageStream;
-  final Stream<WhiteboardChatMessage>? chatStream;
-  final Stream<WhiteboardUser>? userJoinStream;
-  final Stream<WhiteboardUser>? userLeaveStream;
   final String myID;
   final Future<bool> Function() onAttemptToClose;
   final Future<bool> Function() onAttemptToCompleteRecording;
   const MathTutorWhiteboardImpl(
-      {required this.onAttemptToCompleteRecording,
+      {this.inputStream,
+      this.outputStream,
+      required this.onAttemptToCompleteRecording,
       required this.onAttemptToClose,
-      this.outputImageStream,
-      this.inputImageStream,
-      required this.outputDrawingStream,
       required this.myID,
-      this.chatStream,
-      this.userJoinStream,
-      this.userLeaveStream,
-      this.inputDrawingStream,
       super.key,
       this.preloadImage,
       this.recordDuration,
@@ -67,8 +57,12 @@ class _MathTutorWhiteboardState extends ConsumerState<MathTutorWhiteboardImpl> {
   final screenRecorder = EdScreenRecorder();
   Timer? timer;
   final Map<int, int> deletedStrokes = {};
-  StreamSubscription<BroadcastData>? _inputStreamSubscription;
+  StreamSubscription<BroadcastPaintData>? _inputDrawingStreamSubscription;
   StreamSubscription<File>? _inputImageStreamSubscription;
+  StreamSubscription<WhiteboardChatMessage>? _inputChatStreamSubscription;
+  StreamSubscription<UserEvent>? _userStreamSubscription;
+  StreamSubscription<ViewportChangeEvent>? _viewportChangeStreamSubscription;
+  final transformationController = TransformationController();
   late final Size boardSize;
   ImageProvider? image;
 
@@ -88,50 +82,60 @@ class _MathTutorWhiteboardState extends ConsumerState<MathTutorWhiteboardImpl> {
       boardSize = Size(MediaQuery.of(context).size.width,
           MediaQuery.of(context).size.height * 16 / 9);
     });
-    if (widget.inputDrawingStream != null) {
+    if (widget.inputStream != null) {
       /// 여기서는 서버의 데이터를 받습니다.
-      /// 서버에서 주는 데이터의 형식에 따라 지우고, 그리는 동작을
-      /// 호스트의 동작대로 흉내냅니다.
-      _inputStreamSubscription =
-          widget.inputDrawingStream!.listen(_inputStreamListener);
-    }
+      _inputDrawingStreamSubscription = widget.inputStream
+          ?.where((event) => event is BroadcastPaintData)
+          .map((event) => event as BroadcastPaintData)
+          .listen((_inputDrawingStreamListener));
 
-    if (widget.inputImageStream != null) {
-      _inputImageStreamSubscription =
-          widget.inputImageStream!.listen(_inputImageStreamListener);
-    }
-    if (widget.userJoinStream != null) {
-      widget.userJoinStream!.listen((event) {
-        if (event.serverUid != widget.myID) {
-          Fluttertoast.showToast(msg: '${event.nickname}님이 입장하셨습니다.');
-          ref.read(userListStateProvider.notifier).addUser(event);
+      _inputImageStreamSubscription = widget.inputStream
+          ?.where((event) => event is File)
+          .map((event) => event as File)
+          .listen(_inputImageStreamListener);
+
+      _userStreamSubscription = widget.inputStream
+          ?.where((event) => event is UserEvent)
+          .map((event) => event as UserEvent)
+          .listen((event) {
+        if (event.isJoin) {
+          if (event.user.serverUid != widget.myID) {
+            Fluttertoast.showToast(msg: '${event.user.nickname}님이 입장하셨습니다.');
+            ref.read(userListStateProvider.notifier).addUser(event.user);
+          }
+        } else {
+          if (event.user.serverUid != widget.myID) {
+            Fluttertoast.showToast(msg: '${event.user.nickname}님이 퇴장하셨습니다.');
+            ref.read(userListStateProvider.notifier).removeUser(event.user);
+          }
         }
       });
-    }
-    if (widget.userLeaveStream != null) {
-      widget.userLeaveStream!.listen((event) {
-        if (event.serverUid != widget.myID) {
-          Fluttertoast.showToast(msg: '${event.nickname}님이 퇴장하셨습니다.');
-          ref.read(userListStateProvider.notifier).removeUser(event);
-        }
-      });
-    }
 
-    if (widget.chatStream != null) {
       ref
           .read(chatMessageStateProvider.notifier)
           .addMessage(const WhiteboardChatMessage(
             nickname: '시스템',
             message: '채팅방에 입장하셨습니다.',
           ));
-      widget.chatStream!.listen((event) {
+
+      _inputChatStreamSubscription = widget.inputStream
+          ?.where((event) => event is WhiteboardChatMessage)
+          .map((event) => event as WhiteboardChatMessage)
+          .listen((event) {
         ref.read(chatMessageStateProvider.notifier).addMessage(event);
+      });
+
+      _viewportChangeStreamSubscription = widget.inputStream
+          ?.where((event) => event is ViewportChangeEvent)
+          .map((event) => event as ViewportChangeEvent)
+          .listen((event) {
+        transformationController.value = event.matrix;
       });
     }
     super.initState();
   }
 
-  void _inputStreamListener(BroadcastData event) {
+  void _inputDrawingStreamListener(BroadcastPaintData event) {
     /// Command가 clear면 모든 데이터를 지웁니다.
     if (event.command == BroadcastCommand.clear) {
       _onTapClear();
@@ -192,12 +196,15 @@ class _MathTutorWhiteboardState extends ConsumerState<MathTutorWhiteboardImpl> {
     if (timer != null && timer!.isActive) {
       timer!.cancel();
     }
-    if (_inputStreamSubscription != null) {
-      _inputStreamSubscription!.cancel();
-    }
-    if (_inputImageStreamSubscription != null) {
-      _inputImageStreamSubscription!.cancel();
-    }
+
+    _inputDrawingStreamSubscription?.cancel();
+    _inputImageStreamSubscription?.cancel();
+    _userStreamSubscription?.cancel();
+    _inputChatStreamSubscription?.cancel();
+    _viewportChangeStreamSubscription?.cancel();
+
+    transformationController.dispose();
+
     ref.read(recordingStateProvider.notifier).dispose();
     super.dispose();
   }
@@ -233,10 +240,12 @@ class _MathTutorWhiteboardState extends ConsumerState<MathTutorWhiteboardImpl> {
               child: _WhiteBoard(
                   onStartDrawing: _onStartDrawing,
                   deletedStrokes: deletedStrokes,
+                  transformationController: transformationController,
                   onDrawing: _onDrawing,
                   onEndDrawing: _onEndDrawing,
                   drawingData: drawingData,
                   limitCursor: limitCursor,
+                  onViewportChange: _onViewportChange,
                   preloadImage: image),
             )
           ],
@@ -275,7 +284,7 @@ class _MathTutorWhiteboardState extends ConsumerState<MathTutorWhiteboardImpl> {
       drawingData.clear();
       deletedStrokes.clear();
       limitCursor = 0;
-      widget.outputDrawingStream?.add(BroadcastData(
+      widget.outputStream?.add(BroadcastPaintData(
           drawingData: null,
           command: BroadcastCommand.clear,
           limitCursor: limitCursor,
@@ -288,7 +297,7 @@ class _MathTutorWhiteboardState extends ConsumerState<MathTutorWhiteboardImpl> {
     setState(() {
       if (limitCursor > 0) {
         limitCursor--;
-        widget.outputDrawingStream?.add(BroadcastData(
+        widget.outputStream?.add(BroadcastPaintData(
             drawingData: null,
             command: BroadcastCommand.draw,
             limitCursor: limitCursor,
@@ -330,7 +339,7 @@ class _MathTutorWhiteboardState extends ConsumerState<MathTutorWhiteboardImpl> {
     if (limitCursor < drawingData.length) {
       setState(() {
         limitCursor++;
-        widget.outputDrawingStream?.add(BroadcastData(
+        widget.outputStream?.add(BroadcastPaintData(
             drawingData: null,
             command: BroadcastCommand.draw,
             limitCursor: limitCursor,
@@ -409,7 +418,7 @@ class _MathTutorWhiteboardState extends ConsumerState<MathTutorWhiteboardImpl> {
             color: Colors.white,
             penType: penType,
             strokeWidth: strokeWidth));
-        widget.outputDrawingStream?.add(BroadcastData(
+        widget.outputStream?.add(BroadcastPaintData(
             drawingData: drawingData.last.last,
             command: BroadcastCommand.draw,
             limitCursor: limitCursor,
@@ -432,7 +441,7 @@ class _MathTutorWhiteboardState extends ConsumerState<MathTutorWhiteboardImpl> {
                 pow(drawingData[i][j].point.x - event.localPosition.dx, 2) +
                     pow(drawingData[i][j].point.y - event.localPosition.dy, 2));
             if (distance < strokeWidth) {
-              widget.outputDrawingStream?.add(BroadcastData(
+              widget.outputStream?.add(BroadcastPaintData(
                   drawingData: null,
                   command: BroadcastCommand.removeStroke,
                   limitCursor: limitCursor,
@@ -454,7 +463,7 @@ class _MathTutorWhiteboardState extends ConsumerState<MathTutorWhiteboardImpl> {
             color: color,
             penType: penType,
             strokeWidth: strokeWidth));
-        widget.outputDrawingStream?.add(BroadcastData(
+        widget.outputStream?.add(BroadcastPaintData(
             drawingData: drawingData.last.last,
             boardSize: boardSize,
             command: BroadcastCommand.draw,
@@ -471,7 +480,7 @@ class _MathTutorWhiteboardState extends ConsumerState<MathTutorWhiteboardImpl> {
     final imageFile = await file.create();
     final imageByte = await uiImage.toByteData(format: ui.ImageByteFormat.png);
     await imageFile.writeAsBytes(imageByte!.buffer.asUint8List());
-    widget.outputImageStream?.add(imageFile);
+    widget.outputStream?.add(imageFile);
   }
 
   void _inputImageStreamListener(File event) {
@@ -479,16 +488,23 @@ class _MathTutorWhiteboardState extends ConsumerState<MathTutorWhiteboardImpl> {
       image = FileImage(event);
     });
   }
+
+  void _onViewportChange(Matrix4 matrix) {
+    widget.outputStream
+        ?.add(ViewportChangeEvent(matrix: matrix, boardSize: boardSize));
+  }
 }
 
 class _WhiteBoard extends StatefulWidget {
   final void Function() onStartDrawing;
   final void Function(PointerMoveEvent event) onDrawing;
   final void Function(PointerUpEvent event) onEndDrawing;
+  final void Function(Matrix4 data) onViewportChange;
   final ImageProvider? preloadImage;
   final List<List<DrawingData>> drawingData;
   final int limitCursor;
   final Map<int, int> deletedStrokes;
+  final TransformationController transformationController;
   const _WhiteBoard(
       {Key? key,
       required this.onStartDrawing,
@@ -497,7 +513,9 @@ class _WhiteBoard extends StatefulWidget {
       this.preloadImage,
       required this.drawingData,
       required this.limitCursor,
-      required this.deletedStrokes})
+      required this.deletedStrokes,
+      required this.onViewportChange,
+      required this.transformationController})
       : super(key: key);
 
   @override
@@ -507,16 +525,18 @@ class _WhiteBoard extends StatefulWidget {
 class _WhiteBoardState extends State<_WhiteBoard> {
   bool panMode = false;
   Set<int> pointers = {};
-  final TransformationController transformationController =
-      TransformationController();
+  late final TransformationController transformationController;
 
   @override
   void initState() {
+    transformationController = widget.transformationController;
+    transformationController.addListener(() {
+      widget.onViewportChange(transformationController.value);
+    });
     WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
       SystemChrome.setEnabledSystemUIMode(SystemUiMode.manual, overlays: [
         SystemUiOverlay.bottom, //This line is used for showing the bottom bar
       ]);
-      final query = MediaQuery.of(context);
       final height = MediaQuery.of(context).size.height;
       final width = MediaQuery.of(context).size.width;
       final scale = (64 * width) / (9 * height);
@@ -525,12 +545,6 @@ class _WhiteBoardState extends State<_WhiteBoard> {
         ..translate(-(-9 * height / 64 + width) / 2);
     });
     super.initState();
-  }
-
-  @override
-  void dispose() {
-    transformationController.dispose();
-    super.dispose();
   }
 
   @override
