@@ -300,4 +300,23 @@ class ViewportChangeEvent extends Equatable {
 
   @override
   List<Object> get props => [matrix, boardSize];
+
+  Map<String, dynamic> toMap() {
+    return {
+      'matrix': matrix.storage,
+      'boardSize': boardSize.toMap(),
+    };
+  }
+
+  factory ViewportChangeEvent.fromMap(Map<String, dynamic> map) {
+    return ViewportChangeEvent(
+      matrix: Matrix4.fromFloat64List(map['matrix']),
+      boardSize: Size(map['boardSize']['width'], map['boardSize']['height']),
+    );
+  }
+
+  String toJson() => json.encode(toMap());
+
+  factory ViewportChangeEvent.fromJson(String source) =>
+      ViewportChangeEvent.fromMap(json.decode(source));
 }
