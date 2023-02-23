@@ -139,13 +139,13 @@ extension SizeSerde on Size {
   }
 }
 
-class BroadcastData extends Equatable {
+class BroadcastPaintData extends Equatable {
   final DrawingData? drawingData;
   final int limitCursor;
   final BroadcastCommand command;
   final int? removeStrokeIndex;
   final Size boardSize;
-  const BroadcastData({
+  const BroadcastPaintData({
     required this.boardSize,
     required this.drawingData,
     required this.limitCursor,
@@ -163,8 +163,8 @@ class BroadcastData extends Equatable {
     };
   }
 
-  factory BroadcastData.fromMap(Map<String, dynamic> map) {
-    return BroadcastData(
+  factory BroadcastPaintData.fromMap(Map<String, dynamic> map) {
+    return BroadcastPaintData(
       drawingData: map['drawingData'] == null
           ? null
           : DrawingData.fromMap(map['drawingData']),
@@ -177,8 +177,8 @@ class BroadcastData extends Equatable {
 
   String toJson() => json.encode(toMap());
 
-  factory BroadcastData.fromJson(String source) =>
-      BroadcastData.fromMap(json.decode(source));
+  factory BroadcastPaintData.fromJson(String source) =>
+      BroadcastPaintData.fromMap(json.decode(source));
 
   @override
   List<Object?> get props {
@@ -276,4 +276,28 @@ class WhiteboardChatMessage extends Equatable {
 
   factory WhiteboardChatMessage.fromJson(String source) =>
       WhiteboardChatMessage.fromMap(json.decode(source));
+}
+
+class UserEvent extends Equatable {
+  final WhiteboardUser user;
+  final bool isJoin;
+  const UserEvent({
+    required this.user,
+    required this.isJoin,
+  });
+
+  @override
+  List<Object> get props => [user, isJoin];
+}
+
+class ViewportChangeEvent extends Equatable {
+  final Matrix4 matrix;
+  final Size boardSize;
+  const ViewportChangeEvent({
+    required this.matrix,
+    required this.boardSize,
+  });
+
+  @override
+  List<Object> get props => [matrix, boardSize];
 }

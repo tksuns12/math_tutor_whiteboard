@@ -13,9 +13,9 @@ class MathTutorWhiteBoard extends StatelessWidget {
   final ImageProvider? preloadImage;
   final Duration? recordDuration;
   final WhiteboardMode mode;
-  final StreamController<BroadcastData>? drawingStream;
+  final StreamController<BroadcastPaintData>? drawingStream;
   final String myID;
-  final Stream<BroadcastData>? inputDrawingStream;
+  final Stream<BroadcastPaintData>? inputDrawingStream;
   final Stream<WhiteboardChatMessage>? chatStream;
   final Stream<WhiteboardUser>? userJoinStream;
   final Stream<WhiteboardUser>? userLeaveStream;
@@ -47,17 +47,10 @@ class MathTutorWhiteBoard extends StatelessWidget {
     return ProviderScope(
         child: MathTutorWhiteboardImpl(
       myID: myID,
-      chatStream: chatStream,
-      inputDrawingStream: inputDrawingStream,
-      userJoinStream: userJoinStream,
-      userLeaveStream: userLeaveStream,
       mode: mode,
       onRecordingFinished: onRecordingFinished,
       preloadImage: preloadImage,
-      inputImageStream: inputImageStream,
-      outputImageStream: outputImageStream,
       recordDuration: recordDuration,
-      outputDrawingStream: drawingStream,
       onAttemptToClose: onAttemptToClose,
       onAttemptToCompleteRecording: onAttemptToCompleteRecording,
     ));

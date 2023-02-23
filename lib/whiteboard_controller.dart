@@ -105,7 +105,8 @@ class _WhiteboardControllerState extends ConsumerState<WhiteboardController> {
                             onTap: () {
                               // Show modal bottom sheet to choose camera or gallery
                               showModalBottomSheet(
-                                context: context,backgroundColor: Colors.transparent,
+                                context: context,
+                                backgroundColor: Colors.transparent,
                                 builder: (context) =>
                                     MediaSourceSelectionBottomSheet(
                                         onImageSelected: widget.onLoadImage),
@@ -190,6 +191,7 @@ class _WhiteboardControllerState extends ConsumerState<WhiteboardController> {
           ),
           SizedBox(width: 14 / 360 * MediaQuery.of(context).size.width),
           InkWell(
+            onTap: widget.onTapClose,
             child: SvgPicture.asset('assets/ex.svg',
                 package: "math_tutor_whiteboard"),
           ),
