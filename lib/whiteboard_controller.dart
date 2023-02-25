@@ -21,6 +21,7 @@ class WhiteboardController extends ConsumerStatefulWidget {
   final VoidCallback onTapUndo;
   final VoidCallback onTapClear;
   final VoidCallback onTapClose;
+  final void Function(String message) onSendChatMessage;
   final void Function(Color color) onColorSelected;
   final Color selectedColor;
   final PenType penType;
@@ -33,8 +34,8 @@ class WhiteboardController extends ConsumerStatefulWidget {
   final VoidCallback onTapStrokeEraser;
   final void Function(ui.Image file) onLoadImage;
 
-  const WhiteboardController(
-      {required this.onLoadImage,
+  const WhiteboardController({required this.onSendChatMessage, 
+      required this.onLoadImage,
       required this.onTapStrokeEraser,
       super.key,
       required this.onPenSelected,
@@ -251,10 +252,11 @@ class _WhiteboardControllerState extends ConsumerState<WhiteboardController> {
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.transparent,
-      builder: (context) => ChatMessageBottomSheet(ref),
+      builder: (context) => ChatMessageBottomSheet(ref, onSend: widget.onSendChatMessage),
       isScrollControlled: true,
     );
   }
+
 }
 
 class RecordButton extends StatelessWidget {

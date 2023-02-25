@@ -1,5 +1,6 @@
 import 'dart:convert';
-import 'dart:ui';
+import 'dart:typed_data';
+import 'package:vector_math/vector_math_64.dart' show Vector3;
 
 import 'package:equatable/equatable.dart';
 import 'package:flutter/material.dart';
@@ -308,10 +309,31 @@ class ViewportChangeEvent extends Equatable {
     };
   }
 
+  Matrix4 adjustedMatrix(Size myBoardSize) {
+    // Calculate the scaling factors for the width and height
+    double widthScale = myBoardSize.width / boardSize.width;
+    double heightScale = myBoardSize.height / boardSize.height;
+
+    // Calculate the new translation components
+    Vector3 translation = matrix.getTranslation();
+    double newTx = translation.x * widthScale;
+    double newTy = translation.y * heightScale;
+    final ex = matrix.getMaxScaleOnAxis();
+
+    // Create a scaling matrix
+    return Matrix4.identity()
+      ..translate(newTx, newTy)
+      ..scale(ex);
+  }
+
   factory ViewportChangeEvent.fromMap(Map<String, dynamic> map) {
     return ViewportChangeEvent(
-      matrix: Matrix4.fromFloat64List(map['matrix']),
-      boardSize: Size(map['boardSize']['width'], map['boardSize']['height']),
+      matrix: Matrix4.fromFloat64List(Float64List.fromList(
+          (map['matrix'] as List).map((e) => e as double).toList())),
+      boardSize: Size(
+        map['boardSize']['width'],
+        map['boardSize']['height'],
+      ),
     );
   }
 

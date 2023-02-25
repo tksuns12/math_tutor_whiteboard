@@ -5,27 +5,51 @@ import 'package:math_tutor_whiteboard/types.dart';
 
 class ChatMessageBottomSheet extends StatefulWidget {
   final WidgetRef ref;
-  const ChatMessageBottomSheet(this.ref, {super.key});
+  final void Function(String message) onSend;
+  const ChatMessageBottomSheet(this.ref, {super.key, required this.onSend});
 
   @override
   State<ChatMessageBottomSheet> createState() => _ChatMessageBottomSheetState();
 }
 
-class _ChatMessageBottomSheetState extends State<ChatMessageBottomSheet> {
+class _ChatMessageBottomSheetState extends State<ChatMessageBottomSheet>
+    with WidgetsBindingObserver {
   var chatMessages = <WhiteboardChatMessage>[];
   final scrollContrller = ScrollController();
   bool isViewAttached = false;
+  double bottomInset = 0;
+  final textEditingController = TextEditingController();
 
   @override
   void initState() {
     WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
-      isViewAttached = true;scrollContrller.animateTo(
-          scrollContrller.position.maxScrollExtent,
-          duration: const Duration(milliseconds: 300),
-          curve: Curves.easeOut,
-        );
+      isViewAttached = true;
+      scrollContrller.animateTo(
+        scrollContrller.position.maxScrollExtent,
+        duration: const Duration(milliseconds: 300),
+        curve: Curves.easeOut,
+      );
     });
+    WidgetsBinding.instance.addObserver(this);
     super.initState();
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    scrollContrller.dispose();
+    textEditingController.dispose();
+    super.dispose();
+  }
+
+  @override
+  void didChangeMetrics() {
+    if (isViewAttached) {
+      setState(() {
+        bottomInset = MediaQuery.of(context).viewInsets.bottom;
+      });
+    }
+    super.didChangeMetrics();
   }
 
   @override
@@ -46,30 +70,46 @@ class _ChatMessageBottomSheetState extends State<ChatMessageBottomSheet> {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      height: MediaQuery.of(context).size.height * 0.3,
-      width: double.infinity,
-      decoration: const BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.only(
-          topLeft: Radius.circular(20),
-          topRight: Radius.circular(20),
+    return AnimatedSize(
+      duration: const Duration(milliseconds: 300),
+      child: Container(
+        height: MediaQuery.of(context).size.height * 0.4 + bottomInset,
+        width: double.infinity,
+        decoration: const BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.only(
+            topLeft: Radius.circular(20),
+            topRight: Radius.circular(20),
+          ),
         ),
-      ),
-      child: Column(
-        children: [
-          const SizedBox(
-            height: 16,
-          ),
-          const Text('채팅', style: TextStyle(fontSize: 20)),
-          Expanded(
-            child: ListView.builder(
-              controller: scrollContrller,
-              itemCount: chatMessages.length,
-              itemBuilder: _chatMessageItemBuilder,
+        child: Column(
+          children: [
+            const SizedBox(
+              height: 16,
             ),
-          ),
-        ],
+            const Text('채팅', style: TextStyle(fontSize: 20)),
+            Expanded(
+              child: ListView.builder(
+                controller: scrollContrller,
+                itemCount: chatMessages.length,
+                itemBuilder: _chatMessageItemBuilder,
+              ),
+            ),
+            TextField(
+                controller: textEditingController,
+                onSubmitted: (value) {
+                  widget.onSend(value);
+                  textEditingController.clear();
+                },
+                decoration: InputDecoration(
+                    hintText: '메시지 입력',
+                    filled: true,
+                    fillColor: Colors.grey[200])),
+            SizedBox(
+              height: bottomInset,
+            )
+          ],
+        ),
       ),
     );
   }
@@ -78,6 +118,7 @@ class _ChatMessageBottomSheetState extends State<ChatMessageBottomSheet> {
     final message = chatMessages[index];
     return ListTile(
       leading: Text('${message.nickname}:'),
+      dense: true,
       title: Text(message.message),
     );
   }

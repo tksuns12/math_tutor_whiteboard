@@ -28,7 +28,7 @@ class MathTutorWhiteboardImpl extends ConsumerStatefulWidget {
   final Stream? inputStream;
   final StreamController? outputStream;
   final void Function(File file)? onRecordingFinished;
-  final String myID;
+  final WhiteboardUser me;
   final Future<bool> Function() onAttemptToClose;
   final Future<bool> Function() onAttemptToCompleteRecording;
   const MathTutorWhiteboardImpl(
@@ -36,7 +36,7 @@ class MathTutorWhiteboardImpl extends ConsumerStatefulWidget {
       this.outputStream,
       required this.onAttemptToCompleteRecording,
       required this.onAttemptToClose,
-      required this.myID,
+      required this.me,
       super.key,
       this.preloadImage,
       this.recordDuration,
@@ -80,7 +80,15 @@ class _MathTutorWhiteboardState extends ConsumerState<MathTutorWhiteboardImpl> {
             .updateDuration(widget.recordDuration!);
       }
       boardSize = Size(MediaQuery.of(context).size.width,
-          MediaQuery.of(context).size.height * 16 / 9);
+          MediaQuery.of(context).size.width * (16 / 9));
+      // boardSize = MediaQuery.of(context).size;
+
+      ref
+          .read(chatMessageStateProvider.notifier)
+          .addMessage(const WhiteboardChatMessage(
+            nickname: '시스템',
+            message: '채팅방에 입장하셨습니다.',
+          ));
     });
     if (widget.inputStream != null) {
       /// 여기서는 서버의 데이터를 받습니다.
@@ -99,24 +107,17 @@ class _MathTutorWhiteboardState extends ConsumerState<MathTutorWhiteboardImpl> {
           .map((event) => event as UserEvent)
           .listen((event) {
         if (event.isJoin) {
-          if (event.user.serverUid != widget.myID) {
+          if (event.user.serverUid != widget.me) {
             Fluttertoast.showToast(msg: '${event.user.nickname}님이 입장하셨습니다.');
             ref.read(userListStateProvider.notifier).addUser(event.user);
           }
         } else {
-          if (event.user.serverUid != widget.myID) {
+          if (event.user.serverUid != widget.me) {
             Fluttertoast.showToast(msg: '${event.user.nickname}님이 퇴장하셨습니다.');
             ref.read(userListStateProvider.notifier).removeUser(event.user);
           }
         }
       });
-
-      ref
-          .read(chatMessageStateProvider.notifier)
-          .addMessage(const WhiteboardChatMessage(
-            nickname: '시스템',
-            message: '채팅방에 입장하셨습니다.',
-          ));
 
       _inputChatStreamSubscription = widget.inputStream
           ?.where((event) => event is WhiteboardChatMessage)
@@ -129,7 +130,7 @@ class _MathTutorWhiteboardState extends ConsumerState<MathTutorWhiteboardImpl> {
           ?.where((event) => event is ViewportChangeEvent)
           .map((event) => event as ViewportChangeEvent)
           .listen((event) {
-        transformationController.value = event.matrix;
+        transformationController.value = event.adjustedMatrix(boardSize);
       });
     }
     super.initState();
@@ -138,7 +139,7 @@ class _MathTutorWhiteboardState extends ConsumerState<MathTutorWhiteboardImpl> {
   void _inputDrawingStreamListener(BroadcastPaintData event) {
     /// Command가 clear면 모든 데이터를 지웁니다.
     if (event.command == BroadcastCommand.clear) {
-      _onTapClear();
+      _onReceiveClear();
     } else {
       /// 중간에 들어온 경우에는 현재의 limitCursor와 서버에서 내려준 limitCursor가 차이가 납니다.
       /// 정합성을 위해서 부족한 limitCursor 만큼 빈 스트로크를 추가합니다.
@@ -235,6 +236,7 @@ class _MathTutorWhiteboardState extends ConsumerState<MathTutorWhiteboardImpl> {
               onTapRecord: _onTapRecord,
               onTapStrokeEraser: _onTapStrokeEraswer,
               onLoadImage: _onLoadImage,
+              onSendChatMessage: _onSendChatMessage,
             ),
             Expanded(
               child: _WhiteBoard(
@@ -290,6 +292,14 @@ class _MathTutorWhiteboardState extends ConsumerState<MathTutorWhiteboardImpl> {
           limitCursor: limitCursor,
           boardSize: boardSize));
       log('clear');
+    });
+  }
+
+  void _onReceiveClear() {
+    setState(() {
+      drawingData.clear();
+      deletedStrokes.clear();
+      limitCursor = 0;
     });
   }
 
@@ -493,6 +503,13 @@ class _MathTutorWhiteboardState extends ConsumerState<MathTutorWhiteboardImpl> {
     widget.outputStream
         ?.add(ViewportChangeEvent(matrix: matrix, boardSize: boardSize));
   }
+
+  void _onSendChatMessage(String message) {
+    widget.outputStream?.add(
+        WhiteboardChatMessage(message: message, nickname: widget.me.nickname));
+    ref.read(chatMessageStateProvider.notifier).addMessage(
+        WhiteboardChatMessage(message: message, nickname: widget.me.nickname));
+  }
 }
 
 class _WhiteBoard extends StatefulWidget {
@@ -524,6 +541,7 @@ class _WhiteBoard extends StatefulWidget {
 
 class _WhiteBoardState extends State<_WhiteBoard> {
   bool panMode = false;
+  bool isPanning = false;
   Set<int> pointers = {};
   late final TransformationController transformationController;
 
@@ -531,7 +549,9 @@ class _WhiteBoardState extends State<_WhiteBoard> {
   void initState() {
     transformationController = widget.transformationController;
     transformationController.addListener(() {
-      widget.onViewportChange(transformationController.value);
+      if (isPanning && panMode) {
+        widget.onViewportChange(transformationController.value);
+      }
     });
     WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
       SystemChrome.setEnabledSystemUIMode(SystemUiMode.manual, overlays: [
@@ -563,6 +583,8 @@ class _WhiteBoardState extends State<_WhiteBoard> {
         body: InteractiveViewer.builder(
           panEnabled: panMode,
           scaleEnabled: panMode,
+          onInteractionStart: (details) => isPanning = true,
+          onInteractionEnd: (details) => isPanning = false,
           minScale: 1.0,
           maxScale: 4.5,
           transformationController: transformationController,

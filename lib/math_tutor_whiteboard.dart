@@ -15,7 +15,7 @@ class MathTutorWhiteBoard extends StatelessWidget {
   final WhiteboardMode mode;
   final Stream? inputStream;
   final StreamController? outputStream;
-  final String myID;
+  final WhiteboardUser me;
   final void Function(File file)? onRecordingFinished;
   final Future<bool> Function() onAttemptToClose;
   final Future<bool> Function() onAttemptToCompleteRecording;
@@ -25,7 +25,7 @@ class MathTutorWhiteBoard extends StatelessWidget {
     this.recordDuration,
     required this.mode,
     this.onRecordingFinished,
-    required this.myID,
+    required this.me,
     required this.onAttemptToClose,
     required this.onAttemptToCompleteRecording,
     this.inputStream,
@@ -36,7 +36,7 @@ class MathTutorWhiteBoard extends StatelessWidget {
   Widget build(BuildContext context) {
     return ProviderScope(
         child: MathTutorWhiteboardImpl(
-      myID: myID,
+      me: me,
       mode: mode,
       onRecordingFinished: onRecordingFinished,
       preloadImage: preloadImage,
