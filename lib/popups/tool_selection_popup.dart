@@ -168,7 +168,7 @@ class _PopupButton extends StatelessWidget {
   final bool selected;
 
   const _PopupButton(
-      {super.key,
+      {
       required this.onPressed,
       required this.selected,
       required this.child});

@@ -90,8 +90,6 @@ class _ImageCropPage extends State<ImageCropPage> {
       ],
     );
   }
-  // TODO: 사진 크기 줄여야 함.
-
   _onOk() async {
     if (controller != null) {
       final navigator = Navigator.of(context);

@@ -1,10 +1,11 @@
 import 'dart:convert';
 import 'dart:typed_data';
-import 'package:vector_math/vector_math_64.dart' show Vector3;
 
 import 'package:equatable/equatable.dart';
 import 'package:flutter/material.dart';
 import 'package:perfect_freehand/perfect_freehand.dart';
+// ignore: depend_on_referenced_packages
+import 'package:vector_math/vector_math_64.dart' show Vector3;
 
 class DrawingData extends Equatable {
   final Point point;
@@ -196,15 +197,15 @@ class WhiteboardUser extends Equatable {
   final String? avatar;
   final String nickname;
   final bool micEnabled;
-  final bool chatEnabled;
-  final String serverUid;
+  final bool drawingEnabled;
   final String id;
+  final bool isHost;
   const WhiteboardUser({
+    required this.isHost,
     this.avatar,
     required this.nickname,
     required this.micEnabled,
-    required this.chatEnabled,
-    required this.serverUid,
+    required this.drawingEnabled,
     required this.id,
   });
 
@@ -214,8 +215,7 @@ class WhiteboardUser extends Equatable {
       avatar,
       nickname,
       micEnabled,
-      chatEnabled,
-      serverUid,
+      drawingEnabled,
       id,
     ];
   }
@@ -225,9 +225,9 @@ class WhiteboardUser extends Equatable {
       'avatar': avatar,
       'nickname': nickname,
       'micEnabled': micEnabled,
-      'chatEnabled': chatEnabled,
-      'serverUid': serverUid,
+      'drawingEnabled': drawingEnabled,
       'id': id,
+      'isHost': isHost,
     };
   }
 
@@ -236,9 +236,9 @@ class WhiteboardUser extends Equatable {
       avatar: map['avatar'],
       nickname: map['nickname'] ?? '',
       micEnabled: map['micEnabled'] ?? false,
-      chatEnabled: map['chatEnabled'] ?? false,
-      serverUid: map['serverUid'] ?? '',
+      drawingEnabled: map['drawingEnabled'] ?? false,
       id: map['id'] ?? '',
+      isHost: map['isHost'] ?? false,
     );
   }
 
@@ -246,6 +246,25 @@ class WhiteboardUser extends Equatable {
 
   factory WhiteboardUser.fromJson(String source) =>
       WhiteboardUser.fromMap(json.decode(source));
+
+
+  WhiteboardUser copyWith({
+    String? avatar,
+    String? nickname,
+    bool? micEnabled,
+    bool? drawingEnabled,
+    String? id,
+    bool? isHost,
+  }) {
+    return WhiteboardUser(
+      avatar: avatar ?? this.avatar,
+      nickname: nickname ?? this.nickname,
+      micEnabled: micEnabled ?? this.micEnabled,
+      drawingEnabled: drawingEnabled ?? this.drawingEnabled,
+      id: id ?? this.id,
+      isHost: isHost ?? this.isHost,
+    );
+  }
 }
 
 class WhiteboardChatMessage extends Equatable {
@@ -341,4 +360,35 @@ class ViewportChangeEvent extends Equatable {
 
   factory ViewportChangeEvent.fromJson(String source) =>
       ViewportChangeEvent.fromMap(json.decode(source));
+}
+
+class PermissionChangeEvent extends Equatable {
+  final bool? drawing;
+  final bool? microphone;
+  const PermissionChangeEvent({
+    this.drawing,
+    this.microphone,
+  });
+
+  @override
+  List<Object?> get props => [drawing, microphone];
+
+  Map<String, dynamic> toMap() {
+    return {
+      'drawing': drawing,
+      'chat': microphone,
+    };
+  }
+
+  factory PermissionChangeEvent.fromMap(Map<String, dynamic> map) {
+    return PermissionChangeEvent(
+      drawing: map['drawing'],
+      microphone: map['chat'],
+    );
+  }
+
+  String toJson() => json.encode(toMap());
+
+  factory PermissionChangeEvent.fromJson(String source) =>
+      PermissionChangeEvent.fromMap(json.decode(source));
 }

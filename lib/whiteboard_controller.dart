@@ -1,5 +1,3 @@
-import 'dart:io';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/svg.dart';
@@ -32,9 +30,17 @@ class WhiteboardController extends ConsumerStatefulWidget {
   final void Function(double strokeWidth) onStrokeWidthChanged;
   final VoidCallback onTapRecord;
   final VoidCallback onTapStrokeEraser;
+  final bool drawable;
   final void Function(ui.Image file) onLoadImage;
+  final void Function(WhiteboardUser user, bool allow) onMicPermissionChanged;
+  final void Function(WhiteboardUser user, bool allow)
+      onDrawingPermissionChanged;
 
-  const WhiteboardController({required this.onSendChatMessage, 
+  const WhiteboardController(
+      {required this.onMicPermissionChanged,
+      required this.onDrawingPermissionChanged,
+      required this.drawable,
+      required this.onSendChatMessage,
       required this.onLoadImage,
       required this.onTapStrokeEraser,
       super.key,
@@ -90,65 +96,67 @@ class _WhiteboardControllerState extends ConsumerState<WhiteboardController> {
           Expanded(
             child: Row(
               children: [
-                Expanded(
-                  child: Container(
-                    decoration: BoxDecoration(
-                        color: Colors.grey[350],
-                        borderRadius: BorderRadius.circular(34)),
-                    padding: EdgeInsets.symmetric(
-                        vertical: 4 / 360 * MediaQuery.of(context).size.width),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        if (widget.isLive)
+                if (widget.drawable)
+                  Expanded(
+                    child: Container(
+                      decoration: BoxDecoration(
+                          color: Colors.grey[350],
+                          borderRadius: BorderRadius.circular(34)),
+                      padding: EdgeInsets.symmetric(
+                          vertical:
+                              4 / 360 * MediaQuery.of(context).size.width),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          if (widget.isLive && widget.drawable)
+                            InkWell(
+                              onTap: () {
+                                // Show modal bottom sheet to choose camera or gallery
+                                showModalBottomSheet(
+                                  context: context,
+                                  backgroundColor: Colors.transparent,
+                                  builder: (context) =>
+                                      MediaSourceSelectionBottomSheet(
+                                          onImageSelected: widget.onLoadImage),
+                                );
+                              },
+                              child: SvgPicture.asset(
+                                'assets/file.svg',
+                                package: 'math_tutor_whiteboard',
+                              ),
+                            ),
+                          GestureDetector(
+                            behavior: HitTestBehavior.opaque,
+                            child: _toolButtonBuilder(),
+                            onTapUp: (detail) => showToolSelectionPopup(
+                                context, detail.globalPosition),
+                          ),
                           InkWell(
-                            onTap: () {
-                              // Show modal bottom sheet to choose camera or gallery
-                              showModalBottomSheet(
-                                context: context,
-                                backgroundColor: Colors.transparent,
-                                builder: (context) =>
-                                    MediaSourceSelectionBottomSheet(
-                                        onImageSelected: widget.onLoadImage),
-                              );
-                            },
+                            onTap: widget.onTapClear,
                             child: SvgPicture.asset(
-                              'assets/file.svg',
+                              'assets/clear_all.svg',
                               package: 'math_tutor_whiteboard',
                             ),
                           ),
-                        GestureDetector(
-                          behavior: HitTestBehavior.opaque,
-                          child: _toolButtonBuilder(),
-                          onTapUp: (detail) => showToolSelectionPopup(
-                              context, detail.globalPosition),
-                        ),
-                        InkWell(
-                          onTap: widget.onTapClear,
-                          child: SvgPicture.asset(
-                            'assets/clear_all.svg',
-                            package: 'math_tutor_whiteboard',
+                          InkWell(
+                            onTap: widget.onTapUndo,
+                            child: Icon(Icons.undo,
+                                color: widget.isUndoable
+                                    ? Colors.black
+                                    : Colors.grey),
                           ),
-                        ),
-                        InkWell(
-                          onTap: widget.onTapUndo,
-                          child: Icon(Icons.undo,
-                              color: widget.isUndoable
-                                  ? Colors.black
-                                  : Colors.grey),
-                        ),
-                        InkWell(
-                          onTap: widget.onTapRedo,
-                          child: Icon(Icons.redo,
-                              color: widget.isRedoable
-                                  ? Colors.black
-                                  : Colors.grey),
-                        ),
-                      ],
+                          InkWell(
+                            onTap: widget.onTapRedo,
+                            child: Icon(Icons.redo,
+                                color: widget.isRedoable
+                                    ? Colors.black
+                                    : Colors.grey),
+                          ),
+                        ],
+                      ),
                     ),
                   ),
-                ),
                 Padding(
                   padding: EdgeInsets.symmetric(
                       horizontal: 7 / 360 * MediaQuery.of(context).size.width),
@@ -243,7 +251,11 @@ class _WhiteboardControllerState extends ConsumerState<WhiteboardController> {
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.transparent,
-      builder: (context) => UserListBottomSheet(ref),
+      builder: (context) => UserListBottomSheet(
+        ref,
+        onChangeDrawPermission: widget.onDrawingPermissionChanged,
+        onChangeMicPermission: widget.onMicPermissionChanged,
+      ),
       isScrollControlled: true,
     );
   }
@@ -252,11 +264,11 @@ class _WhiteboardControllerState extends ConsumerState<WhiteboardController> {
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.transparent,
-      builder: (context) => ChatMessageBottomSheet(ref, onSend: widget.onSendChatMessage),
+      builder: (context) =>
+          ChatMessageBottomSheet(ref, onSend: widget.onSendChatMessage),
       isScrollControlled: true,
     );
   }
-
 }
 
 class RecordButton extends StatelessWidget {

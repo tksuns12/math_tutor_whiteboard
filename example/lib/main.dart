@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import 'package:example/whiteboard_view.dart';
 import 'package:flutter/material.dart';
 import 'package:math_tutor_whiteboard/types.dart';
@@ -58,9 +60,9 @@ class _MyHomePageState extends State<MyHomePage> {
                       me: WhiteboardUser(
                           nickname: const Uuid().v4(),
                           micEnabled: true,
-                          chatEnabled: true,
-                          serverUid: const Uuid().v4(),
-                          id: const Uuid().v4())),
+                          drawingEnabled: true,
+                          id: const Uuid().v4(),
+                          isHost: Random().nextBool())),
                 ));
               },
               child: const Text('Record Mode')),
@@ -71,9 +73,9 @@ class _MyHomePageState extends State<MyHomePage> {
                       mode: WhiteboardMode.liveTeaching,
                       me: WhiteboardUser(
                           nickname: const Uuid().v4(),
+                          isHost: Random().nextBool(),
                           micEnabled: true,
-                          chatEnabled: true,
-                          serverUid: const Uuid().v4(),
+                          drawingEnabled: true,
                           id: const Uuid().v4())),
                 ));
               },

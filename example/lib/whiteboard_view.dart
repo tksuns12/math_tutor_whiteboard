@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 import 'package:math_tutor_whiteboard/math_tutor_whiteboard.dart';
@@ -50,16 +51,20 @@ class _WhiteboardViewState extends State<WhiteboardView> {
     return Material(
       child: widget.mode != WhiteboardMode.liveTeaching
           ? MathTutorWhiteBoard(
-              mode: WhiteboardMode.record,
+              mode: widget.mode,
               preloadImage: const NetworkImage('https://picsum.photos/640/320'),
               me: widget.me,
               recordDuration: const Duration(minutes: 15),
               onAttemptToClose: () async {
-                print('onAttemptToClose');
+                if (kDebugMode) {
+                  print('onAttemptToClose');
+                }
                 return true;
               },
               onAttemptToCompleteRecording: () async {
-                print('onAttemptToCompleteRecording');
+                if (kDebugMode) {
+                  print('onAttemptToCompleteRecording');
+                }
                 return true;
               },
             )
@@ -72,7 +77,9 @@ class _WhiteboardViewState extends State<WhiteboardView> {
                     final event = jsonDecode(rawEvent);
                     final data = jsonDecode(event['data']);
                     final senderID = event['id'];
-                    print("Input: $event");
+                    if (kDebugMode) {
+                      print("Input: $event");
+                    }
                     if (senderID != widget.me) {
                       switch (event['type']) {
                         case kChatMessageCode:
@@ -85,9 +92,9 @@ class _WhiteboardViewState extends State<WhiteboardView> {
                           final user = WhiteboardUser(
                               nickname: data,
                               micEnabled: false,
-                              chatEnabled: true,
-                              serverUid: '',
-                              id: const Uuid().v4());
+                              drawingEnabled: true,
+                              id: const Uuid().v4(),
+                              isHost: false);
                           return UserEvent(user: user, isJoin: data);
                         case kViewportCode:
                           return ViewportChangeEvent.fromMap(data);
@@ -98,7 +105,9 @@ class _WhiteboardViewState extends State<WhiteboardView> {
                   });
                   outputStream = StreamController();
                   outputStream!.stream.listen((event) {
-                    print("Output: $event");
+                    if (kDebugMode) {
+                      print("Output: $event");
+                    }
                     switch (event.runtimeType) {
                       case WhiteboardChatMessage:
                         snapshot.data!.add(jsonEncode({
@@ -148,11 +157,15 @@ class _WhiteboardViewState extends State<WhiteboardView> {
                     inputStream: inputStream,
                     outputStream: outputStream,
                     onAttemptToClose: () async {
-                      print('onAttemptToClose');
+                      if (kDebugMode) {
+                        print('onAttemptToClose');
+                      }
                       return true;
                     },
                     onAttemptToCompleteRecording: () async {
-                      print('onAttemptToCompleteRecording');
+                      if (kDebugMode) {
+                        print('onAttemptToCompleteRecording');
+                      }
                       return true;
                     },
                   );
