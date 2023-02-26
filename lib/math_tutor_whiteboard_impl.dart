@@ -225,15 +225,13 @@ class _MathTutorWhiteboardState extends ConsumerState<MathTutorWhiteboardImpl> {
     widget.outputStream?.close();
 
     transformationController.dispose();
-
-    ref.read(recordingStateProvider.notifier).dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
     return WillPopScope(
-      onWillPop: widget.onAttemptToClose,
+      onWillPop: _onTapClose,
       child: Material(
         child: SafeArea(
             child: Column(
@@ -298,12 +296,15 @@ class _MathTutorWhiteboardState extends ConsumerState<MathTutorWhiteboardImpl> {
     _draw(event);
   }
 
-  Future<void> _onTapClose() async {
-    final navigator = Navigator.of(context);
+  Future<bool> _onTapClose() async {
     final result = await widget.onAttemptToClose();
     if (result == true) {
-      navigator.pop();
+      if (ref.read(recordingStateProvider).isRecording) {
+        await _stopRecording();
+      }
+      return true;
     }
+    return false;
   }
 
   void _onTapClear() {
@@ -418,11 +419,8 @@ class _MathTutorWhiteboardState extends ConsumerState<MathTutorWhiteboardImpl> {
 
   Future<void> _startRecording() async {
     final micPermission = await Permission.microphone.request();
-    final storagePermission = await Permission.storage.request();
     final notificationPermission = await Permission.notification.request();
-    if (micPermission.isGranted &&
-        storagePermission.isGranted &&
-        notificationPermission.isGranted) {
+    if (micPermission.isGranted && notificationPermission.isGranted) {
       log('Permission granted');
       await screenRecorder.startRecordScreen(
           fileName: 'math_record_temp',
@@ -610,6 +608,15 @@ class _WhiteBoardState extends State<_WhiteBoard> {
         ..translate(-(-9 * height / 64 + width) / 2);
     });
     super.initState();
+  }
+
+  @override
+  void dispose() {
+    SystemChrome.setEnabledSystemUIMode(SystemUiMode.manual, overlays: [
+      SystemUiOverlay.top,
+      SystemUiOverlay.bottom,
+    ]);
+    super.dispose();
   }
 
   @override

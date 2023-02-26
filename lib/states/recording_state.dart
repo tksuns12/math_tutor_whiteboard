@@ -76,6 +76,6 @@ class RecordingStateNotifier extends StateNotifier<RecordingState> {
 }
 
 final recordingStateProvider =
-    StateNotifierProvider<RecordingStateNotifier, RecordingState>((ref) {
+    AutoDisposeStateNotifierProvider<RecordingStateNotifier, RecordingState>((ref) {
   return RecordingStateNotifier(maxDuration: 20 * 60);
 });
