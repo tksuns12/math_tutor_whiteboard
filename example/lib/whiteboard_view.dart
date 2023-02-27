@@ -56,16 +56,44 @@ class _WhiteboardViewState extends State<WhiteboardView> {
               me: widget.me,
               recordDuration: const Duration(minutes: 15),
               onAttemptToClose: () async {
-                if (kDebugMode) {
-                  print('onAttemptToClose');
-                }
-                return true;
+                return await showDialog(
+                  context: context,
+                  builder: (context) => AlertDialog(
+                    title: const Text('Are you sure?'),
+                    content: const Text(
+                        'You will lose all unsaved changes if you close the whiteboard.'),
+                    actions: [
+                      TextButton(
+                        onPressed: () => Navigator.pop(context, false),
+                        child: const Text('Cancel'),
+                      ),
+                      TextButton(
+                        onPressed: () => Navigator.pop(context, true),
+                        child: const Text('Close'),
+                      ),
+                    ],
+                  ),
+                );
               },
               onAttemptToCompleteRecording: () async {
-                if (kDebugMode) {
-                  print('onAttemptToCompleteRecording');
-                }
-                return true;
+                return await showDialog(
+                  context: context,
+                  builder: (context) => AlertDialog(
+                    title: const Text('Are you sure?'),
+                    content: const Text(
+                        'You will lose all unsaved changes if you close the whiteboard.'),
+                    actions: [
+                      TextButton(
+                        onPressed: () => Navigator.pop(context, false),
+                        child: const Text('Cancel'),
+                      ),
+                      TextButton(
+                        onPressed: () => Navigator.pop(context, true),
+                        child: const Text('Close'),
+                      ),
+                    ],
+                  ),
+                );
               },
             )
           : FutureBuilder<WebSocket>(

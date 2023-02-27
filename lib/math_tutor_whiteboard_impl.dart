@@ -300,12 +300,24 @@ class _MathTutorWhiteboardState extends ConsumerState<MathTutorWhiteboardImpl> {
   }
 
   Future<bool> _onTapClose() async {
-    final result = await widget.onAttemptToClose();
-    if (result == true) {
-      if (ref.read(recordingStateProvider).isRecording) {
+    if (ref.read(recordingStateProvider).recorderState ==
+            RecorderState.recording ||
+        ref.read(recordingStateProvider).recorderState ==
+            RecorderState.paused) {
+      _pauseRecorder();
+
+      final result = await widget.onAttemptToClose();
+      if (result) {
         await _stopRecording();
+        return true;
+      } else {
+        return false;
       }
-      return true;
+    } else {
+      final result = await widget.onAttemptToClose();
+      if (result) {
+        return true;
+      }
     }
     return false;
   }
@@ -396,28 +408,40 @@ class _MathTutorWhiteboardState extends ConsumerState<MathTutorWhiteboardImpl> {
   }
 
   Future<void> _onTapRecord() async {
-    if (ref.read(recordingStateProvider).isRecording) {
-      screenRecorder.pauseRecord();
-      timer?.cancel();
-      final result = await widget.onAttemptToCompleteRecording();
-      if (result == true) {
-        _stopRecording();
-      } else {
+    switch (ref.read(recordingStateProvider).recorderState) {
+      case RecorderState.recording:
+        _pauseRecorder();
+        final result = await widget.onAttemptToCompleteRecording();
+        if (result == true) {
+          _stopRecording(forceClose: false);
+        }
+        break;
+      case RecorderState.paused:
         screenRecorder.resumeRecord();
+        ref.read(recordingStateProvider.notifier).startRecording();
         timer = Timer.periodic(const Duration(seconds: 1), (timer) {
           ref.read(recordingStateProvider.notifier).tick();
         });
-      }
-    } else {
-      _startRecording();
+        break;
+      case RecorderState.init:
+        _startRecording();
+        break;
     }
   }
 
-  Future<void> _stopRecording() async {
+  void _pauseRecorder() {
+    screenRecorder.pauseRecord();
+    ref.read(recordingStateProvider.notifier).pauseRecording();
+    timer?.cancel();
+  }
+
+  Future<void> _stopRecording({bool forceClose = true}) async {
     final res = await screenRecorder.stopRecord();
     log('stop recording: ${res['file']}');
     ref.read(recordingStateProvider.notifier).finishRecording(res['file']);
-    widget.onRecordingFinished?.call(res['file']);
+    if (!forceClose) {
+      widget.onRecordingFinished?.call(res['file']);
+    }
   }
 
   Future<void> _startRecording() async {

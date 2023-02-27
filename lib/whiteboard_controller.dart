@@ -87,7 +87,8 @@ class _WhiteboardControllerState extends ConsumerState<WhiteboardController> {
                   : Consumer(builder: (context, ref, child) {
                       return RecordButton(
                         isRecording:
-                            ref.watch(recordingStateProvider).isRecording,
+                            ref.watch(recordingStateProvider).recorderState ==
+                                RecorderState.recording,
                         onTap: widget.onTapRecord,
                         remainingTime:
                             ref.watch(recordingStateProvider).remainingTime,

@@ -2,15 +2,17 @@ import 'dart:io';
 import 'package:equatable/equatable.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+enum RecorderState { recording, paused, init }
+
 class RecordingState extends Equatable {
-  final bool isRecording;
+  final RecorderState recorderState;
   final int remainingTime;
   final int totalDuration;
   final File? result;
   final bool precessing;
   const RecordingState({
     required this.precessing,
-    required this.isRecording,
+    required this.recorderState,
     required this.remainingTime,
     required this.totalDuration,
     this.result,
@@ -18,31 +20,30 @@ class RecordingState extends Equatable {
 
   @override
   List<Object?> get props =>
-      [isRecording, remainingTime, totalDuration, result];
+      [recorderState, remainingTime, totalDuration, result];
 
   RecordingState copyWith({
-    bool? isRecording,
+    RecorderState? isRecording,
     int? remainingTime,
     int? totalDuration,
     File? result,
     bool? precessing,
   }) {
     return RecordingState(
-      isRecording: isRecording ?? this.isRecording,
+      recorderState: isRecording ?? this.recorderState,
       remainingTime: remainingTime ?? this.remainingTime,
       totalDuration: totalDuration ?? this.totalDuration,
       precessing: precessing ?? this.precessing,
       result: result ?? this.result,
     );
   }
-
 }
 
 class RecordingStateNotifier extends StateNotifier<RecordingState> {
   RecordingStateNotifier({
     required this.maxDuration,
   }) : super(RecordingState(
-            isRecording: false,
+            recorderState: RecorderState.init,
             remainingTime: maxDuration,
             totalDuration: maxDuration,
             precessing: false));
@@ -54,7 +55,7 @@ class RecordingStateNotifier extends StateNotifier<RecordingState> {
   }
 
   void startRecording() {
-    state = state.copyWith(isRecording: true);
+    state = state.copyWith(isRecording: RecorderState.recording);
   }
 
   void tick() {
@@ -64,7 +65,7 @@ class RecordingStateNotifier extends StateNotifier<RecordingState> {
   }
 
   void finishRecording(File file) {
-    state = state.copyWith(result: file, isRecording: false);
+    state = state.copyWith(result: file, isRecording: RecorderState.init);
   }
 
   void updateDuration(Duration duration) {
@@ -73,9 +74,14 @@ class RecordingStateNotifier extends StateNotifier<RecordingState> {
       remainingTime: duration.inSeconds,
     );
   }
+
+  void pauseRecording() {
+    state = state.copyWith(isRecording: RecorderState.paused);
+  }
 }
 
 final recordingStateProvider =
-    AutoDisposeStateNotifierProvider<RecordingStateNotifier, RecordingState>((ref) {
+    AutoDisposeStateNotifierProvider<RecordingStateNotifier, RecordingState>(
+        (ref) {
   return RecordingStateNotifier(maxDuration: 20 * 60);
 });
