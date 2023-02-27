@@ -18,7 +18,7 @@ class WhiteboardController extends ConsumerStatefulWidget {
   final VoidCallback onTapEraser;
   final VoidCallback onTapUndo;
   final VoidCallback onTapClear;
-  final VoidCallback onTapClose;
+  final Future<bool> Function() onTapClose;
   final void Function(String message) onSendChatMessage;
   final void Function(Color color) onColorSelected;
   final Color selectedColor;
@@ -200,7 +200,12 @@ class _WhiteboardControllerState extends ConsumerState<WhiteboardController> {
           ),
           SizedBox(width: 14 / 360 * MediaQuery.of(context).size.width),
           InkWell(
-            onTap: widget.onTapClose,
+            onTap: () async {
+              final result = await widget.onTapClose();
+              if (result && context.mounted) {
+                Navigator.of(context).pop();
+              }
+            },
             child: SvgPicture.asset('assets/ex.svg',
                 package: "math_tutor_whiteboard"),
           ),

@@ -231,7 +231,10 @@ class _MathTutorWhiteboardState extends ConsumerState<MathTutorWhiteboardImpl> {
   @override
   Widget build(BuildContext context) {
     return WillPopScope(
-      onWillPop: _onTapClose,
+      onWillPop: () async {
+        final result = await _onTapClose();
+        return result;
+      },
       child: Material(
         child: SafeArea(
             child: Column(

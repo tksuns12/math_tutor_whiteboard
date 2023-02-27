@@ -13,10 +13,6 @@
 	<key>CFBundleInfoDictionaryVersion</key>
 	<string>6.0</string>
 	<key>CFBundleName</key>
-	  <key>NSPhotoLibraryUsageDescription</key>
-	<string>Save video in gallery</string>
-	<key>NSMicrophoneUsageDescription</key>
-	<string>Save audio in video</string>
 	<string>example</string>
 	<key>CFBundlePackageType</key>
 	<string>APPL</string>
@@ -51,7 +47,7 @@
 	<true/>
 	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
-		<key>NSAppleMusicUsageDescription</key>
+	<key>NSAppleMusicUsageDescription</key>
 	<string>화상수업내용의 동영상 녹화를 위해 미디어 접근권한이 필요합니다.</string>
 	<key>NSCameraUsageDescription</key>
 	<string>문제풀이영상을 촬영하기 위해 카메라 접근권한이 필요합니다.</string>
