@@ -41,7 +41,7 @@ class _WhiteboardViewState extends State<WhiteboardView> {
   @override
   void initState() {
     if (widget.mode == WhiteboardMode.liveTeaching) {
-      webSocket = WebSocket.connect('ws://192.168.200.106:8080/ws');
+      webSocket = WebSocket.connect('ws://https://ws-test-mathtutor.wimcorp.dev/ws');
     }
     super.initState();
   }
