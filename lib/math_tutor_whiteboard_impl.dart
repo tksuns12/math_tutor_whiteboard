@@ -308,7 +308,10 @@ class _MathTutorWhiteboardState extends ConsumerState<MathTutorWhiteboardImpl> {
 
       final result = await widget.onAttemptToClose();
       if (result) {
-        await _stopRecording();
+        if (widget.mode != WhiteboardMode.liveTeaching ||
+            widget.mode != WhiteboardMode.participant) {
+          await _stopRecording();
+        }
         return true;
       } else {
         return false;
