@@ -9,7 +9,7 @@ import 'popups/chat_message_bottom_sheet.dart';
 import 'popups/media_source_selection_bottom_sheet.dart';
 import 'popups/tool_selection_popup.dart';
 import 'popups/user_list_bottom_sheet.dart';
-import 'types.dart';
+import 'types/types.dart';
 import 'dart:ui' as ui;
 
 class WhiteboardController extends ConsumerStatefulWidget {

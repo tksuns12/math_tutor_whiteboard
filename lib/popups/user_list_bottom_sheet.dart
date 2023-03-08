@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:math_tutor_whiteboard/states/user_list_state.dart';
-import 'package:math_tutor_whiteboard/types.dart';
+import 'package:math_tutor_whiteboard/types/types.dart';
 
 class UserListBottomSheet extends StatefulWidget {
   final WidgetRef ref;

@@ -19,7 +19,8 @@ import 'package:path_provider/path_provider.dart';
 import 'package:perfect_freehand/perfect_freehand.dart';
 import 'package:permission_handler/permission_handler.dart';
 
-import 'types.dart';
+import 'types/recording_event.dart';
+import 'types/types.dart';
 import 'whiteboard_controller.dart';
 
 class MathTutorWhiteboardImpl extends ConsumerStatefulWidget {
@@ -27,22 +28,22 @@ class MathTutorWhiteboardImpl extends ConsumerStatefulWidget {
   final Duration? recordDuration;
   final WhiteboardMode mode;
   final Stream? inputStream;
-  final StreamController? outputStream;
-  final void Function(File file)? onRecordingFinished;
+  final void Function(dynamic data)? onOutput;
   final WhiteboardUser me;
+  final void Function(RecordingEvent event) onRecordingEvent;
   final Future<bool> Function() onAttemptToClose;
   final Future<bool> Function() onAttemptToCompleteRecording;
   const MathTutorWhiteboardImpl(
-      {this.inputStream,
-      this.outputStream,
+      {required this.onOutput,
+      required this.onRecordingEvent,
+      this.inputStream,
       required this.onAttemptToCompleteRecording,
       required this.onAttemptToClose,
       required this.me,
       super.key,
       this.preloadImage,
       this.recordDuration,
-      required this.mode,
-      this.onRecordingFinished});
+      required this.mode});
 
   @override
   ConsumerState<MathTutorWhiteboardImpl> createState() =>
@@ -222,7 +223,6 @@ class _MathTutorWhiteboardState extends ConsumerState<MathTutorWhiteboardImpl> {
     _inputChatStreamSubscription?.cancel();
     _viewportChangeStreamSubscription?.cancel();
     _authorityChangeStreamSubscription?.cancel();
-    widget.outputStream?.close();
 
     transformationController.dispose();
     super.dispose();
@@ -330,7 +330,7 @@ class _MathTutorWhiteboardState extends ConsumerState<MathTutorWhiteboardImpl> {
       drawingData.clear();
       deletedStrokes.clear();
       limitCursor = 0;
-      widget.outputStream?.add(BroadcastPaintData(
+      widget.onOutput?.call(BroadcastPaintData(
           drawingData: null,
           command: BroadcastCommand.clear,
           limitCursor: limitCursor,
@@ -351,7 +351,7 @@ class _MathTutorWhiteboardState extends ConsumerState<MathTutorWhiteboardImpl> {
     setState(() {
       if (limitCursor > 0) {
         limitCursor--;
-        widget.outputStream?.add(BroadcastPaintData(
+        widget.onOutput?.call(BroadcastPaintData(
             drawingData: null,
             command: BroadcastCommand.draw,
             limitCursor: limitCursor,
@@ -393,7 +393,7 @@ class _MathTutorWhiteboardState extends ConsumerState<MathTutorWhiteboardImpl> {
     if (limitCursor < drawingData.length) {
       setState(() {
         limitCursor++;
-        widget.outputStream?.add(BroadcastPaintData(
+        widget.onOutput?.call(BroadcastPaintData(
             drawingData: null,
             command: BroadcastCommand.draw,
             limitCursor: limitCursor,
@@ -436,14 +436,16 @@ class _MathTutorWhiteboardState extends ConsumerState<MathTutorWhiteboardImpl> {
     screenRecorder.pauseRecord();
     ref.read(recordingStateProvider.notifier).pauseRecording();
     timer?.cancel();
+    widget.onRecordingEvent(const RecordingEvent.pause());
   }
 
   Future<void> _stopRecording({bool forceClose = true}) async {
     final res = await screenRecorder.stopRecord();
     log('stop recording: ${res['file']}');
     ref.read(recordingStateProvider.notifier).finishRecording(res['file']);
+    widget.onRecordingEvent(RecordingEvent.finished(res['file']));
     if (!forceClose) {
-      widget.onRecordingFinished?.call(res['file']);
+      widget.onRecordingEvent.call(RecordingEvent.finished(res['file']));
     }
     if (context.mounted) {
       Navigator.of(context).pop();
@@ -459,6 +461,7 @@ class _MathTutorWhiteboardState extends ConsumerState<MathTutorWhiteboardImpl> {
           fileName: 'math_record_temp',
           audioEnable: true,
           dirPathToSave: (await getTemporaryDirectory()).path);
+      widget.onRecordingEvent(const RecordingEvent.start());
       log('start recording');
       ref.read(recordingStateProvider.notifier).startRecording();
       timer = Timer.periodic(const Duration(seconds: 1), (timer) {
@@ -485,7 +488,7 @@ class _MathTutorWhiteboardState extends ConsumerState<MathTutorWhiteboardImpl> {
               color: Colors.white,
               penType: penType,
               strokeWidth: strokeWidth));
-          widget.outputStream?.add(BroadcastPaintData(
+          widget.onOutput?.call(BroadcastPaintData(
               drawingData: drawingData.last.last,
               command: BroadcastCommand.draw,
               limitCursor: limitCursor,
@@ -508,7 +511,7 @@ class _MathTutorWhiteboardState extends ConsumerState<MathTutorWhiteboardImpl> {
                       drawingData[i][j].point.x - event.localPosition.dx, 2) +
                   pow(drawingData[i][j].point.y - event.localPosition.dy, 2));
               if (distance < strokeWidth) {
-                widget.outputStream?.add(BroadcastPaintData(
+                widget.onOutput?.call(BroadcastPaintData(
                     drawingData: null,
                     command: BroadcastCommand.removeStroke,
                     limitCursor: limitCursor,
@@ -530,7 +533,7 @@ class _MathTutorWhiteboardState extends ConsumerState<MathTutorWhiteboardImpl> {
               color: color,
               penType: penType,
               strokeWidth: strokeWidth));
-          widget.outputStream?.add(BroadcastPaintData(
+          widget.onOutput?.call(BroadcastPaintData(
               drawingData: drawingData.last.last,
               boardSize: boardSize,
               command: BroadcastCommand.draw,
@@ -548,7 +551,7 @@ class _MathTutorWhiteboardState extends ConsumerState<MathTutorWhiteboardImpl> {
     final imageFile = await file.create();
     final imageByte = await uiImage.toByteData(format: ui.ImageByteFormat.png);
     await imageFile.writeAsBytes(imageByte!.buffer.asUint8List());
-    widget.outputStream?.add(imageFile);
+    widget.onOutput?.call(imageFile);
   }
 
   void _inputImageStreamListener(File event) {
@@ -559,27 +562,27 @@ class _MathTutorWhiteboardState extends ConsumerState<MathTutorWhiteboardImpl> {
 
   void _onViewportChange(Matrix4 matrix) {
     if (drawable) {
-      widget.outputStream
-          ?.add(ViewportChangeEvent(matrix: matrix, boardSize: boardSize));
+      widget.onOutput
+          ?.call(ViewportChangeEvent(matrix: matrix, boardSize: boardSize));
     }
   }
 
   void _onSendChatMessage(String message) {
-    widget.outputStream?.add(
+    widget.onOutput?.call(
         WhiteboardChatMessage(message: message, nickname: widget.me.nickname));
     ref.read(chatMessageStateProvider.notifier).addMessage(
         WhiteboardChatMessage(message: message, nickname: widget.me.nickname));
   }
 
   void _onMicPermissionChanged(WhiteboardUser user, bool allow) {
-    widget.outputStream?.add(PermissionChangeEvent(microphone: allow));
+    widget.onOutput?.call(PermissionChangeEvent(microphone: allow));
     ref
         .read(userListStateProvider.notifier)
         .updatePermission(user, PermissionChangeEvent(microphone: allow));
   }
 
   void _onDrawingPermissionChanged(WhiteboardUser user, bool allow) {
-    widget.outputStream?.add(PermissionChangeEvent(drawing: allow));
+    widget.onOutput?.call(PermissionChangeEvent(drawing: allow));
     ref
         .read(userListStateProvider.notifier)
         .updatePermission(user, PermissionChangeEvent(drawing: allow));

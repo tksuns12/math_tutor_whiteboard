@@ -1,5 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:math_tutor_whiteboard/types.dart';
+import 'package:math_tutor_whiteboard/types/types.dart';
 
 class ChatMessageStateNotifier
     extends StateNotifier<List<WhiteboardChatMessage>> {

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:math_tutor_whiteboard/states/chat_message_state.dart';
-import 'package:math_tutor_whiteboard/types.dart';
+import 'package:math_tutor_whiteboard/types/types.dart';
 
 class ChatMessageBottomSheet extends StatefulWidget {
   final WidgetRef ref;

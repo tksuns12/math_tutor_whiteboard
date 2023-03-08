@@ -2,7 +2,7 @@ import 'dart:math';
 
 import 'package:example/whiteboard_view.dart';
 import 'package:flutter/material.dart';
-import 'package:math_tutor_whiteboard/types.dart';
+import 'package:math_tutor_whiteboard/types/types.dart';
 import 'package:uuid/uuid.dart';
 
 void main() {

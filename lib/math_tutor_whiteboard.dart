@@ -6,17 +6,18 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:math_tutor_whiteboard/math_tutor_whiteboard_impl.dart';
+import 'package:math_tutor_whiteboard/types/recording_event.dart';
 
-import 'package:math_tutor_whiteboard/types.dart';
+import 'package:math_tutor_whiteboard/types/types.dart';
 
 class MathTutorWhiteBoard extends StatelessWidget {
   final ImageProvider? preloadImage;
   final Duration? recordDuration;
   final WhiteboardMode mode;
   final Stream? inputStream;
-  final StreamController? outputStream;
+  final void Function(dynamic data)? onOutput;
   final WhiteboardUser me;
-  final void Function(File file)? onRecordingFinished;
+  final void Function(RecordingEvent event) onRecordingEvent;
   final Future<bool> Function() onAttemptToClose;
   final Future<bool> Function() onAttemptToCompleteRecording;
   const MathTutorWhiteBoard({
@@ -24,12 +25,12 @@ class MathTutorWhiteBoard extends StatelessWidget {
     this.preloadImage,
     this.recordDuration,
     required this.mode,
-    this.onRecordingFinished,
     required this.me,
     required this.onAttemptToClose,
     required this.onAttemptToCompleteRecording,
     this.inputStream,
-    this.outputStream,
+    required this.onOutput,
+    required this.onRecordingEvent,
   }) : super(key: key);
 
   @override
@@ -38,13 +39,13 @@ class MathTutorWhiteBoard extends StatelessWidget {
         child: MathTutorWhiteboardImpl(
       me: me,
       mode: mode,
-      onRecordingFinished: onRecordingFinished,
       preloadImage: preloadImage,
       recordDuration: recordDuration,
       onAttemptToClose: onAttemptToClose,
       onAttemptToCompleteRecording: onAttemptToCompleteRecording,
       inputStream: inputStream,
-      outputStream: outputStream,
+      onOutput: onOutput,
+      onRecordingEvent: onRecordingEvent,
     ));
   }
 }

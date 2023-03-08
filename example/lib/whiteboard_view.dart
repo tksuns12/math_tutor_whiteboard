@@ -6,7 +6,8 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 import 'package:math_tutor_whiteboard/math_tutor_whiteboard.dart';
-import 'package:math_tutor_whiteboard/types.dart';
+import 'package:math_tutor_whiteboard/types/recording_event.dart';
+import 'package:math_tutor_whiteboard/types/types.dart';
 import 'package:uuid/uuid.dart';
 
 const kFileCode = 100;
@@ -95,6 +96,8 @@ class _WhiteboardViewState extends State<WhiteboardView> {
                   ),
                 );
               },
+              onOutput: (data) {},
+              onRecordingEvent: (RecordingEvent event) {},
             )
           : FutureBuilder<WebSocket>(
               future: webSocket,
@@ -131,59 +134,58 @@ class _WhiteboardViewState extends State<WhiteboardView> {
                       }
                     }
                   });
-                  outputStream = StreamController();
-                  outputStream!.stream.listen((event) {
-                    if (kDebugMode) {
-                      print("Output: $event");
-                    }
-                    switch (event.runtimeType) {
-                      case WhiteboardChatMessage:
-                        snapshot.data!.add(jsonEncode({
-                          'id': widget.me.id,
-                          'type': kChatMessageCode,
-                          'data': (event as WhiteboardChatMessage).toJson()
-                        }));
-                        break;
-                      case File:
-                        snapshot.data!.add(jsonEncode({
-                          'id': widget.me.id,
-                          'type': kFileCode,
-                          'data': (event as File).path,
-                        }));
-                        break;
-                      case BroadcastPaintData:
-                        snapshot.data!.add(jsonEncode({
-                          'id': widget.me.id,
-                          'type': kDrawingCode,
-                          'data': (event as BroadcastPaintData).toJson()
-                        }));
-                        break;
-                      case UserEvent:
-                        snapshot.data!.add(jsonEncode({
-                          'id': widget.me.id,
-                          'type': kUserCode,
-                          'data': (event as UserEvent).user.nickname,
-                          'isEnter': (event).isJoin,
-                        }));
-                        break;
-                      case ViewportChangeEvent:
-                        snapshot.data!.add(jsonEncode({
-                          'id': widget.me.id,
-                          'type': kViewportCode,
-                          'data': (event as ViewportChangeEvent).toJson()
-                        }));
-                        break;
-                      default:
-                        snapshot.data!.add(jsonEncode(event));
-                    }
-                  });
                   return MathTutorWhiteBoard(
                     mode: WhiteboardMode.liveTeaching,
                     preloadImage:
                         const NetworkImage('https://picsum.photos/640/320'),
                     me: widget.me,
                     inputStream: inputStream,
-                    outputStream: outputStream,
+                    onOutput: (event) {
+                      if (kDebugMode) {
+                        print("Output: $event");
+                      }
+                      switch (event.runtimeType) {
+                        case WhiteboardChatMessage:
+                          snapshot.data!.add(jsonEncode({
+                            'id': widget.me.id,
+                            'type': kChatMessageCode,
+                            'data': (event as WhiteboardChatMessage).toJson()
+                          }));
+                          break;
+                        case File:
+                          snapshot.data!.add(jsonEncode({
+                            'id': widget.me.id,
+                            'type': kFileCode,
+                            'data': (event as File).path,
+                          }));
+                          break;
+                        case BroadcastPaintData:
+                          snapshot.data!.add(jsonEncode({
+                            'id': widget.me.id,
+                            'type': kDrawingCode,
+                            'data': (event as BroadcastPaintData).toJson()
+                          }));
+                          break;
+                        case UserEvent:
+                          snapshot.data!.add(jsonEncode({
+                            'id': widget.me.id,
+                            'type': kUserCode,
+                            'data': (event as UserEvent).user.nickname,
+                            'isEnter': (event).isJoin,
+                          }));
+                          break;
+                        case ViewportChangeEvent:
+                          snapshot.data!.add(jsonEncode({
+                            'id': widget.me.id,
+                            'type': kViewportCode,
+                            'data': (event as ViewportChangeEvent).toJson()
+                          }));
+                          break;
+                        default:
+                          snapshot.data!.add(jsonEncode(event));
+                      }
+                    },
+                    onRecordingEvent: (event) {},
                     onAttemptToClose: () async {
                       if (kDebugMode) {
                         print('onAttemptToClose');
