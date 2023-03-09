@@ -31,7 +31,7 @@ class DrawingData extends Equatable {
     };
   }
 
-  factory DrawingData.fromMap(Map<String, dynamic> map) {
+  factory DrawingData.fromMap(Map map) {
     return DrawingData(
       point: Point(map['point']['x'], map['point']['y'], map['point']['p']),
       penType: PenType.fromMap(map['penType']),
@@ -101,7 +101,7 @@ enum PenType {
     };
   }
 
-  factory PenType.fromMap(Map<String, dynamic> map) {
+  factory PenType.fromMap(Map map) {
     return PenType.values[map['type']];
   }
 }
@@ -117,7 +117,7 @@ enum BroadcastCommand {
     };
   }
 
-  factory BroadcastCommand.fromMap(Map<String, dynamic> map) {
+  factory BroadcastCommand.fromMap(Map map) {
     return BroadcastCommand.values[map['type']];
   }
 }
@@ -165,7 +165,7 @@ class BroadcastPaintData extends Equatable {
     };
   }
 
-  factory BroadcastPaintData.fromMap(Map<String, dynamic> map) {
+  factory BroadcastPaintData.fromMap(Map map) {
     return BroadcastPaintData(
       drawingData: map['drawingData'] == null
           ? null
@@ -231,7 +231,7 @@ class WhiteboardUser extends Equatable {
     };
   }
 
-  factory WhiteboardUser.fromMap(Map<String, dynamic> map) {
+  factory WhiteboardUser.fromMap(Map map) {
     return WhiteboardUser(
       avatar: map['avatar'],
       nickname: map['nickname'] ?? '',
@@ -284,7 +284,7 @@ class WhiteboardChatMessage extends Equatable {
     };
   }
 
-  factory WhiteboardChatMessage.fromMap(Map<String, dynamic> map) {
+  factory WhiteboardChatMessage.fromMap(Map map) {
     return WhiteboardChatMessage(
       message: map['message'] ?? '',
       nickname: map['nickname'] ?? '',
@@ -344,7 +344,7 @@ class ViewportChangeEvent extends Equatable {
       ..scale(ex);
   }
 
-  factory ViewportChangeEvent.fromMap(Map<String, dynamic> map) {
+  factory ViewportChangeEvent.fromMap(Map map) {
     return ViewportChangeEvent(
       matrix: Matrix4.fromFloat64List(Float64List.fromList(
           (map['matrix'] as List).map((e) => e as double).toList())),
@@ -379,7 +379,7 @@ class PermissionChangeEvent extends Equatable {
     };
   }
 
-  factory PermissionChangeEvent.fromMap(Map<String, dynamic> map) {
+  factory PermissionChangeEvent.fromMap(Map map) {
     return PermissionChangeEvent(
       drawing: map['drawing'],
       microphone: map['chat'],
