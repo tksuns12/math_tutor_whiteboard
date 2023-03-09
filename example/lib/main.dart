@@ -67,17 +67,55 @@ class _MyHomePageState extends State<MyHomePage> {
               },
               child: const Text('Record Mode')),
           ElevatedButton(
-              onPressed: () {
-                Navigator.of(context).push(MaterialPageRoute(
-                  builder: (context) => WhiteboardView(
-                      mode: WhiteboardMode.liveTeaching,
-                      me: WhiteboardUser(
-                          nickname: const Uuid().v4(),
-                          isHost: Random().nextBool(),
-                          micEnabled: true,
-                          drawingEnabled: true,
-                          id: const Uuid().v4())),
-                ));
+              onPressed: () async {
+                // Ask my id and host id first
+                final myID = await showDialog(
+                    context: context,
+                    builder: (context) {
+                      String id = '';
+                      return AlertDialog(
+                        title: const Text('Enter your id'),
+                        content: TextField(onChanged: (value) => id = value),
+                        actions: [
+                          TextButton(
+                            onPressed: () => Navigator.pop(context, id),
+                            child: const Text('OK'),
+                          ),
+                        ],
+                      );
+                    });
+                if (myID != null && mounted) {
+                  final hostID = await showDialog(
+                      context: context,
+                      builder: (context) {
+                        String id = '';
+                        return AlertDialog(
+                          title: const Text('host id'),
+                          content: TextField(
+                            onChanged: (value) => id = value,
+                          ),
+                          actions: [
+                            TextButton(
+                              onPressed: () => Navigator.pop(context, id),
+                              child: const Text('OK'),
+                            ),
+                          ],
+                        );
+                      });
+                  if (hostID != null && mounted) {
+                    Navigator.of(context).push(MaterialPageRoute(
+                      builder: (context) => WhiteboardView(
+                          mode: WhiteboardMode.liveTeaching,
+                          hostID: hostID,
+                          me: WhiteboardUser(
+                              nickname: myID,
+                              isHost: myID == hostID,
+                              micEnabled: true,
+                              drawingEnabled: true,
+                              id: myID)),
+                    ));
+                  }
+                }
               },
               child: const Text('Realtime Mode'))
         ],
