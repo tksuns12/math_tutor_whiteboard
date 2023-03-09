@@ -86,6 +86,15 @@ class RecordingStateNotifier extends StateNotifier<RecordingState> {
       setProcessing(false);
     });
   }
+
+  void initialize() {
+    state = state.copyWith(
+        recorderState: RecorderState.init,
+        remainingTime: maxDuration,
+        totalDuration: maxDuration,
+        precessing: false,
+        result: null);
+  }
 }
 
 final recordingStateProvider =

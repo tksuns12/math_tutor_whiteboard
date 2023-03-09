@@ -87,6 +87,7 @@ class _MathTutorWhiteboardState extends ConsumerState<MathTutorWhiteboardImpl> {
     }
 
     WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
+      ref.read(recordingStateProvider.notifier).initialize();
       if (widget.recordDuration != null) {
         ref
             .read(recordingStateProvider.notifier)
