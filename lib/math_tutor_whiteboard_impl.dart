@@ -301,20 +301,18 @@ class _MathTutorWhiteboardState extends ConsumerState<MathTutorWhiteboardImpl> {
 
   Future<bool> _onTapClose() async {
     if (ref.read(recordingStateProvider).recorderState ==
-            RecorderState.recording ||
-        ref.read(recordingStateProvider).recorderState ==
-            RecorderState.paused) {
+        RecorderState.recording) {
       _pauseRecorder();
 
       final result = await widget.onAttemptToClose();
       if (result) {
-        if (widget.mode != WhiteboardMode.participant &&
-            ref.read(recordingStateProvider).recorderState ==
-                RecorderState.recording) {
-          await _stopRecording();
+        if (ref.read(recordingStateProvider).recorderState ==
+            RecorderState.recording) {
+          await _cancelRecording();
         }
         return true;
       } else {
+        _startRecording();
         return false;
       }
     } else {
@@ -417,7 +415,7 @@ class _MathTutorWhiteboardState extends ConsumerState<MathTutorWhiteboardImpl> {
         _pauseRecorder();
         final result = await widget.onAttemptToCompleteRecording();
         if (result == true) {
-          _stopRecording(forceClose: false);
+          _stopRecording();
         }
         break;
       case RecorderState.paused:
@@ -440,14 +438,11 @@ class _MathTutorWhiteboardState extends ConsumerState<MathTutorWhiteboardImpl> {
     widget.onRecordingEvent(const RecordingEvent.pause());
   }
 
-  Future<void> _stopRecording({bool forceClose = true}) async {
+  Future<void> _stopRecording() async {
     final res = await screenRecorder.stopRecord();
     log('stop recording: ${res['file']}');
     ref.read(recordingStateProvider.notifier).finishRecording(res['file']);
     widget.onRecordingEvent(RecordingEvent.finished(res['file']));
-    if (!forceClose) {
-      widget.onRecordingEvent.call(RecordingEvent.finished(res['file']));
-    }
     if (context.mounted) {
       Navigator.of(context).pop();
     }
@@ -462,7 +457,7 @@ class _MathTutorWhiteboardState extends ConsumerState<MathTutorWhiteboardImpl> {
           fileName: 'math_record_temp',
           audioEnable: true,
           dirPathToSave: (await getTemporaryDirectory()).path);
-      widget.onRecordingEvent(const RecordingEvent.start());
+      widget.onRecordingEvent(const RecordingEvent.recording());
       log('start recording');
       ref.read(recordingStateProvider.notifier).startRecording();
       timer = Timer.periodic(const Duration(seconds: 1), (timer) {
@@ -587,6 +582,11 @@ class _MathTutorWhiteboardState extends ConsumerState<MathTutorWhiteboardImpl> {
     ref
         .read(userListStateProvider.notifier)
         .updatePermission(user, PermissionChangeEvent(drawing: allow));
+  }
+
+  _cancelRecording() async {
+    await screenRecorder.stopRecord();
+    widget.onRecordingEvent.call(const RecordingEvent.cancelled());
   }
 }
 

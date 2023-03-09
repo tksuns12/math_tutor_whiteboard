@@ -19,30 +19,33 @@ mixin _$RecordingEvent {
   @optionalTypeArgs
   TResult when<TResult extends Object?>({
     required TResult Function() init,
-    required TResult Function() start,
+    required TResult Function() recording,
     required TResult Function() pause,
     required TResult Function() resume,
     required TResult Function(File recordedFile) finished,
+    required TResult Function() cancelled,
     required TResult Function(Object error) failed,
   }) =>
       throw _privateConstructorUsedError;
   @optionalTypeArgs
   TResult? whenOrNull<TResult extends Object?>({
     TResult? Function()? init,
-    TResult? Function()? start,
+    TResult? Function()? recording,
     TResult? Function()? pause,
     TResult? Function()? resume,
     TResult? Function(File recordedFile)? finished,
+    TResult? Function()? cancelled,
     TResult? Function(Object error)? failed,
   }) =>
       throw _privateConstructorUsedError;
   @optionalTypeArgs
   TResult maybeWhen<TResult extends Object?>({
     TResult Function()? init,
-    TResult Function()? start,
+    TResult Function()? recording,
     TResult Function()? pause,
     TResult Function()? resume,
     TResult Function(File recordedFile)? finished,
+    TResult Function()? cancelled,
     TResult Function(Object error)? failed,
     required TResult orElse(),
   }) =>
@@ -50,30 +53,33 @@ mixin _$RecordingEvent {
   @optionalTypeArgs
   TResult map<TResult extends Object?>({
     required TResult Function(RecordingInit value) init,
-    required TResult Function(RecordingStart value) start,
+    required TResult Function(RecordingOngoing value) recording,
     required TResult Function(RecordingPause value) pause,
     required TResult Function(RecordingResume value) resume,
     required TResult Function(RecordingFinished value) finished,
+    required TResult Function(RecordingCancelled value) cancelled,
     required TResult Function(RecordingFailed value) failed,
   }) =>
       throw _privateConstructorUsedError;
   @optionalTypeArgs
   TResult? mapOrNull<TResult extends Object?>({
     TResult? Function(RecordingInit value)? init,
-    TResult? Function(RecordingStart value)? start,
+    TResult? Function(RecordingOngoing value)? recording,
     TResult? Function(RecordingPause value)? pause,
     TResult? Function(RecordingResume value)? resume,
     TResult? Function(RecordingFinished value)? finished,
+    TResult? Function(RecordingCancelled value)? cancelled,
     TResult? Function(RecordingFailed value)? failed,
   }) =>
       throw _privateConstructorUsedError;
   @optionalTypeArgs
   TResult maybeMap<TResult extends Object?>({
     TResult Function(RecordingInit value)? init,
-    TResult Function(RecordingStart value)? start,
+    TResult Function(RecordingOngoing value)? recording,
     TResult Function(RecordingPause value)? pause,
     TResult Function(RecordingResume value)? resume,
     TResult Function(RecordingFinished value)? finished,
+    TResult Function(RecordingCancelled value)? cancelled,
     TResult Function(RecordingFailed value)? failed,
     required TResult orElse(),
   }) =>
@@ -137,10 +143,11 @@ class _$RecordingInit implements RecordingInit {
   @optionalTypeArgs
   TResult when<TResult extends Object?>({
     required TResult Function() init,
-    required TResult Function() start,
+    required TResult Function() recording,
     required TResult Function() pause,
     required TResult Function() resume,
     required TResult Function(File recordedFile) finished,
+    required TResult Function() cancelled,
     required TResult Function(Object error) failed,
   }) {
     return init();
@@ -150,10 +157,11 @@ class _$RecordingInit implements RecordingInit {
   @optionalTypeArgs
   TResult? whenOrNull<TResult extends Object?>({
     TResult? Function()? init,
-    TResult? Function()? start,
+    TResult? Function()? recording,
     TResult? Function()? pause,
     TResult? Function()? resume,
     TResult? Function(File recordedFile)? finished,
+    TResult? Function()? cancelled,
     TResult? Function(Object error)? failed,
   }) {
     return init?.call();
@@ -163,10 +171,11 @@ class _$RecordingInit implements RecordingInit {
   @optionalTypeArgs
   TResult maybeWhen<TResult extends Object?>({
     TResult Function()? init,
-    TResult Function()? start,
+    TResult Function()? recording,
     TResult Function()? pause,
     TResult Function()? resume,
     TResult Function(File recordedFile)? finished,
+    TResult Function()? cancelled,
     TResult Function(Object error)? failed,
     required TResult orElse(),
   }) {
@@ -180,10 +189,11 @@ class _$RecordingInit implements RecordingInit {
   @optionalTypeArgs
   TResult map<TResult extends Object?>({
     required TResult Function(RecordingInit value) init,
-    required TResult Function(RecordingStart value) start,
+    required TResult Function(RecordingOngoing value) recording,
     required TResult Function(RecordingPause value) pause,
     required TResult Function(RecordingResume value) resume,
     required TResult Function(RecordingFinished value) finished,
+    required TResult Function(RecordingCancelled value) cancelled,
     required TResult Function(RecordingFailed value) failed,
   }) {
     return init(this);
@@ -193,10 +203,11 @@ class _$RecordingInit implements RecordingInit {
   @optionalTypeArgs
   TResult? mapOrNull<TResult extends Object?>({
     TResult? Function(RecordingInit value)? init,
-    TResult? Function(RecordingStart value)? start,
+    TResult? Function(RecordingOngoing value)? recording,
     TResult? Function(RecordingPause value)? pause,
     TResult? Function(RecordingResume value)? resume,
     TResult? Function(RecordingFinished value)? finished,
+    TResult? Function(RecordingCancelled value)? cancelled,
     TResult? Function(RecordingFailed value)? failed,
   }) {
     return init?.call(this);
@@ -206,10 +217,11 @@ class _$RecordingInit implements RecordingInit {
   @optionalTypeArgs
   TResult maybeMap<TResult extends Object?>({
     TResult Function(RecordingInit value)? init,
-    TResult Function(RecordingStart value)? start,
+    TResult Function(RecordingOngoing value)? recording,
     TResult Function(RecordingPause value)? pause,
     TResult Function(RecordingResume value)? resume,
     TResult Function(RecordingFinished value)? finished,
+    TResult Function(RecordingCancelled value)? cancelled,
     TResult Function(RecordingFailed value)? failed,
     required TResult orElse(),
   }) {
@@ -225,35 +237,35 @@ abstract class RecordingInit implements RecordingEvent {
 }
 
 /// @nodoc
-abstract class _$$RecordingStartCopyWith<$Res> {
-  factory _$$RecordingStartCopyWith(
-          _$RecordingStart value, $Res Function(_$RecordingStart) then) =
-      __$$RecordingStartCopyWithImpl<$Res>;
+abstract class _$$RecordingOngoingCopyWith<$Res> {
+  factory _$$RecordingOngoingCopyWith(
+          _$RecordingOngoing value, $Res Function(_$RecordingOngoing) then) =
+      __$$RecordingOngoingCopyWithImpl<$Res>;
 }
 
 /// @nodoc
-class __$$RecordingStartCopyWithImpl<$Res>
-    extends _$RecordingEventCopyWithImpl<$Res, _$RecordingStart>
-    implements _$$RecordingStartCopyWith<$Res> {
-  __$$RecordingStartCopyWithImpl(
-      _$RecordingStart _value, $Res Function(_$RecordingStart) _then)
+class __$$RecordingOngoingCopyWithImpl<$Res>
+    extends _$RecordingEventCopyWithImpl<$Res, _$RecordingOngoing>
+    implements _$$RecordingOngoingCopyWith<$Res> {
+  __$$RecordingOngoingCopyWithImpl(
+      _$RecordingOngoing _value, $Res Function(_$RecordingOngoing) _then)
       : super(_value, _then);
 }
 
 /// @nodoc
 
-class _$RecordingStart implements RecordingStart {
-  const _$RecordingStart();
+class _$RecordingOngoing implements RecordingOngoing {
+  const _$RecordingOngoing();
 
   @override
   String toString() {
-    return 'RecordingEvent.start()';
+    return 'RecordingEvent.recording()';
   }
 
   @override
   bool operator ==(dynamic other) {
     return identical(this, other) ||
-        (other.runtimeType == runtimeType && other is _$RecordingStart);
+        (other.runtimeType == runtimeType && other is _$RecordingOngoing);
   }
 
   @override
@@ -263,41 +275,44 @@ class _$RecordingStart implements RecordingStart {
   @optionalTypeArgs
   TResult when<TResult extends Object?>({
     required TResult Function() init,
-    required TResult Function() start,
+    required TResult Function() recording,
     required TResult Function() pause,
     required TResult Function() resume,
     required TResult Function(File recordedFile) finished,
+    required TResult Function() cancelled,
     required TResult Function(Object error) failed,
   }) {
-    return start();
+    return recording();
   }
 
   @override
   @optionalTypeArgs
   TResult? whenOrNull<TResult extends Object?>({
     TResult? Function()? init,
-    TResult? Function()? start,
+    TResult? Function()? recording,
     TResult? Function()? pause,
     TResult? Function()? resume,
     TResult? Function(File recordedFile)? finished,
+    TResult? Function()? cancelled,
     TResult? Function(Object error)? failed,
   }) {
-    return start?.call();
+    return recording?.call();
   }
 
   @override
   @optionalTypeArgs
   TResult maybeWhen<TResult extends Object?>({
     TResult Function()? init,
-    TResult Function()? start,
+    TResult Function()? recording,
     TResult Function()? pause,
     TResult Function()? resume,
     TResult Function(File recordedFile)? finished,
+    TResult Function()? cancelled,
     TResult Function(Object error)? failed,
     required TResult orElse(),
   }) {
-    if (start != null) {
-      return start();
+    if (recording != null) {
+      return recording();
     }
     return orElse();
   }
@@ -306,48 +321,51 @@ class _$RecordingStart implements RecordingStart {
   @optionalTypeArgs
   TResult map<TResult extends Object?>({
     required TResult Function(RecordingInit value) init,
-    required TResult Function(RecordingStart value) start,
+    required TResult Function(RecordingOngoing value) recording,
     required TResult Function(RecordingPause value) pause,
     required TResult Function(RecordingResume value) resume,
     required TResult Function(RecordingFinished value) finished,
+    required TResult Function(RecordingCancelled value) cancelled,
     required TResult Function(RecordingFailed value) failed,
   }) {
-    return start(this);
+    return recording(this);
   }
 
   @override
   @optionalTypeArgs
   TResult? mapOrNull<TResult extends Object?>({
     TResult? Function(RecordingInit value)? init,
-    TResult? Function(RecordingStart value)? start,
+    TResult? Function(RecordingOngoing value)? recording,
     TResult? Function(RecordingPause value)? pause,
     TResult? Function(RecordingResume value)? resume,
     TResult? Function(RecordingFinished value)? finished,
+    TResult? Function(RecordingCancelled value)? cancelled,
     TResult? Function(RecordingFailed value)? failed,
   }) {
-    return start?.call(this);
+    return recording?.call(this);
   }
 
   @override
   @optionalTypeArgs
   TResult maybeMap<TResult extends Object?>({
     TResult Function(RecordingInit value)? init,
-    TResult Function(RecordingStart value)? start,
+    TResult Function(RecordingOngoing value)? recording,
     TResult Function(RecordingPause value)? pause,
     TResult Function(RecordingResume value)? resume,
     TResult Function(RecordingFinished value)? finished,
+    TResult Function(RecordingCancelled value)? cancelled,
     TResult Function(RecordingFailed value)? failed,
     required TResult orElse(),
   }) {
-    if (start != null) {
-      return start(this);
+    if (recording != null) {
+      return recording(this);
     }
     return orElse();
   }
 }
 
-abstract class RecordingStart implements RecordingEvent {
-  const factory RecordingStart() = _$RecordingStart;
+abstract class RecordingOngoing implements RecordingEvent {
+  const factory RecordingOngoing() = _$RecordingOngoing;
 }
 
 /// @nodoc
@@ -389,10 +407,11 @@ class _$RecordingPause implements RecordingPause {
   @optionalTypeArgs
   TResult when<TResult extends Object?>({
     required TResult Function() init,
-    required TResult Function() start,
+    required TResult Function() recording,
     required TResult Function() pause,
     required TResult Function() resume,
     required TResult Function(File recordedFile) finished,
+    required TResult Function() cancelled,
     required TResult Function(Object error) failed,
   }) {
     return pause();
@@ -402,10 +421,11 @@ class _$RecordingPause implements RecordingPause {
   @optionalTypeArgs
   TResult? whenOrNull<TResult extends Object?>({
     TResult? Function()? init,
-    TResult? Function()? start,
+    TResult? Function()? recording,
     TResult? Function()? pause,
     TResult? Function()? resume,
     TResult? Function(File recordedFile)? finished,
+    TResult? Function()? cancelled,
     TResult? Function(Object error)? failed,
   }) {
     return pause?.call();
@@ -415,10 +435,11 @@ class _$RecordingPause implements RecordingPause {
   @optionalTypeArgs
   TResult maybeWhen<TResult extends Object?>({
     TResult Function()? init,
-    TResult Function()? start,
+    TResult Function()? recording,
     TResult Function()? pause,
     TResult Function()? resume,
     TResult Function(File recordedFile)? finished,
+    TResult Function()? cancelled,
     TResult Function(Object error)? failed,
     required TResult orElse(),
   }) {
@@ -432,10 +453,11 @@ class _$RecordingPause implements RecordingPause {
   @optionalTypeArgs
   TResult map<TResult extends Object?>({
     required TResult Function(RecordingInit value) init,
-    required TResult Function(RecordingStart value) start,
+    required TResult Function(RecordingOngoing value) recording,
     required TResult Function(RecordingPause value) pause,
     required TResult Function(RecordingResume value) resume,
     required TResult Function(RecordingFinished value) finished,
+    required TResult Function(RecordingCancelled value) cancelled,
     required TResult Function(RecordingFailed value) failed,
   }) {
     return pause(this);
@@ -445,10 +467,11 @@ class _$RecordingPause implements RecordingPause {
   @optionalTypeArgs
   TResult? mapOrNull<TResult extends Object?>({
     TResult? Function(RecordingInit value)? init,
-    TResult? Function(RecordingStart value)? start,
+    TResult? Function(RecordingOngoing value)? recording,
     TResult? Function(RecordingPause value)? pause,
     TResult? Function(RecordingResume value)? resume,
     TResult? Function(RecordingFinished value)? finished,
+    TResult? Function(RecordingCancelled value)? cancelled,
     TResult? Function(RecordingFailed value)? failed,
   }) {
     return pause?.call(this);
@@ -458,10 +481,11 @@ class _$RecordingPause implements RecordingPause {
   @optionalTypeArgs
   TResult maybeMap<TResult extends Object?>({
     TResult Function(RecordingInit value)? init,
-    TResult Function(RecordingStart value)? start,
+    TResult Function(RecordingOngoing value)? recording,
     TResult Function(RecordingPause value)? pause,
     TResult Function(RecordingResume value)? resume,
     TResult Function(RecordingFinished value)? finished,
+    TResult Function(RecordingCancelled value)? cancelled,
     TResult Function(RecordingFailed value)? failed,
     required TResult orElse(),
   }) {
@@ -515,10 +539,11 @@ class _$RecordingResume implements RecordingResume {
   @optionalTypeArgs
   TResult when<TResult extends Object?>({
     required TResult Function() init,
-    required TResult Function() start,
+    required TResult Function() recording,
     required TResult Function() pause,
     required TResult Function() resume,
     required TResult Function(File recordedFile) finished,
+    required TResult Function() cancelled,
     required TResult Function(Object error) failed,
   }) {
     return resume();
@@ -528,10 +553,11 @@ class _$RecordingResume implements RecordingResume {
   @optionalTypeArgs
   TResult? whenOrNull<TResult extends Object?>({
     TResult? Function()? init,
-    TResult? Function()? start,
+    TResult? Function()? recording,
     TResult? Function()? pause,
     TResult? Function()? resume,
     TResult? Function(File recordedFile)? finished,
+    TResult? Function()? cancelled,
     TResult? Function(Object error)? failed,
   }) {
     return resume?.call();
@@ -541,10 +567,11 @@ class _$RecordingResume implements RecordingResume {
   @optionalTypeArgs
   TResult maybeWhen<TResult extends Object?>({
     TResult Function()? init,
-    TResult Function()? start,
+    TResult Function()? recording,
     TResult Function()? pause,
     TResult Function()? resume,
     TResult Function(File recordedFile)? finished,
+    TResult Function()? cancelled,
     TResult Function(Object error)? failed,
     required TResult orElse(),
   }) {
@@ -558,10 +585,11 @@ class _$RecordingResume implements RecordingResume {
   @optionalTypeArgs
   TResult map<TResult extends Object?>({
     required TResult Function(RecordingInit value) init,
-    required TResult Function(RecordingStart value) start,
+    required TResult Function(RecordingOngoing value) recording,
     required TResult Function(RecordingPause value) pause,
     required TResult Function(RecordingResume value) resume,
     required TResult Function(RecordingFinished value) finished,
+    required TResult Function(RecordingCancelled value) cancelled,
     required TResult Function(RecordingFailed value) failed,
   }) {
     return resume(this);
@@ -571,10 +599,11 @@ class _$RecordingResume implements RecordingResume {
   @optionalTypeArgs
   TResult? mapOrNull<TResult extends Object?>({
     TResult? Function(RecordingInit value)? init,
-    TResult? Function(RecordingStart value)? start,
+    TResult? Function(RecordingOngoing value)? recording,
     TResult? Function(RecordingPause value)? pause,
     TResult? Function(RecordingResume value)? resume,
     TResult? Function(RecordingFinished value)? finished,
+    TResult? Function(RecordingCancelled value)? cancelled,
     TResult? Function(RecordingFailed value)? failed,
   }) {
     return resume?.call(this);
@@ -584,10 +613,11 @@ class _$RecordingResume implements RecordingResume {
   @optionalTypeArgs
   TResult maybeMap<TResult extends Object?>({
     TResult Function(RecordingInit value)? init,
-    TResult Function(RecordingStart value)? start,
+    TResult Function(RecordingOngoing value)? recording,
     TResult Function(RecordingPause value)? pause,
     TResult Function(RecordingResume value)? resume,
     TResult Function(RecordingFinished value)? finished,
+    TResult Function(RecordingCancelled value)? cancelled,
     TResult Function(RecordingFailed value)? failed,
     required TResult orElse(),
   }) {
@@ -668,10 +698,11 @@ class _$RecordingFinished implements RecordingFinished {
   @optionalTypeArgs
   TResult when<TResult extends Object?>({
     required TResult Function() init,
-    required TResult Function() start,
+    required TResult Function() recording,
     required TResult Function() pause,
     required TResult Function() resume,
     required TResult Function(File recordedFile) finished,
+    required TResult Function() cancelled,
     required TResult Function(Object error) failed,
   }) {
     return finished(recordedFile);
@@ -681,10 +712,11 @@ class _$RecordingFinished implements RecordingFinished {
   @optionalTypeArgs
   TResult? whenOrNull<TResult extends Object?>({
     TResult? Function()? init,
-    TResult? Function()? start,
+    TResult? Function()? recording,
     TResult? Function()? pause,
     TResult? Function()? resume,
     TResult? Function(File recordedFile)? finished,
+    TResult? Function()? cancelled,
     TResult? Function(Object error)? failed,
   }) {
     return finished?.call(recordedFile);
@@ -694,10 +726,11 @@ class _$RecordingFinished implements RecordingFinished {
   @optionalTypeArgs
   TResult maybeWhen<TResult extends Object?>({
     TResult Function()? init,
-    TResult Function()? start,
+    TResult Function()? recording,
     TResult Function()? pause,
     TResult Function()? resume,
     TResult Function(File recordedFile)? finished,
+    TResult Function()? cancelled,
     TResult Function(Object error)? failed,
     required TResult orElse(),
   }) {
@@ -711,10 +744,11 @@ class _$RecordingFinished implements RecordingFinished {
   @optionalTypeArgs
   TResult map<TResult extends Object?>({
     required TResult Function(RecordingInit value) init,
-    required TResult Function(RecordingStart value) start,
+    required TResult Function(RecordingOngoing value) recording,
     required TResult Function(RecordingPause value) pause,
     required TResult Function(RecordingResume value) resume,
     required TResult Function(RecordingFinished value) finished,
+    required TResult Function(RecordingCancelled value) cancelled,
     required TResult Function(RecordingFailed value) failed,
   }) {
     return finished(this);
@@ -724,10 +758,11 @@ class _$RecordingFinished implements RecordingFinished {
   @optionalTypeArgs
   TResult? mapOrNull<TResult extends Object?>({
     TResult? Function(RecordingInit value)? init,
-    TResult? Function(RecordingStart value)? start,
+    TResult? Function(RecordingOngoing value)? recording,
     TResult? Function(RecordingPause value)? pause,
     TResult? Function(RecordingResume value)? resume,
     TResult? Function(RecordingFinished value)? finished,
+    TResult? Function(RecordingCancelled value)? cancelled,
     TResult? Function(RecordingFailed value)? failed,
   }) {
     return finished?.call(this);
@@ -737,10 +772,11 @@ class _$RecordingFinished implements RecordingFinished {
   @optionalTypeArgs
   TResult maybeMap<TResult extends Object?>({
     TResult Function(RecordingInit value)? init,
-    TResult Function(RecordingStart value)? start,
+    TResult Function(RecordingOngoing value)? recording,
     TResult Function(RecordingPause value)? pause,
     TResult Function(RecordingResume value)? resume,
     TResult Function(RecordingFinished value)? finished,
+    TResult Function(RecordingCancelled value)? cancelled,
     TResult Function(RecordingFailed value)? failed,
     required TResult orElse(),
   }) {
@@ -759,6 +795,138 @@ abstract class RecordingFinished implements RecordingEvent {
   @JsonKey(ignore: true)
   _$$RecordingFinishedCopyWith<_$RecordingFinished> get copyWith =>
       throw _privateConstructorUsedError;
+}
+
+/// @nodoc
+abstract class _$$RecordingCancelledCopyWith<$Res> {
+  factory _$$RecordingCancelledCopyWith(_$RecordingCancelled value,
+          $Res Function(_$RecordingCancelled) then) =
+      __$$RecordingCancelledCopyWithImpl<$Res>;
+}
+
+/// @nodoc
+class __$$RecordingCancelledCopyWithImpl<$Res>
+    extends _$RecordingEventCopyWithImpl<$Res, _$RecordingCancelled>
+    implements _$$RecordingCancelledCopyWith<$Res> {
+  __$$RecordingCancelledCopyWithImpl(
+      _$RecordingCancelled _value, $Res Function(_$RecordingCancelled) _then)
+      : super(_value, _then);
+}
+
+/// @nodoc
+
+class _$RecordingCancelled implements RecordingCancelled {
+  const _$RecordingCancelled();
+
+  @override
+  String toString() {
+    return 'RecordingEvent.cancelled()';
+  }
+
+  @override
+  bool operator ==(dynamic other) {
+    return identical(this, other) ||
+        (other.runtimeType == runtimeType && other is _$RecordingCancelled);
+  }
+
+  @override
+  int get hashCode => runtimeType.hashCode;
+
+  @override
+  @optionalTypeArgs
+  TResult when<TResult extends Object?>({
+    required TResult Function() init,
+    required TResult Function() recording,
+    required TResult Function() pause,
+    required TResult Function() resume,
+    required TResult Function(File recordedFile) finished,
+    required TResult Function() cancelled,
+    required TResult Function(Object error) failed,
+  }) {
+    return cancelled();
+  }
+
+  @override
+  @optionalTypeArgs
+  TResult? whenOrNull<TResult extends Object?>({
+    TResult? Function()? init,
+    TResult? Function()? recording,
+    TResult? Function()? pause,
+    TResult? Function()? resume,
+    TResult? Function(File recordedFile)? finished,
+    TResult? Function()? cancelled,
+    TResult? Function(Object error)? failed,
+  }) {
+    return cancelled?.call();
+  }
+
+  @override
+  @optionalTypeArgs
+  TResult maybeWhen<TResult extends Object?>({
+    TResult Function()? init,
+    TResult Function()? recording,
+    TResult Function()? pause,
+    TResult Function()? resume,
+    TResult Function(File recordedFile)? finished,
+    TResult Function()? cancelled,
+    TResult Function(Object error)? failed,
+    required TResult orElse(),
+  }) {
+    if (cancelled != null) {
+      return cancelled();
+    }
+    return orElse();
+  }
+
+  @override
+  @optionalTypeArgs
+  TResult map<TResult extends Object?>({
+    required TResult Function(RecordingInit value) init,
+    required TResult Function(RecordingOngoing value) recording,
+    required TResult Function(RecordingPause value) pause,
+    required TResult Function(RecordingResume value) resume,
+    required TResult Function(RecordingFinished value) finished,
+    required TResult Function(RecordingCancelled value) cancelled,
+    required TResult Function(RecordingFailed value) failed,
+  }) {
+    return cancelled(this);
+  }
+
+  @override
+  @optionalTypeArgs
+  TResult? mapOrNull<TResult extends Object?>({
+    TResult? Function(RecordingInit value)? init,
+    TResult? Function(RecordingOngoing value)? recording,
+    TResult? Function(RecordingPause value)? pause,
+    TResult? Function(RecordingResume value)? resume,
+    TResult? Function(RecordingFinished value)? finished,
+    TResult? Function(RecordingCancelled value)? cancelled,
+    TResult? Function(RecordingFailed value)? failed,
+  }) {
+    return cancelled?.call(this);
+  }
+
+  @override
+  @optionalTypeArgs
+  TResult maybeMap<TResult extends Object?>({
+    TResult Function(RecordingInit value)? init,
+    TResult Function(RecordingOngoing value)? recording,
+    TResult Function(RecordingPause value)? pause,
+    TResult Function(RecordingResume value)? resume,
+    TResult Function(RecordingFinished value)? finished,
+    TResult Function(RecordingCancelled value)? cancelled,
+    TResult Function(RecordingFailed value)? failed,
+    required TResult orElse(),
+  }) {
+    if (cancelled != null) {
+      return cancelled(this);
+    }
+    return orElse();
+  }
+}
+
+abstract class RecordingCancelled implements RecordingEvent {
+  const factory RecordingCancelled() = _$RecordingCancelled;
 }
 
 /// @nodoc
@@ -824,10 +992,11 @@ class _$RecordingFailed implements RecordingFailed {
   @optionalTypeArgs
   TResult when<TResult extends Object?>({
     required TResult Function() init,
-    required TResult Function() start,
+    required TResult Function() recording,
     required TResult Function() pause,
     required TResult Function() resume,
     required TResult Function(File recordedFile) finished,
+    required TResult Function() cancelled,
     required TResult Function(Object error) failed,
   }) {
     return failed(error);
@@ -837,10 +1006,11 @@ class _$RecordingFailed implements RecordingFailed {
   @optionalTypeArgs
   TResult? whenOrNull<TResult extends Object?>({
     TResult? Function()? init,
-    TResult? Function()? start,
+    TResult? Function()? recording,
     TResult? Function()? pause,
     TResult? Function()? resume,
     TResult? Function(File recordedFile)? finished,
+    TResult? Function()? cancelled,
     TResult? Function(Object error)? failed,
   }) {
     return failed?.call(error);
@@ -850,10 +1020,11 @@ class _$RecordingFailed implements RecordingFailed {
   @optionalTypeArgs
   TResult maybeWhen<TResult extends Object?>({
     TResult Function()? init,
-    TResult Function()? start,
+    TResult Function()? recording,
     TResult Function()? pause,
     TResult Function()? resume,
     TResult Function(File recordedFile)? finished,
+    TResult Function()? cancelled,
     TResult Function(Object error)? failed,
     required TResult orElse(),
   }) {
@@ -867,10 +1038,11 @@ class _$RecordingFailed implements RecordingFailed {
   @optionalTypeArgs
   TResult map<TResult extends Object?>({
     required TResult Function(RecordingInit value) init,
-    required TResult Function(RecordingStart value) start,
+    required TResult Function(RecordingOngoing value) recording,
     required TResult Function(RecordingPause value) pause,
     required TResult Function(RecordingResume value) resume,
     required TResult Function(RecordingFinished value) finished,
+    required TResult Function(RecordingCancelled value) cancelled,
     required TResult Function(RecordingFailed value) failed,
   }) {
     return failed(this);
@@ -880,10 +1052,11 @@ class _$RecordingFailed implements RecordingFailed {
   @optionalTypeArgs
   TResult? mapOrNull<TResult extends Object?>({
     TResult? Function(RecordingInit value)? init,
-    TResult? Function(RecordingStart value)? start,
+    TResult? Function(RecordingOngoing value)? recording,
     TResult? Function(RecordingPause value)? pause,
     TResult? Function(RecordingResume value)? resume,
     TResult? Function(RecordingFinished value)? finished,
+    TResult? Function(RecordingCancelled value)? cancelled,
     TResult? Function(RecordingFailed value)? failed,
   }) {
     return failed?.call(this);
@@ -893,10 +1066,11 @@ class _$RecordingFailed implements RecordingFailed {
   @optionalTypeArgs
   TResult maybeMap<TResult extends Object?>({
     TResult Function(RecordingInit value)? init,
-    TResult Function(RecordingStart value)? start,
+    TResult Function(RecordingOngoing value)? recording,
     TResult Function(RecordingPause value)? pause,
     TResult Function(RecordingResume value)? resume,
     TResult Function(RecordingFinished value)? finished,
+    TResult Function(RecordingCancelled value)? cancelled,
     TResult Function(RecordingFailed value)? failed,
     required TResult orElse(),
   }) {
