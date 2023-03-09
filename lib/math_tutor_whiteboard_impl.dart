@@ -261,7 +261,7 @@ class _MathTutorWhiteboardState extends ConsumerState<MathTutorWhiteboardImpl> {
                     selectedColor: color,
                     isRedoable: limitCursor < drawingData.length,
                     isUndoable: limitCursor > 0,
-                    strokeWidth: strokeWidth * 3,
+                    strokeWidth: strokeWidth,
                     onStrokeWidthChanged: _onStrokeWidthChanged,
                     onTapRecord: _onTapRecord,
                     onTapStrokeEraser: _onTapStrokeEraswer,
@@ -425,7 +425,7 @@ class _MathTutorWhiteboardState extends ConsumerState<MathTutorWhiteboardImpl> {
 
   void _onStrokeWidthChanged(double strokeWidth) {
     setState(() {
-      this.strokeWidth = max(1.0, strokeWidth / 3);
+      this.strokeWidth = strokeWidth;
       log('stroke width changed: $strokeWidth');
     });
   }
