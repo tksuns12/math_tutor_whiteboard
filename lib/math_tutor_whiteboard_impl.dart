@@ -664,12 +664,6 @@ class _WhiteBoardState extends State<_WhiteBoard> {
       SystemChrome.setEnabledSystemUIMode(SystemUiMode.manual, overlays: [
         SystemUiOverlay.bottom, //This line is used for showing the bottom bar
       ]);
-      final height = MediaQuery.of(context).size.height;
-      final width = MediaQuery.of(context).size.width;
-      final scale = (64 * width) / (9 * height);
-      transformationController.value = Matrix4.identity()
-        ..scale(scale)
-        ..translate(-(-9 * height / 64 + width) / 2);
     });
     super.initState();
   }
@@ -701,89 +695,79 @@ class _WhiteBoardState extends State<_WhiteBoard> {
             : null,
         body: InteractiveViewer.builder(
           panEnabled: panMode,
-          scaleEnabled: panMode,
+          scaleEnabled: false,
           onInteractionStart: (details) => isPanning = true,
           onInteractionEnd: (details) => isPanning = false,
-          minScale: 1.0,
-          maxScale: 4.5,
           transformationController: transformationController,
           builder: (BuildContext context, Quad viewport) {
-            return Container(
-              color: Colors.black,
-              height: constraints.maxHeight,
-              width: constraints.maxWidth,
-              child: Center(
-                child: Listener(
-                  onPointerDown: (event) {
-                    pointers.add(event.pointer);
-                    if (pointers.length > 1) {
-                      setState(() {
-                        panMode = true;
-                      });
-                    }
-                    if (panMode) {
-                      return;
-                    }
-                    widget.onStartDrawing();
-                  },
-                  onPointerMove: (event) {
-                    if (panMode) {
-                      return;
-                    }
-                    widget.onDrawing(event);
-                  },
-                  onPointerUp: (event) {
-                    pointers.clear();
-                    if (panMode) {
-                      return;
-                    }
-                    widget.onEndDrawing(event);
-                  },
-                  child: SizedBox(
-                    height: MediaQuery.of(context).size.height,
-                    width: MediaQuery.of(context).size.height * 9 / (16 * 4),
-                    child: Stack(
-                      children: [
-                        Positioned.fill(
-                          child: Container(
-                            color: Colors.white,
-                          ),
-                        ),
-                        if (widget.preloadImage != null)
-                          Positioned.fill(
-                              child: Image(
-                            image: widget.preloadImage!,
-                            fit: BoxFit.fitWidth,
-                            alignment: Alignment.topCenter,
-                          )),
-                        Positioned.fill(
-                            child: CustomPaint(
-                          painter: _WhiteboardPainter((() {
-                            /// limitCursor 이전의 스트로크들만 그리되
-                            /// limitCursor 이전의 key값이 [deletedStrokes]에 존재한다면
-                            /// [deletedStrokes]의 value값에 해당하는 index를 지워줍니다.
-                            final drawingBeforeLimitCursor = widget.drawingData
-                                .sublist(0, widget.limitCursor);
-                            for (int i = 0;
-                                i < drawingBeforeLimitCursor.length;
-                                i++) {
-                              for (final deleteStroke
-                                  in widget.deletedStrokes.entries) {
-                                if (deleteStroke.key <= widget.limitCursor) {
-                                  drawingBeforeLimitCursor[deleteStroke.value] =
-                                      [];
-                                }
-                              }
-                            }
-                            return drawingBeforeLimitCursor;
-                          })()),
-                          size: Size(
-                              MediaQuery.of(context).size.height * 9 / (16 * 4),
-                              MediaQuery.of(context).size.height),
-                        ))
-                      ],
+            return Listener(
+              onPointerDown: (event) {
+                pointers.add(event.pointer);
+                if (pointers.length > 1) {
+                  setState(() {
+                    panMode = true;
+                  });
+                }
+                if (panMode) {
+                  return;
+                }
+                widget.onStartDrawing();
+              },
+              onPointerMove: (event) {
+                if (panMode) {
+                  return;
+                }
+                widget.onDrawing(event);
+              },
+              onPointerUp: (event) {
+                pointers.clear();
+                if (panMode) {
+                  return;
+                }
+                widget.onEndDrawing(event);
+              },
+              child: SizedBox(
+                height: MediaQuery.of(context).size.height * 4,
+                width: MediaQuery.of(context).size.width,
+                child: Stack(
+                  children: [
+                    Positioned.fill(
+                      child: Container(
+                        color: Colors.white,
+                      ),
                     ),
-                  ),
+                    if (widget.preloadImage != null)
+                      Positioned.fill(
+                          child: Image(
+                        image: widget.preloadImage!,
+                        fit: BoxFit.fitWidth,
+                        alignment: Alignment.topCenter,
+                      )),
+                    Positioned.fill(
+                        child: CustomPaint(
+                      painter: _WhiteboardPainter((() {
+                        /// limitCursor 이전의 스트로크들만 그리되
+                        /// limitCursor 이전의 key값이 [deletedStrokes]에 존재한다면
+                        /// [deletedStrokes]의 value값에 해당하는 index를 지워줍니다.
+                        final drawingBeforeLimitCursor =
+                            widget.drawingData.sublist(0, widget.limitCursor);
+                        for (int i = 0;
+                            i < drawingBeforeLimitCursor.length;
+                            i++) {
+                          for (final deleteStroke
+                              in widget.deletedStrokes.entries) {
+                            if (deleteStroke.key <= widget.limitCursor) {
+                              drawingBeforeLimitCursor[deleteStroke.value] = [];
+                            }
+                          }
+                        }
+                        return drawingBeforeLimitCursor;
+                      })()),
+                      size: Size(
+                          MediaQuery.of(context).size.height * 9 / (16 * 4),
+                          MediaQuery.of(context).size.height),
+                    ))
+                  ],
                 ),
               ),
             );
