@@ -33,8 +33,12 @@ class MathTutorWhiteboardImpl extends ConsumerStatefulWidget {
   final void Function(RecordingEvent event) onRecordingEvent;
   final Future<bool> Function() onAttemptToClose;
   final Future<bool> Function() onAttemptToCompleteRecording;
+  final Future<void> Function() onBeforeTimeLimitReached;
+  final Future<void> Function() onTimeLimitReached;
   const MathTutorWhiteboardImpl(
-      {required this.onOutput,
+      {required this.onBeforeTimeLimitReached,
+      required this.onTimeLimitReached,
+      required this.onOutput,
       required this.onRecordingEvent,
       this.inputStream,
       required this.onAttemptToCompleteRecording,
@@ -236,48 +240,64 @@ class _MathTutorWhiteboardState extends ConsumerState<MathTutorWhiteboardImpl> {
         return result;
       },
       child: Material(
-        child: SafeArea(
-            child: Column(
-          children: [
-            WhiteboardController(
-              onPenSelected: _onPenSelected,
-              onTapEraser: _onTapEraser,
-              onTapUndo: _onTapUndo,
-              onTapClear: _onTapClear,
-              onTapClose: _onTapClose,
-              onColorSelected: _onColorSelected,
-              isLive: widget.mode == WhiteboardMode.liveTeaching,
-              onTapRedo: _onTapRedo,
-              penType: penType,
-              selectedColor: color,
-              isRedoable: limitCursor < drawingData.length,
-              isUndoable: limitCursor > 0,
-              strokeWidth: strokeWidth * 3,
-              onStrokeWidthChanged: _onStrokeWidthChanged,
-              onTapRecord: _onTapRecord,
-              onTapStrokeEraser: _onTapStrokeEraswer,
-              onLoadImage: _onLoadImage,
-              onSendChatMessage: _onSendChatMessage,
-              drawable: drawable,
-              onDrawingPermissionChanged: _onDrawingPermissionChanged,
-              onMicPermissionChanged: _onMicPermissionChanged,
-            ),
-            Expanded(
-              child: _WhiteBoard(
-                onStartDrawing: _onStartDrawing,
-                deletedStrokes: deletedStrokes,
-                transformationController: transformationController,
-                onDrawing: _onDrawing,
-                onEndDrawing: _onEndDrawing,
-                drawingData: drawingData,
-                limitCursor: limitCursor,
-                onViewportChange: _onViewportChange,
-                preloadImage: image,
-                drawable: drawable,
+        child: SafeArea(child: Consumer(builder: (context, ref, _) {
+          final busyState = ref.watch(
+              recordingStateProvider.select((value) => value.precessing));
+          return Stack(
+            children: [
+              Column(
+                children: [
+                  WhiteboardController(
+                    onPenSelected: _onPenSelected,
+                    onTapEraser: _onTapEraser,
+                    onTapUndo: _onTapUndo,
+                    onTapClear: _onTapClear,
+                    onTapClose: _onTapClose,
+                    onColorSelected: _onColorSelected,
+                    isLive: widget.mode == WhiteboardMode.liveTeaching,
+                    onTapRedo: _onTapRedo,
+                    penType: penType,
+                    selectedColor: color,
+                    isRedoable: limitCursor < drawingData.length,
+                    isUndoable: limitCursor > 0,
+                    strokeWidth: strokeWidth * 3,
+                    onStrokeWidthChanged: _onStrokeWidthChanged,
+                    onTapRecord: _onTapRecord,
+                    onTapStrokeEraser: _onTapStrokeEraswer,
+                    onLoadImage: _onLoadImage,
+                    onSendChatMessage: _onSendChatMessage,
+                    drawable: drawable,
+                    onDrawingPermissionChanged: _onDrawingPermissionChanged,
+                    onMicPermissionChanged: _onMicPermissionChanged,
+                  ),
+                  Expanded(
+                    child: _WhiteBoard(
+                      onStartDrawing: _onStartDrawing,
+                      deletedStrokes: deletedStrokes,
+                      transformationController: transformationController,
+                      onDrawing: _onDrawing,
+                      onEndDrawing: _onEndDrawing,
+                      drawingData: drawingData,
+                      limitCursor: limitCursor,
+                      onViewportChange: _onViewportChange,
+                      preloadImage: image,
+                      drawable: drawable,
+                    ),
+                  )
+                ],
               ),
-            )
-          ],
-        )),
+              if (busyState)
+                Positioned.fill(
+                  child: Container(
+                    color: Colors.black.withOpacity(0.5),
+                    child: const Center(
+                      child: CircularProgressIndicator(),
+                    ),
+                  ),
+                ),
+            ],
+          );
+        })),
       ),
     );
   }
@@ -439,10 +459,14 @@ class _MathTutorWhiteboardState extends ConsumerState<MathTutorWhiteboardImpl> {
   }
 
   Future<void> _stopRecording() async {
-    final res = await screenRecorder.stopRecord();
-    log('stop recording: ${res['file']}');
-    ref.read(recordingStateProvider.notifier).finishRecording(res['file']);
-    widget.onRecordingEvent(RecordingEvent.finished(res['file']));
+    await ref.read(recordingStateProvider.notifier).doAsync(
+      () async {
+        final res = await screenRecorder.stopRecord();
+        log('stop recording: ${res['file']}');
+        ref.read(recordingStateProvider.notifier).finishRecording(res['file']);
+        widget.onRecordingEvent(RecordingEvent.finished(res['file']));
+      },
+    );
     if (context.mounted) {
       Navigator.of(context).pop();
     }
@@ -453,10 +477,11 @@ class _MathTutorWhiteboardState extends ConsumerState<MathTutorWhiteboardImpl> {
     final notificationPermission = await Permission.notification.request();
     if (micPermission.isGranted && notificationPermission.isGranted) {
       log('Permission granted');
-      await screenRecorder.startRecordScreen(
-          fileName: 'math_record_temp',
-          audioEnable: true,
-          dirPathToSave: (await getTemporaryDirectory()).path);
+      await ref.read(recordingStateProvider.notifier).doAsync(() async =>
+          await screenRecorder.startRecordScreen(
+              fileName: 'math_record_temp',
+              audioEnable: true,
+              dirPathToSave: (await getTemporaryDirectory()).path));
       widget.onRecordingEvent(const RecordingEvent.recording());
       log('start recording');
       ref.read(recordingStateProvider.notifier).startRecording();
@@ -464,10 +489,12 @@ class _MathTutorWhiteboardState extends ConsumerState<MathTutorWhiteboardImpl> {
         setState(() {
           ref.read(recordingStateProvider.notifier).tick();
           if (ref.read(recordingStateProvider).remainingTime == 0) {
-            _stopRecording();
-            // TODO: 안내 팝업 띄워줌
+            _pauseRecorder();
+            widget.onBeforeTimeLimitReached().then((value) {
+              _stopRecording();
+            });
           } else if (ref.read(recordingStateProvider).remainingTime == 60 * 5) {
-            // TODO: 안내 팝업 띄워줌
+            widget.onBeforeTimeLimitReached();
           }
         });
       });

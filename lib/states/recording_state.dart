@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'package:equatable/equatable.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 enum RecorderState { recording, paused, init }
@@ -23,14 +24,14 @@ class RecordingState extends Equatable {
       [recorderState, remainingTime, totalDuration, result];
 
   RecordingState copyWith({
-    RecorderState? isRecording,
+    RecorderState? recorderState,
     int? remainingTime,
     int? totalDuration,
     File? result,
     bool? precessing,
   }) {
     return RecordingState(
-      recorderState: isRecording ?? this.recorderState,
+      recorderState: recorderState ?? this.recorderState,
       remainingTime: remainingTime ?? this.remainingTime,
       totalDuration: totalDuration ?? this.totalDuration,
       precessing: precessing ?? this.precessing,
@@ -55,7 +56,7 @@ class RecordingStateNotifier extends StateNotifier<RecordingState> {
   }
 
   void startRecording() {
-    state = state.copyWith(isRecording: RecorderState.recording);
+    state = state.copyWith(recorderState: RecorderState.recording);
   }
 
   void tick() {
@@ -65,7 +66,7 @@ class RecordingStateNotifier extends StateNotifier<RecordingState> {
   }
 
   void finishRecording(File file) {
-    state = state.copyWith(result: file, isRecording: RecorderState.init);
+    state = state.copyWith(result: file, recorderState: RecorderState.init);
   }
 
   void updateDuration(Duration duration) {
@@ -76,7 +77,14 @@ class RecordingStateNotifier extends StateNotifier<RecordingState> {
   }
 
   void pauseRecording() {
-    state = state.copyWith(isRecording: RecorderState.paused);
+    state = state.copyWith(recorderState: RecorderState.paused);
+  }
+
+  Future<void> doAsync(AsyncCallback asyncFunc) async {
+    setProcessing(true);
+    return await asyncFunc().then((value) {
+      setProcessing(false);
+    });
   }
 }
 
