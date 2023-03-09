@@ -1,13 +1,10 @@
 library math_tutor_whiteboard;
 
 import 'dart:async';
-import 'dart:io';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:math_tutor_whiteboard/math_tutor_whiteboard_impl.dart';
 import 'package:math_tutor_whiteboard/types/recording_event.dart';
-
 import 'package:math_tutor_whiteboard/types/types.dart';
 
 class MathTutorWhiteBoard extends StatelessWidget {

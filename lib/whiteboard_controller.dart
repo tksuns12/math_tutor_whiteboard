@@ -79,21 +79,16 @@ class _WhiteboardControllerState extends ConsumerState<WhiteboardController> {
         children: [
           SizedBox(
               width: 72 / 360 * MediaQuery.of(context).size.width,
-              child: widget.isLive
-                  ? SvgPicture.asset(
-                      'assets/live.svg',
-                      package: 'math_tutor_whiteboard',
-                    )
-                  : Consumer(builder: (context, ref, child) {
-                      return RecordButton(
-                        isRecording:
-                            ref.watch(recordingStateProvider).recorderState ==
-                                RecorderState.recording,
-                        onTap: widget.onTapRecord,
-                        remainingTime:
-                            ref.watch(recordingStateProvider).remainingTime,
-                      );
-                    })),
+              child: Consumer(builder: (context, ref, child) {
+                return RecordButton(
+                  isRecording:
+                      ref.watch(recordingStateProvider).recorderState ==
+                          RecorderState.recording,
+                  onTap: widget.onTapRecord,
+                  remainingTime:
+                      ref.watch(recordingStateProvider).remainingTime,
+                );
+              })),
           Expanded(
             child: Row(
               children: [

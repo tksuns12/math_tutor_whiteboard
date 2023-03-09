@@ -62,7 +62,6 @@ class DrawingData extends Equatable {
 
 enum WhiteboardMode {
   liveTeaching,
-  recordTeaching,
   record,
   participant,
 }
@@ -246,7 +245,6 @@ class WhiteboardUser extends Equatable {
 
   factory WhiteboardUser.fromJson(String source) =>
       WhiteboardUser.fromMap(json.decode(source));
-
 
   WhiteboardUser copyWith({
     String? avatar,
