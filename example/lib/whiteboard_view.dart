@@ -98,6 +98,46 @@ class _WhiteboardViewState extends State<WhiteboardView> {
               },
               onOutput: (data) {},
               onRecordingEvent: (RecordingEvent event) {},
+              onBeforeTimeLimitReached: () {
+                return showDialog(
+                  context: context,
+                  builder: (context) => AlertDialog(
+                    title: const Text('Are you sure?'),
+                    content: const Text(
+                        'You will lose all unsaved changes if you close the whiteboard.'),
+                    actions: [
+                      TextButton(
+                        onPressed: () => Navigator.pop(context, false),
+                        child: const Text('Cancel'),
+                      ),
+                      TextButton(
+                        onPressed: () => Navigator.pop(context, true),
+                        child: const Text('Close'),
+                      ),
+                    ],
+                  ),
+                );
+              },
+              onTimeLimitReached: () {
+                return showDialog(
+                  context: context,
+                  builder: (context) => AlertDialog(
+                    title: const Text('Are you sure?'),
+                    content: const Text(
+                        'You will lose all unsaved changes if you close the whiteboard.'),
+                    actions: [
+                      TextButton(
+                        onPressed: () => Navigator.pop(context, false),
+                        child: const Text('Cancel'),
+                      ),
+                      TextButton(
+                        onPressed: () => Navigator.pop(context, true),
+                        child: const Text('Close'),
+                      ),
+                    ],
+                  ),
+                );
+              },
             )
           : FutureBuilder<WebSocket>(
               future: webSocket,
@@ -135,6 +175,46 @@ class _WhiteboardViewState extends State<WhiteboardView> {
                     }
                   });
                   return MathTutorWhiteBoard(
+                    onBeforeTimeLimitReached: () {
+                      return showDialog(
+                        context: context,
+                        builder: (context) => AlertDialog(
+                          title: const Text('Are you sure?'),
+                          content: const Text(
+                              'You will lose all unsaved changes if you close the whiteboard.'),
+                          actions: [
+                            TextButton(
+                              onPressed: () => Navigator.pop(context, false),
+                              child: const Text('Cancel'),
+                            ),
+                            TextButton(
+                              onPressed: () => Navigator.pop(context, true),
+                              child: const Text('Close'),
+                            ),
+                          ],
+                        ),
+                      );
+                    },
+                    onTimeLimitReached: () {
+                      return showDialog(
+                        context: context,
+                        builder: (context) => AlertDialog(
+                          title: const Text('Are you sure?'),
+                          content: const Text(
+                              'You will lose all unsaved changes if you close the whiteboard.'),
+                          actions: [
+                            TextButton(
+                              onPressed: () => Navigator.pop(context, false),
+                              child: const Text('Cancel'),
+                            ),
+                            TextButton(
+                              onPressed: () => Navigator.pop(context, true),
+                              child: const Text('Close'),
+                            ),
+                          ],
+                        ),
+                      );
+                    },
                     mode: WhiteboardMode.liveTeaching,
                     preloadImage:
                         const NetworkImage('https://picsum.photos/640/320'),

@@ -17,6 +17,8 @@ class MathTutorWhiteBoard extends StatelessWidget {
   final void Function(RecordingEvent event) onRecordingEvent;
   final Future<bool> Function() onAttemptToClose;
   final Future<bool> Function() onAttemptToCompleteRecording;
+  final Future<void> Function() onBeforeTimeLimitReached;
+  final Future<void> Function() onTimeLimitReached;
   const MathTutorWhiteBoard({
     Key? key,
     this.preloadImage,
@@ -28,21 +30,24 @@ class MathTutorWhiteBoard extends StatelessWidget {
     this.inputStream,
     required this.onOutput,
     required this.onRecordingEvent,
+    required this.onBeforeTimeLimitReached,
+    required this.onTimeLimitReached,
   }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
     return ProviderScope(
         child: MathTutorWhiteboardImpl(
-      me: me,
-      mode: mode,
-      preloadImage: preloadImage,
-      recordDuration: recordDuration,
-      onAttemptToClose: onAttemptToClose,
-      onAttemptToCompleteRecording: onAttemptToCompleteRecording,
-      inputStream: inputStream,
-      onOutput: onOutput,
-      onRecordingEvent: onRecordingEvent,
-    ));
+            onBeforeTimeLimitReached: onBeforeTimeLimitReached,
+            onTimeLimitReached: onTimeLimitReached,
+            onOutput: onOutput,
+            onRecordingEvent: onRecordingEvent,
+            preloadImage: preloadImage,
+            recordDuration: recordDuration,
+            mode: mode,
+            me: me,
+            inputStream: inputStream,
+            onAttemptToClose: onAttemptToClose,
+            onAttemptToCompleteRecording: onAttemptToCompleteRecording));
   }
 }
