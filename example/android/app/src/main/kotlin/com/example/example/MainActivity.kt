@@ -1,5 +1,4 @@
 package com.example.example
-
 import android.os.Handler
 import android.os.Looper
 import android.os.Message
@@ -34,23 +33,24 @@ const val PERMISSION_CODE = 700
 
 const val CID = "agcoding"
 
-class MainActivity: FlutterActivity() , MethodChannel.MethodCallHandler, EventChannel.StreamHandler {
+class MainActivity : FlutterActivity(), MethodChannel.MethodCallHandler,
+    EventChannel.StreamHandler {
     companion object {
         const val METHOD_CHANNEL = "mathtutor_neotech_plugin"
         const val EVENT_CHANNEL = "mathtutor_neotech_plugin_event"
     }
 
-        private lateinit var methodChannel: MethodChannel
+    private lateinit var methodChannel: MethodChannel
     private lateinit var eventChannel: EventChannel
     private lateinit var neotechServerHandler: ELServerHandler
     private lateinit var id: String
+    var holdingFilePath: String? = null
 
-        override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
+    override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
         GeneratedPluginRegistrant.registerWith(flutterEngine)
 
         methodChannel = MethodChannel(
-            flutterEngine.dartExecutor
-                .binaryMessenger, METHOD_CHANNEL
+            flutterEngine.dartExecutor.binaryMessenger, METHOD_CHANNEL
         )
         methodChannel.setMethodCallHandler(this)
         eventChannel = EventChannel(flutterEngine.dartExecutor, EVENT_CHANNEL)
@@ -58,16 +58,16 @@ class MainActivity: FlutterActivity() , MethodChannel.MethodCallHandler, EventCh
 
     }
 
-     override fun onMethodCall(call: MethodCall, result: MethodChannel.Result) {
+    override fun onMethodCall(call: MethodCall, result: MethodChannel.Result) {
         when (call.method) {
             "initialize" -> {
                 try {
+                    holdingFilePath = call.argument("preloadImage")
                     neotechServerHandler = ELServerHandler()
                     neotechServerHandler.initial(this)
                     neotechServerHandler.setDownloadDir(getDownloadDir())
                     neotechServerHandler.setServerInfo(
-                        call.argument("host"),
-                        call.argument("port")!!
+                        call.argument("host"), call.argument("port")!!
                     )
                     result.success("Successfully Initialized")
                 } catch (e: Exception) {
@@ -102,8 +102,7 @@ class MainActivity: FlutterActivity() , MethodChannel.MethodCallHandler, EventCh
                     val gson = Gson()
                     val stringified = gson.toJson(data)
                     neotechServerHandler.sendPacket(
-                        type,
-                        ByteBuffer.wrap(stringified.toByteArray())
+                        type, ByteBuffer.wrap(stringified.toByteArray())
                     )
                     result.success("Packet Sent")
                 } catch (e: Exception) {
@@ -170,13 +169,14 @@ class MainActivity: FlutterActivity() , MethodChannel.MethodCallHandler, EventCh
             }
             "sendImage" -> {
                 try {
-//                    val userId: String = call.argument("userID")!!
-                    val filePath: String = call.argument("filePath")!!
-                    neotechServerHandler.uploadFile(filePath)
+                    holdingFilePath = call.argument("filePath")!!
+                    sendImage()
+
                     result.success("Successfully sent file")
                 } catch (e: Exception) {
                     result.error("Failed to send file", e.message, e)
                 }
+
             }
 
 
@@ -184,25 +184,29 @@ class MainActivity: FlutterActivity() , MethodChannel.MethodCallHandler, EventCh
 
     }
 
-    
+    private fun sendImage(
+    ) {
+        if (holdingFilePath != null) {
+            neotechServerHandler.uploadFile(holdingFilePath)
+        }
+
+    }
+
 
     private fun getDownloadDir(): String {
-       return cacheDir.absolutePath + "/live_downloaded_image"
+        return cacheDir.absolutePath + "/live_downloaded_image"
     }
 
     override fun onListen(arguments: Any?, events: EventSink?) {
         if (events != null) {
             neotechServerHandler.setEventHandler(
-                NeotechServerHandler(
-                    events,
-                    neotechServerHandler,
-                    id
-                )
+                NeotechServerHandler(events, neotechServerHandler, id, onUserEntered = {
+                    sendImage()
+                })
             )
             neotechServerHandler.setOnFileTransferListener(
                 OnFileTransferListenerImpl(
-                    methodChannel,
-                    events
+                    methodChannel, events
                 )
             )
 
@@ -227,8 +231,13 @@ class MainActivity: FlutterActivity() , MethodChannel.MethodCallHandler, EventCh
     }
 }
 
-class NeotechServerHandler(private val eventSink: EventSink, private val serverHandler: ELServerHandler, private val id: String) :
-    Handler(Looper.getMainLooper()) {
+class NeotechServerHandler(
+    private val eventSink: EventSink,
+    private val serverHandler: ELServerHandler,
+    private val id: String,
+    private val onUserEntered: () -> Unit
+
+) : Handler(Looper.getMainLooper()) {
 
     override fun handleMessage(msg: Message) {
         when (msg.what) {
@@ -247,6 +256,7 @@ class NeotechServerHandler(private val eventSink: EventSink, private val serverH
                 result["type"] = USER_CODE
                 result["isEnter"] = true
                 result["data"] = msg.obj.toString()
+                onUserEntered()
 
                 eventSink.success(result)
             }
@@ -285,35 +295,37 @@ class NeotechServerHandler(private val eventSink: EventSink, private val serverH
     }
 }
 
-class OnFileTransferListenerImpl(private val methodChannel:MethodChannel, private val eventSink: EventSink): OnFileTransferListener {
+class OnFileTransferListenerImpl(
+    private val methodChannel: MethodChannel, private val eventSink: EventSink
+) : OnFileTransferListener {
     override fun uploadCompleted(filePath: String?) {
         val result = HashMap<String, Any>()
         result["event"] = "fileUploaded"
-        result["filePath"] = filePath?:""
+        result["filePath"] = filePath ?: ""
         methodChannel.invokeMethod("onUploadComplete", result)
     }
 
     override fun uploadFailed(filePath: String?) {
         val result = HashMap<String, Any>()
         result["event"] = "fileUploadFailed"
-        result["filePath"] = filePath?:""
+        result["filePath"] = filePath ?: ""
         methodChannel.invokeMethod("onUploadFailed", result)
     }
 
     override fun downloadCompleted(senderID: String?, filePath: String?) {
         val result = HashMap<String, Any>()
         result["event"] = "fileDownloaded"
-        result["senderID"] = senderID?:""
+        result["senderID"] = senderID ?: ""
         result["type"] = FILE_CODE
-        result["data"] = filePath?:""
+        result["data"] = filePath ?: ""
         eventSink.success(result)
     }
 
     override fun downloadFailed(senderID: String?, filePath: String?) {
         val result = HashMap<String, Any>()
         result["event"] = "fileDownloadFailed"
-        result["senderID"] = senderID?:""
-        result["filePath"] = filePath?:""
+        result["senderID"] = senderID ?: ""
+        result["filePath"] = filePath ?: ""
         methodChannel.invokeMethod("onDownloadFailed", result)
 
     }
