@@ -35,8 +35,9 @@ class MathTutorWhiteboardImpl extends ConsumerStatefulWidget {
   final Future<bool> Function() onAttemptToCompleteRecording;
   final Future<void> Function() onBeforeTimeLimitReached;
   final Future<void> Function() onTimeLimitReached;
-  const MathTutorWhiteboardImpl(
-      {required this.onBeforeTimeLimitReached,
+  final String? hostID;
+  const MathTutorWhiteboardImpl({this.hostID, 
+      required this.onBeforeTimeLimitReached,
       required this.onTimeLimitReached,
       required this.onOutput,
       required this.onRecordingEvent,
@@ -96,13 +97,16 @@ class _MathTutorWhiteboardState extends ConsumerState<MathTutorWhiteboardImpl> {
       boardSize = Size(MediaQuery.of(context).size.width,
           MediaQuery.of(context).size.width * (16 / 9));
       // boardSize = MediaQuery.of(context).size;
-
-      ref
-          .read(chatMessageStateProvider.notifier)
-          .addMessage(const WhiteboardChatMessage(
-            nickname: '시스템',
-            message: '채팅방에 입장하셨습니다.',
-          ));
+      if (widget.mode != WhiteboardMode.record &&
+          widget.mode != WhiteboardMode.recordTeaching) {
+        ref
+            .read(chatMessageStateProvider.notifier)
+            .addMessage(const WhiteboardChatMessage(
+              nickname: '시스템',
+              message: '채팅방에 입장하셨습니다.',
+            ));
+        ref.read(userListStateProvider.notifier).addUser(widget.me);
+      }
     });
     if (widget.inputStream != null) {
       /// 여기서는 서버의 데이터를 받습니다.
@@ -252,6 +256,8 @@ class _MathTutorWhiteboardState extends ConsumerState<MathTutorWhiteboardImpl> {
                     onPenSelected: _onPenSelected,
                     onTapEraser: _onTapEraser,
                     onTapUndo: _onTapUndo,
+                    me: widget.me,
+                    hostID: widget.hostID,
                     onTapClear: _onTapClear,
                     onTapClose: _onTapClose,
                     onColorSelected: _onColorSelected,

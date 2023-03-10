@@ -35,9 +35,13 @@ class WhiteboardController extends ConsumerStatefulWidget {
   final void Function(WhiteboardUser user, bool allow) onMicPermissionChanged;
   final void Function(WhiteboardUser user, bool allow)
       onDrawingPermissionChanged;
+  final WhiteboardUser me;
+  final String? hostID;
 
   const WhiteboardController(
-      {required this.onMicPermissionChanged,
+      {required this.me,
+      this.hostID,
+      required this.onMicPermissionChanged,
       required this.onDrawingPermissionChanged,
       required this.drawable,
       required this.onSendChatMessage,
@@ -79,18 +83,21 @@ class _WhiteboardControllerState extends ConsumerState<WhiteboardController> {
         children: [
           SizedBox(
               width: 72 / 360 * MediaQuery.of(context).size.width,
-              child: Consumer(builder: (context, ref, child) {
-                return RecordButton(
-                  isRecording:
-                      ref.watch(recordingStateProvider).recorderState ==
-                          RecorderState.recording,
-                  onTap: widget.onTapRecord,
-                  remainingTime:
-                      ref.watch(recordingStateProvider).remainingTime,
-                );
-              })),
+              child: widget.hostID == widget.me.id
+                  ? Consumer(builder: (context, ref, child) {
+                      return RecordButton(
+                        isRecording:
+                            ref.watch(recordingStateProvider).recorderState ==
+                                RecorderState.recording,
+                        onTap: widget.onTapRecord,
+                        remainingTime:
+                            ref.watch(recordingStateProvider).remainingTime,
+                      );
+                    })
+                  : null),
           Expanded(
             child: Row(
+              mainAxisAlignment: MainAxisAlignment.end,
               children: [
                 if (widget.drawable)
                   Expanded(
@@ -253,9 +260,11 @@ class _WhiteboardControllerState extends ConsumerState<WhiteboardController> {
       context: context,
       backgroundColor: Colors.transparent,
       builder: (context) => UserListBottomSheet(
-        ref,
+        ref: ref,
         onChangeDrawPermission: widget.onDrawingPermissionChanged,
         onChangeMicPermission: widget.onMicPermissionChanged,
+        hostID: widget.hostID!,
+        me: widget.me,
       ),
       isScrollControlled: true,
     );
