@@ -73,6 +73,7 @@ class _WhiteboardViewState extends State<WhiteboardView> {
               preloadImage: const NetworkImage('https://picsum.photos/640/320'),
               me: widget.me,
               recordDuration: const Duration(minutes: 15),
+              hostID: widget.hostID,
               onAttemptToClose: () async {
                 return await showDialog(
                   context: context,
@@ -162,6 +163,7 @@ class _WhiteboardViewState extends State<WhiteboardView> {
                 if (snapshot.connectionState == ConnectionState.done) {
                   inputStream = channel.incomingStream;
                   return MathTutorWhiteBoard(
+                    hostID: widget.hostID,
                     onBeforeTimeLimitReached: () {
                       return showDialog(
                         context: context,

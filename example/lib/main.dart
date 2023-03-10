@@ -105,7 +105,9 @@ class _MyHomePageState extends State<MyHomePage> {
                   if (hostID != null && mounted) {
                     Navigator.of(context).push(MaterialPageRoute(
                       builder: (context) => WhiteboardView(
-                          mode: WhiteboardMode.liveTeaching,
+                          mode: myID == hostID
+                              ? WhiteboardMode.liveTeaching
+                              : WhiteboardMode.participant,
                           hostID: hostID,
                           me: WhiteboardUser(
                               nickname: myID,
