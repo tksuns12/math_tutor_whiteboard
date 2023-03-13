@@ -43,7 +43,8 @@ class _WhiteboardViewState extends State<WhiteboardView> {
   late final Future initFuture;
   @override
   void initState() {
-    if (widget.mode == WhiteboardMode.liveTeaching) {
+    if (widget.mode == WhiteboardMode.liveTeaching ||
+        widget.mode == WhiteboardMode.participant) {
       channel = PlatformChannelImpl();
       initFuture = (() async {
         await channel.initialize();
@@ -51,15 +52,19 @@ class _WhiteboardViewState extends State<WhiteboardView> {
             userID: widget.me.id,
             nicknamne: widget.me.id,
             ownerID: widget.hostID!);
+        if (widget.me.id == widget.hostID) {
+          await channel.turnOnMicrophone(true);
+        }
       })();
     }
     super.initState();
   }
 
   @override
-  void dispose() {
-    if (widget.mode == WhiteboardMode.liveTeaching) {
-      channel.logout();
+  Future<void> dispose() async {
+    if (widget.mode == WhiteboardMode.liveTeaching ||
+        widget.mode == WhiteboardMode.participant) {
+      await channel.logout();
     }
     super.dispose();
   }
