@@ -52,46 +52,61 @@ class PlatformChannelImpl implements MathtutorNeotechPluginPlatform {
       if (call.method == 'onServerEvent') {
         onServerEventStream.add(call.arguments);
       } else {
-        log('Unknown method: ${call.method}');
+        log('WhiteboardPlatformChannel | Unknown method: ${call.method}');
       }
     });
   }
   @override
   Future<void> changePermissionAudio(String userID) async {
-    await methodChannel.invokeMethod('changePermissionAudio', userID);
+    final reuslt =
+        await methodChannel.invokeMethod('changePermissionAudio', userID);
+    log('WhiteboardPlatformChannel | changePermissionAudio: $reuslt');
   }
 
   @override
   Future<void> changePermissionDoc(String userID) async {
-    await methodChannel.invokeMethod('changePermissionDoc', userID);
+    final result =
+        await methodChannel.invokeMethod('changePermissionDoc', userID);
+    log('WhiteboardPlatformChannel | changePermissionDoc: $result');
   }
 
   @override
   Future<bool> getPermissionAudio(String userID) async {
-    return await methodChannel.invokeMethod('getPermissionAudio', userID);
+    final result =
+        await methodChannel.invokeMethod('getPermissionAudio', userID);
+    log('WhiteboardPlatformChannel | getPermissionAudio: $result');
+    return result;
   }
 
   @override
   Future<bool> getPermissionDoc(String userID) async {
-    return await methodChannel.invokeMethod('getPermissionDoc', userID);
+    final result = await methodChannel.invokeMethod('getPermissionDoc', userID);
+    log('WhiteboardPlatformChannel | getPermissionDoc: $result');
+    return result;
   }
 
   @override
   Future<List<String>> getUserList() async {
-    return await methodChannel.invokeMethod('getUserList');
+    final result = await methodChannel.invokeMethod('getUserList');
+    log('WhiteboardPlatformChannel | getUserList: $result');
+    return result;
   }
 
   @override
-  Future<void> initialize() async {
-    await methodChannel.invokeMethod('initialize', {
+  Future<void> initialize([File? preloadImage]) async {
+    final result = await methodChannel.invokeMethod('initialize', {
       'host': serverHost,
       'port': serverPort,
+      'preloadImage': preloadImage?.path
     });
+    log('WhiteboardPlatformChannel | initialize: $result');
   }
 
   @override
   Future<bool> isMicrophoneOn() async {
-    return await methodChannel.invokeMethod('isMicrophoneOn');
+    final result = await methodChannel.invokeMethod('isMicrophoneOn');
+    log('WhiteboardPlatformChannel | isMicrophoneOn: $result');
+    return result;
   }
 
   @override
@@ -99,40 +114,48 @@ class PlatformChannelImpl implements MathtutorNeotechPluginPlatform {
       {required String userID,
       required String nicknamne,
       required String ownerID}) async {
-    await methodChannel.invokeMethod('login', {
+    final result = await methodChannel.invokeMethod('login', {
       'userID': userID,
       'nickname': nicknamne,
       'ownerID': ownerID,
     });
     this.userID = userID;
     hostID = ownerID;
+    log('WhiteboardPlatformChannel | login: $result');
   }
 
   @override
   Future<void> logout() async {
-    await methodChannel.invokeMethod('logout');
+    final result = await methodChannel.invokeMethod('logout');
+    log('WhiteboardPlatformChannel | logout: $result');
   }
 
   @override
   Future<void> sendPacket(Map data) async {
-    await methodChannel
+    final result = await methodChannel
         .invokeMethod('sendPacket', {'type': kDrawingCode, 'data': data});
+    log('WhiteboardPlatformChannel | sendPacket: $result');
   }
 
   @override
   Future<void> turnOnMicrophone(bool on) async {
-    await methodChannel.invokeMethod('turnOnMicrophone', {'on':on});
+    final result =
+        await methodChannel.invokeMethod('turnOnMicrophone', {'on': on});
+    log('WhiteboardPlatformChannel | turnOnMicrophone: $result');
   }
 
   @override
   Future<void> sendImage(File file) async {
-    await methodChannel.invokeMethod('sendImage', {'filePath':file.path});
+    final reuslt =
+        await methodChannel.invokeMethod('sendImage', {'filePath': file.path});
+    log('WhiteboardPlatformChannel | sendImage: $reuslt');
   }
 
   @override
   Future<void> sendMessage(WhiteboardChatMessage message) async {
-    await methodChannel.invokeMethod(
+    final reuslt = await methodChannel.invokeMethod(
         'sendPacket', {'type': kChatMessageCode, 'data': message.toJson()});
+    log('WhiteboardPlatformChannel | sendMessage: $reuslt');
   }
 
   @override
