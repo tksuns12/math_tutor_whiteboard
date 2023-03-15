@@ -1,5 +1,7 @@
+import 'dart:developer' as dev;
 import 'dart:math';
 
+import 'package:example/platform_channel.dart';
 import 'package:example/whiteboard_view.dart';
 import 'package:flutter/material.dart';
 import 'package:math_tutor_whiteboard/types/types.dart';
@@ -45,6 +47,13 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
+  late final PlatformChannelImpl _platformChannel;
+  @override
+  void initState() {
+    _platformChannel = PlatformChannelImpl();
+    super.initState();
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -119,7 +128,37 @@ class _MyHomePageState extends State<MyHomePage> {
                   }
                 }
               },
-              child: const Text('Realtime Mode'))
+              child: const Text('Realtime Mode')),
+          ElevatedButton(
+              onPressed: () async {
+                await _platformChannel.initialize(
+                    userID: 'owner', nickname: '튜터', ownerID: 'owner');
+              },
+              child: const Text('Force Init')),
+          ElevatedButton(
+              onPressed: () async {
+                await _platformChannel.login();
+
+                _platformChannel.incomingStream.listen((event) {
+                  dev.log(event.toString());
+                });
+              },
+              child: const Text('Force Tutor Enter')),
+          ElevatedButton(
+              onPressed: () async {
+                await _platformChannel.login();
+
+                _platformChannel.incomingStream.listen((event) {
+                  dev.log(event.toString());
+                });
+              },
+              child: const Text('Force Student Enter')),
+          ElevatedButton(
+              onPressed: () {
+                _platformChannel.sendMessage(const WhiteboardChatMessage(
+                    message: 'Test Test', nickname: 'Test'));
+              },
+              child: const Text('Force Send Data'))
         ],
       ),
     ));

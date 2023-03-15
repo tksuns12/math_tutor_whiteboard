@@ -1,4 +1,5 @@
 package com.example.example
+
 import android.os.Handler
 import android.os.Looper
 import android.os.Message
@@ -243,12 +244,42 @@ class NeotechServerHandler(
         when (msg.what) {
             EmeetplusApi.IELServerHandler.EL_MSG_REGISTRATION -> {
                 //초기화 결과
+                val result = HashMap<String, Any>()
+                if (msg.arg1 == EmeetplusApi.IELServerHandler.EL_RESULT_OK) {
+                    result["type"] = SERVER_EVENT_CODE
+                    result["data"] = "초기화 성공"
+                    eventSink.success(result)
+                } else {
+                    eventSink.error("Server: 초기화 실패", null, null)
+                }
+
             }
             EmeetplusApi.IELServerHandler.EL_MSG_LOGIN -> {
                 // 로그인 결과
-            }
+                if (msg.arg1 == EmeetplusApi.IELServerHandler.EL_RESULT_OK) {
+                    val result = HashMap<String, Any>()
+                    result["type"] = SERVER_EVENT_CODE
+                    result["data"] = msg.obj.toString() + " 로그인 성공"
+                    eventSink.success(result)
+
+
+                } else {
+                    eventSink.error("Server: 로그인 실패", null, null)
+                }
+           }
             EmeetplusApi.IELServerHandler.EL_MSG_ENTER_ROOM -> {
                 // 방입장 결과
+                if (msg.arg1 == EmeetplusApi.IELServerHandler.EL_RESULT_OK) {
+                    //강의실 입장 성공
+                    val result = HashMap<String, Any>()
+                    result["type"] = SERVER_EVENT_CODE
+                    result["data"] = msg.obj.toString() + "방입장 성공"
+                    eventSink.success(result)
+
+                } else {
+                    //강의실 입장 실패
+eventSink.error("Server: 방입장 실패", null, null)
+                }
             }
             EmeetplusApi.IELServerHandler.EL_MSG_REMOTE_ENTER_ROOM -> {
                 //상대편 방입장 이벤트
@@ -286,7 +317,8 @@ class NeotechServerHandler(
             EmeetplusApi.IELServerHandler.EL_MSG_DISCONNECTED_SERVER -> {
                 //서버와의 연결종료
                 val result = HashMap<String, Any>()
-                result["event"] = "terminated"
+                result["type"] = SERVER_EVENT_CODE
+                result["data"] = "terminated"
                 eventSink.success(result)
             }
         }

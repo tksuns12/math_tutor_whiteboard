@@ -47,10 +47,9 @@ class _WhiteboardViewState extends State<WhiteboardView> {
         widget.mode == WhiteboardMode.participant) {
       channel = PlatformChannelImpl();
       initFuture = (() async {
-        await channel.initialize();
-        await channel.login(
+        await channel.initialize(
             userID: widget.me.id,
-            nicknamne: widget.me.id,
+            nickname: widget.me.id,
             ownerID: widget.hostID!);
         if (widget.me.id == widget.hostID) {
           await channel.turnOnMicrophone(true);
@@ -62,17 +61,18 @@ class _WhiteboardViewState extends State<WhiteboardView> {
 
   @override
   Future<void> dispose() async {
+    super.dispose();
     if (widget.mode == WhiteboardMode.liveTeaching ||
         widget.mode == WhiteboardMode.participant) {
       await channel.logout();
     }
-    super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
     return Material(
-      child: widget.mode != WhiteboardMode.liveTeaching
+      child: widget.mode != WhiteboardMode.liveTeaching &&
+              widget.mode != WhiteboardMode.participant
           ? MathTutorWhiteBoard(
               mode: widget.mode,
               preloadImage: const NetworkImage('https://picsum.photos/640/320'),
@@ -209,14 +209,18 @@ class _WhiteboardViewState extends State<WhiteboardView> {
                         ),
                       );
                     },
-                    mode: WhiteboardMode.liveTeaching,
+                    mode: widget.mode,
                     preloadImage:
                         const NetworkImage('https://picsum.photos/640/320'),
                     me: widget.me,
                     inputStream: inputStream,
                     onOutput: (event) {
                       if (event is WhiteboardChatMessage) {
-                        channel.sendMessage(event);
+                        channel.sendPacket({
+                          'id': widget.me.id,
+                          'type': kChatMessageCode,
+                          'data': event.toJson(),
+                        });
                       } else if (event is File) {
                         channel.sendImage(event);
                       } else if (event is BroadcastPaintData) {

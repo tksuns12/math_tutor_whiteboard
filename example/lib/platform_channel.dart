@@ -20,11 +20,12 @@ const kUserCode = 600;
 const kPermissionCode = 700;
 
 abstract class MathtutorNeotechPluginPlatform {
-  Future<void> initialize();
-  Future<void> login(
-      {required String userID,
-      required String nicknamne,
+  Future<void> initialize(
+      {File? preloadImage,
+      required String userID,
+      required String nickname,
       required String ownerID});
+  Future<void> login();
   Future<void> logout();
   Future<void> sendPacket(Map data);
   Future<List<String>> getUserList();
@@ -45,6 +46,7 @@ class PlatformChannelImpl implements MathtutorNeotechPluginPlatform {
   final onServerEventStream = StreamController<Map>.broadcast();
   late final String userID;
   late final String hostID;
+  late final String nickname;
   final String serverHost = "demo6.gonts.net";
   final int serverPort = 27084;
   PlatformChannelImpl() {
@@ -93,13 +95,22 @@ class PlatformChannelImpl implements MathtutorNeotechPluginPlatform {
   }
 
   @override
-  Future<void> initialize([File? preloadImage]) async {
-    final result = await methodChannel.invokeMethod('initialize', {
+  Future<void> initialize(
+      {File? preloadImage,
+      required String userID,
+      required String nickname,
+      required String ownerID}) async {
+    await methodChannel.invokeMethod('initialize', {
       'host': serverHost,
       'port': serverPort,
       'preloadImage': preloadImage?.path
     });
-    log('WhiteboardPlatformChannel | initialize: $result');
+    this.userID = userID;
+    this.nickname = nickname;
+    hostID = ownerID;
+    await Future.delayed(const Duration(seconds: 1), () {
+      login();
+    });
   }
 
   @override
@@ -110,17 +121,12 @@ class PlatformChannelImpl implements MathtutorNeotechPluginPlatform {
   }
 
   @override
-  Future<void> login(
-      {required String userID,
-      required String nicknamne,
-      required String ownerID}) async {
+  Future<void> login() async {
     final result = await methodChannel.invokeMethod('login', {
       'userID': userID,
-      'nickname': nicknamne,
-      'ownerID': ownerID,
+      'nickname': nickname,
+      'ownerID': hostID,
     });
-    this.userID = userID;
-    hostID = ownerID;
     log('WhiteboardPlatformChannel | login: $result');
   }
 
@@ -154,7 +160,7 @@ class PlatformChannelImpl implements MathtutorNeotechPluginPlatform {
   @override
   Future<void> sendMessage(WhiteboardChatMessage message) async {
     final reuslt = await methodChannel.invokeMethod(
-        'sendPacket', {'type': kChatMessageCode, 'data': message.toJson()});
+        'sendPacket', {'type': kChatMessageCode, 'data': message.toMap()});
     log('WhiteboardPlatformChannel | sendMessage: $reuslt');
   }
 
@@ -180,6 +186,12 @@ class PlatformChannelImpl implements MathtutorNeotechPluginPlatform {
             return ViewportChangeEvent.fromJson(event['data']);
           case kPermissionCode:
             return PermissionChangeEvent.fromJson(event['data']);
+          case kServerEventCode:
+            log('WhiteboardPlatformChannel | kServerEventCode: $event');
+            // if (event.toString().contains('초기화 성공')) {
+            //   await login();
+            // }
+            break;
           default:
             return event;
         }

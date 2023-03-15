@@ -1,10 +1,15 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:fluttertoast/fluttertoast.dart';
 import 'package:math_tutor_whiteboard/types/types.dart';
 
 class UserListStateNotifier extends StateNotifier<List<WhiteboardUser>> {
   UserListStateNotifier() : super([]);
 
   void addUser(WhiteboardUser user) {
+    if (state.any((element) => element.id == user.id)) {
+      Fluttertoast.showToast(msg: "비정상 종료된 ${user.nickname}님이 재접속했습니다.");
+      return;
+    }
     state = [...state, user];
   }
 

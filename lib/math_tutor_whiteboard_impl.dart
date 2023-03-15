@@ -36,7 +36,8 @@ class MathTutorWhiteboardImpl extends ConsumerStatefulWidget {
   final Future<void> Function() onBeforeTimeLimitReached;
   final Future<void> Function() onTimeLimitReached;
   final String? hostID;
-  const MathTutorWhiteboardImpl({this.hostID, 
+  const MathTutorWhiteboardImpl(
+      {this.hostID,
       required this.onBeforeTimeLimitReached,
       required this.onTimeLimitReached,
       required this.onOutput,
@@ -312,7 +313,7 @@ class _MathTutorWhiteboardState extends ConsumerState<MathTutorWhiteboardImpl> {
   void broadcast(bool remove, DrawingData data) {}
 
   void _onStartDrawing() {
-    if (penType != PenType.strokeEraser && drawable) {
+    if (penType != PenType.strokeEraser) {
       drawingData.add([]);
       limitCursor++;
     }
@@ -509,68 +510,66 @@ class _MathTutorWhiteboardState extends ConsumerState<MathTutorWhiteboardImpl> {
   }
 
   void _draw(PointerEvent event) {
-    if (drawable) {
-      setState(() {
-        if (penType == PenType.penEraser) {
-          // 펜 지우개 모드일 때에는 그냥 흰색으로 똑같이 그려줍니다.
-          drawingData.last.add(DrawingData(
-              point: Point(event.localPosition.dx, event.localPosition.dy),
-              color: Colors.white,
-              penType: penType,
-              strokeWidth: strokeWidth));
-          widget.onOutput?.call(BroadcastPaintData(
-              drawingData: drawingData.last.last,
-              command: BroadcastCommand.draw,
-              limitCursor: limitCursor,
-              boardSize: boardSize));
-        } else if (penType == PenType.strokeEraser) {
-          /// 선지우기 모드일 때에는 좌표가 해당 선을 스칠 때 선을 통째로 지웁니다.
-          /// 지우는 방식은 undo와 redo를 위해서 실제로 지우지 않습니다.
-          /// 대신 [deletedStrokes] 라는 [Map]에 key-value로 {지워진 cursor}-{지워진 stroke의 index}를 저장합니다.
-          /// 그리고 limitCursor의 정합성을 위해 [limitCursor]를 1 증가시키면서 drawingData에는 빈 스트로크를 채워줍니다.
-          /// 그러나 deletedStrokes에 이미 지워진 stroke의 index가 있으면 지우지 않습니다.
-          /// 또한 흰색은 펜 지우개 모드가 아니면 선택할 수가 없는 색상이므로
-          /// 흰색은 지우개 모드에서 그린 선으로 간주하고 지우지 않습니다.
-          for (int i = 0; i < drawingData.length; i++) {
-            for (int j = 0; j < drawingData[i].length; j++) {
-              if (deletedStrokes.containsValue(i) ||
-                  drawingData[i][j].color == Colors.white) {
-                continue;
-              }
-              final distance = sqrt(pow(
-                      drawingData[i][j].point.x - event.localPosition.dx, 2) +
-                  pow(drawingData[i][j].point.y - event.localPosition.dy, 2));
-              if (distance < strokeWidth) {
-                widget.onOutput?.call(BroadcastPaintData(
-                    drawingData: null,
-                    command: BroadcastCommand.removeStroke,
-                    limitCursor: limitCursor,
-                    boardSize: boardSize,
-                    removeStrokeIndex: i));
+    setState(() {
+      if (penType == PenType.penEraser) {
+        // 펜 지우개 모드일 때에는 그냥 흰색으로 똑같이 그려줍니다.
+        drawingData.last.add(DrawingData(
+            point: Point(event.localPosition.dx, event.localPosition.dy),
+            color: Colors.white,
+            penType: penType,
+            strokeWidth: strokeWidth));
+        widget.onOutput?.call(BroadcastPaintData(
+            drawingData: drawingData.last.last,
+            command: BroadcastCommand.draw,
+            limitCursor: limitCursor,
+            boardSize: boardSize));
+      } else if (penType == PenType.strokeEraser) {
+        /// 선지우기 모드일 때에는 좌표가 해당 선을 스칠 때 선을 통째로 지웁니다.
+        /// 지우는 방식은 undo와 redo를 위해서 실제로 지우지 않습니다.
+        /// 대신 [deletedStrokes] 라는 [Map]에 key-value로 {지워진 cursor}-{지워진 stroke의 index}를 저장합니다.
+        /// 그리고 limitCursor의 정합성을 위해 [limitCursor]를 1 증가시키면서 drawingData에는 빈 스트로크를 채워줍니다.
+        /// 그러나 deletedStrokes에 이미 지워진 stroke의 index가 있으면 지우지 않습니다.
+        /// 또한 흰색은 펜 지우개 모드가 아니면 선택할 수가 없는 색상이므로
+        /// 흰색은 지우개 모드에서 그린 선으로 간주하고 지우지 않습니다.
+        for (int i = 0; i < drawingData.length; i++) {
+          for (int j = 0; j < drawingData[i].length; j++) {
+            if (deletedStrokes.containsValue(i) ||
+                drawingData[i][j].color == Colors.white) {
+              continue;
+            }
+            final distance = sqrt(
+                pow(drawingData[i][j].point.x - event.localPosition.dx, 2) +
+                    pow(drawingData[i][j].point.y - event.localPosition.dy, 2));
+            if (distance < strokeWidth) {
+              widget.onOutput?.call(BroadcastPaintData(
+                  drawingData: null,
+                  command: BroadcastCommand.removeStroke,
+                  limitCursor: limitCursor,
+                  boardSize: boardSize,
+                  removeStrokeIndex: i));
 
-                setState(() {
-                  drawingData.add([]);
-                  deletedStrokes[++limitCursor] = i;
-                  log('Stroke Erased: $i, $limitCursor');
-                });
-              }
+              setState(() {
+                drawingData.add([]);
+                deletedStrokes[++limitCursor] = i;
+                log('Stroke Erased: $i, $limitCursor');
+              });
             }
           }
-        } else {
-          drawingData.last.add(DrawingData(
-              point: Point(event.localPosition.dx, event.localPosition.dy,
-                  penType == PenType.pen ? event.pressure : 0.5),
-              color: color,
-              penType: penType,
-              strokeWidth: strokeWidth));
-          widget.onOutput?.call(BroadcastPaintData(
-              drawingData: drawingData.last.last,
-              boardSize: boardSize,
-              command: BroadcastCommand.draw,
-              limitCursor: limitCursor));
         }
-      });
-    }
+      } else {
+        drawingData.last.add(DrawingData(
+            point: Point(event.localPosition.dx, event.localPosition.dy,
+                penType == PenType.pen ? event.pressure : 0.5),
+            color: color,
+            penType: penType,
+            strokeWidth: strokeWidth));
+        widget.onOutput?.call(BroadcastPaintData(
+            drawingData: drawingData.last.last,
+            boardSize: boardSize,
+            command: BroadcastCommand.draw,
+            limitCursor: limitCursor));
+      }
+    });
   }
 
   Future<void> _onLoadImage(ui.Image uiImage) async {
@@ -591,10 +590,8 @@ class _MathTutorWhiteboardState extends ConsumerState<MathTutorWhiteboardImpl> {
   }
 
   void _onViewportChange(Matrix4 matrix) {
-    if (drawable) {
-      widget.onOutput
-          ?.call(ViewportChangeEvent(matrix: matrix, boardSize: boardSize));
-    }
+    widget.onOutput
+        ?.call(ViewportChangeEvent(matrix: matrix, boardSize: boardSize));
   }
 
   void _onSendChatMessage(String message) {
@@ -709,29 +706,35 @@ class _WhiteBoardState extends State<_WhiteBoard> {
           builder: (BuildContext context, Quad viewport) {
             return Listener(
               onPointerDown: (event) {
-                pointers.add(event.pointer);
-                if (pointers.length > 1) {
-                  setState(() {
-                    panMode = true;
-                  });
+                if (widget.drawable) {
+                  pointers.add(event.pointer);
+                  if (pointers.length > 1) {
+                    setState(() {
+                      panMode = true;
+                    });
+                  }
+                  if (panMode) {
+                    return;
+                  }
+                  widget.onStartDrawing();
                 }
-                if (panMode) {
-                  return;
-                }
-                widget.onStartDrawing();
               },
               onPointerMove: (event) {
-                if (panMode) {
-                  return;
+                if (widget.drawable) {
+                  if (panMode) {
+                    return;
+                  }
+                  widget.onDrawing(event);
                 }
-                widget.onDrawing(event);
               },
               onPointerUp: (event) {
-                pointers.clear();
-                if (panMode) {
-                  return;
+                if (widget.drawable) {
+                  pointers.clear();
+                  if (panMode) {
+                    return;
+                  }
+                  widget.onEndDrawing(event);
                 }
-                widget.onEndDrawing(event);
               },
               child: SizedBox(
                 height: MediaQuery.of(context).size.height * 4,
