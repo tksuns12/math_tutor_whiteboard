@@ -71,6 +71,7 @@ class _MathTutorWhiteboardState extends ConsumerState<MathTutorWhiteboardImpl> {
   StreamSubscription<UserEvent>? _userStreamSubscription;
   StreamSubscription<ViewportChangeEvent>? _viewportChangeStreamSubscription;
   StreamSubscription<PermissionChangeEvent>? _authorityChangeStreamSubscription;
+  StreamSubscription<InitialUserListEvent>? _initialUserListStreamSubscription;
   final transformationController = TransformationController();
   late final Size boardSize;
   ImageProvider? image;
@@ -160,6 +161,12 @@ class _MathTutorWhiteboardState extends ConsumerState<MathTutorWhiteboardImpl> {
             drawable = event.drawing!;
           });
         }
+      });
+      _initialUserListStreamSubscription = widget.inputStream
+          ?.where((event) => event is InitialUserListEvent)
+          .map((event) => event as InitialUserListEvent)
+          .listen((event) {
+        ref.read(userListStateProvider.notifier).refreshUsers(event.users);
       });
     }
     super.initState();

@@ -32,6 +32,10 @@ class UserListStateNotifier extends StateNotifier<List<WhiteboardUser>> {
       return element;
     }).toList();
   }
+
+  void refreshUsers(List<WhiteboardUser> users) {
+    state = users;
+  }
 }
 
 final userListStateProvider =

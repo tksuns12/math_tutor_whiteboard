@@ -391,3 +391,14 @@ class PermissionChangeEvent extends Equatable {
   factory PermissionChangeEvent.fromJson(String source) =>
       PermissionChangeEvent.fromMap(json.decode(source));
 }
+
+class InitialUserListEvent extends Equatable {
+  final List<WhiteboardUser> users;
+
+  const InitialUserListEvent({
+    required this.users,
+  });
+
+  @override
+  List<Object> get props => [users];
+}
