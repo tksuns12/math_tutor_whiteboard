@@ -58,16 +58,7 @@ class _WhiteboardViewState extends State<WhiteboardView> {
     }
     super.initState();
   }
-
-  @override
-  Future<void> dispose() async {
-    super.dispose();
-    if (widget.mode == WhiteboardMode.liveTeaching ||
-        widget.mode == WhiteboardMode.participant) {
-      await channel.logout();
-    }
-  }
-
+  
   @override
   Widget build(BuildContext context) {
     return Material(

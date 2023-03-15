@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:convert';
 import 'dart:developer';
 import 'dart:io';
 
@@ -28,7 +29,7 @@ abstract class MathtutorNeotechPluginPlatform {
   Future<void> login();
   Future<void> logout();
   Future<void> sendPacket(Map data);
-  Future<List<String>> getUserList();
+  Future<Map> getUserList();
   Future<void> changePermissionAudio(String userID);
   Future<bool> getPermissionAudio(String userID);
   Future<void> changePermissionDoc(String userID);
@@ -88,7 +89,7 @@ class PlatformChannelImpl implements MathtutorNeotechPluginPlatform {
   }
 
   @override
-  Future<List<String>> getUserList() async {
+  Future<Map> getUserList() async {
     final result = await methodChannel.invokeMethod('getUserList');
     log('WhiteboardPlatformChannel | getUserList: $result');
     return result;
@@ -175,22 +176,33 @@ class PlatformChannelImpl implements MathtutorNeotechPluginPlatform {
           case kDrawingCode:
             return BroadcastPaintData.fromJson(event['data']);
           case kUserCode:
+            final data = jsonDecode(event['data']);
             final user = WhiteboardUser(
-                nickname: event['data'],
-                micEnabled: true,
-                drawingEnabled: false,
+                nickname: data['nickname'],
+                micEnabled: data['isAudioOn'] ?? false,
+                drawingEnabled: data['isDocOn'] ?? false,
                 id: '',
-                isHost: true);
-            return UserEvent(user: user, isJoin: event['isEnter']);
+                isHost: data['nickname'] == nickname);
+            return UserEvent(user: user, isJoin: data['isEnter']);
           case kViewportCode:
             return ViewportChangeEvent.fromJson(event['data']);
           case kPermissionCode:
             return PermissionChangeEvent.fromJson(event['data']);
           case kServerEventCode:
             log('WhiteboardPlatformChannel | kServerEventCode: $event');
-            // if (event.toString().contains('초기화 성공')) {
-            //   await login();
-            // }
+            if (event.toString().contains('방입장 성공')) {
+              final userList = await getUserList();
+              final users = jsonDecode(userList['data']);
+              return InitialUserListEvent(
+                  users: users
+                      .map<WhiteboardUser>((e) => WhiteboardUser(
+                          nickname: e['nickname'],
+                          micEnabled: e['isAudioOn'] ?? false,
+                          drawingEnabled: e['isDocOn'] ?? false,
+                          id: '',
+                          isHost: e['nickname'] == nickname))
+                      .toList());
+            }
             break;
           default:
             return event;

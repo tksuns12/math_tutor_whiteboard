@@ -1,5 +1,8 @@
 package com.example.example
 
+import android.app.Activity
+import android.app.Application.ActivityLifecycleCallbacks
+import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
 import android.os.Message
@@ -65,6 +68,7 @@ class MainActivity : FlutterActivity(), MethodChannel.MethodCallHandler,
                 try {
                     holdingFilePath = call.argument("preloadImage")
                     neotechServerHandler = ELServerHandler()
+                    registerActivityLifecycleCallbacks(AppLifecycleObserver(neotechServerHandler))
                     neotechServerHandler.initial(this)
                     neotechServerHandler.setDownloadDir(getDownloadDir())
                     neotechServerHandler.setServerInfo(
@@ -112,8 +116,20 @@ class MainActivity : FlutterActivity(), MethodChannel.MethodCallHandler,
             }
             "getUserList" -> {
                 try {
+                    val res = HashMap<String, Any>()
+                    val data = mutableListOf<HashMap<String, Any>>()
                     val userList = neotechServerHandler.userList
-                    result.success(userList)
+                    for (user in userList) {
+                        val userMap = HashMap<String, Any>()
+                        userMap["nickname"] = user
+                        userMap["isAudioOn"] = neotechServerHandler.getPermissionAudio(user)
+                        userMap["isDocOn"] = neotechServerHandler.getPermissionDoc(user)
+                        data.add(userMap)
+                    }
+                    val gson = Gson()
+                    val stringified = gson.toJson(data)
+                    res["data"] = stringified
+                    result.success(res)
                 } catch (e: Exception) {
                     result.error("Failed to get user list ", e.message, e)
                 }
@@ -283,10 +299,17 @@ eventSink.error("Server: 방입장 실패", null, null)
             }
             EmeetplusApi.IELServerHandler.EL_MSG_REMOTE_ENTER_ROOM -> {
                 //상대편 방입장 이벤트
+                
                 val result = HashMap<String, Any>()
+                val data = HashMap<String, Any>()
                 result["type"] = USER_CODE
-                result["isEnter"] = true
-                result["data"] = msg.obj.toString()
+                data["isEnter"] = true
+                data["nickname"]=msg.obj.toString()
+                data["isAudioOn"] = serverHandler.getPermissionAudio(msg.obj.toString())
+                data["isDocOn"] = serverHandler.getPermissionDoc(msg.obj.toString())
+                val gson = Gson()
+                val json = gson.toJson(data)
+                result["data"] = json
                 onUserEntered()
 
                 eventSink.success(result)
@@ -294,9 +317,13 @@ eventSink.error("Server: 방입장 실패", null, null)
             EmeetplusApi.IELServerHandler.EL_MSG_REMOTE_EXIT_ROOM -> {
                 //상대편 방퇴장 이벤트
                 val result = HashMap<String, Any>()
+                val data = HashMap<String, Any>()
                 result["type"] = USER_CODE
-                result["isEnter"] = false
-                result["data"] = msg.obj.toString()
+                data["isEnter"] = false
+                data["nickname"]=msg.obj.toString()
+                val gson = Gson()
+                val json = gson.toJson(data)
+                result["data"] = json
                 eventSink.success(result)
             }
             EmeetplusApi.IELServerHandler.EL_MSG_OVERLAPPED_USER_ID -> {
@@ -362,4 +389,35 @@ class OnFileTransferListenerImpl(
 
     }
 
+}
+
+class AppLifecycleObserver(private val serverHandler: ELServerHandler,) : ActivityLifecycleCallbacks {
+
+    override fun onActivityCreated(activity: Activity, savedInstanceState: Bundle?) {
+        TODO("Not yet implemented")
+    }
+
+    override fun onActivityStarted(activity: Activity) {
+        TODO("Not yet implemented")
+    }
+
+    override fun onActivityResumed(activity: Activity) {
+        TODO("Not yet implemented")
+    }
+
+    override fun onActivityPaused(activity: Activity) {
+        TODO("Not yet implemented")
+    }
+
+    override fun onActivityStopped(activity: Activity) {
+        TODO("Not yet implemented")
+    }
+
+    override fun onActivitySaveInstanceState(activity: Activity, outState: Bundle) {
+        TODO("Not yet implemented")
+    }
+
+    override fun onActivityDestroyed(activity: Activity) {
+        serverHandler.logout()
+    }
 }
