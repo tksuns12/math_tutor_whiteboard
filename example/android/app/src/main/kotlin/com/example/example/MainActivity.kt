@@ -68,7 +68,7 @@ class MainActivity : FlutterActivity(), MethodChannel.MethodCallHandler,
                 try {
                     holdingFilePath = call.argument("preloadImage")
                     neotechServerHandler = ELServerHandler()
-                    registerActivityLifecycleCallbacks(AppLifecycleObserver(neotechServerHandler))
+                    application.registerActivityLifecycleCallbacks(AppLifecycleObserver(neotechServerHandler))
                     neotechServerHandler.initial(this)
                     neotechServerHandler.setDownloadDir(getDownloadDir())
                     neotechServerHandler.setServerInfo(
