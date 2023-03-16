@@ -114,6 +114,9 @@ class _WhiteboardViewState extends State<WhiteboardView> {
               onOutput: (data) {},
               onRecordingEvent: (RecordingEvent event) {
                 log(event.toString());
+                if (event is RecordingFinished) {
+                  Navigator.of(context).pop();
+                }
               },
               onBeforeTimeLimitReached: () {
                 return showDialog(
@@ -239,7 +242,11 @@ class _WhiteboardViewState extends State<WhiteboardView> {
                         throw UnimplementedError();
                       }
                     },
-                    onRecordingEvent: (event) {},
+                    onRecordingEvent: (event) {
+                      if (event is RecordingFinished) {
+                        Navigator.of(context).pop();
+                      }
+                    },
                     onAttemptToClose: () async {
                       if (kDebugMode) {
                         print('onAttemptToClose');
