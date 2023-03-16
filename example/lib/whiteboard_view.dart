@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:developer';
 import 'dart:io';
 
 import 'package:example/platform_channel.dart';
@@ -58,7 +59,7 @@ class _WhiteboardViewState extends State<WhiteboardView> {
     }
     super.initState();
   }
-  
+
   @override
   Widget build(BuildContext context) {
     return Material(
@@ -111,7 +112,9 @@ class _WhiteboardViewState extends State<WhiteboardView> {
                 );
               },
               onOutput: (data) {},
-              onRecordingEvent: (RecordingEvent event) {},
+              onRecordingEvent: (RecordingEvent event) {
+                log(event.toString());
+              },
               onBeforeTimeLimitReached: () {
                 return showDialog(
                   context: context,
