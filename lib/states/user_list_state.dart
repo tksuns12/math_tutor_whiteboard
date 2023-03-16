@@ -39,5 +39,5 @@ class UserListStateNotifier extends StateNotifier<List<WhiteboardUser>> {
 }
 
 final userListStateProvider =
-    StateNotifierProvider<UserListStateNotifier, List<WhiteboardUser>>(
+    AutoDisposeStateNotifierProvider<UserListStateNotifier, List<WhiteboardUser>>(
         (ref) => UserListStateNotifier());

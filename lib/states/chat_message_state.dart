@@ -16,5 +16,5 @@ class ChatMessageStateNotifier
   }
 }
 
-final chatMessageStateProvider = StateNotifierProvider<ChatMessageStateNotifier,
+final chatMessageStateProvider = AutoDisposeStateNotifierProvider<ChatMessageStateNotifier,
     List<WhiteboardChatMessage>>((ref) => ChatMessageStateNotifier());
