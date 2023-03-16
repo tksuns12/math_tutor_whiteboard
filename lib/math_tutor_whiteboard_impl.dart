@@ -172,6 +172,8 @@ class _MathTutorWhiteboardState extends ConsumerState<MathTutorWhiteboardImpl> {
     super.initState();
   }
 
+  
+
   void _inputDrawingStreamListener(BroadcastPaintData event) {
     /// Command가 clear면 모든 데이터를 지웁니다.
     if (event.command == BroadcastCommand.clear) {
@@ -240,6 +242,7 @@ class _MathTutorWhiteboardState extends ConsumerState<MathTutorWhiteboardImpl> {
     _inputChatStreamSubscription?.cancel();
     _viewportChangeStreamSubscription?.cancel();
     _authorityChangeStreamSubscription?.cancel();
+    _initialUserListStreamSubscription?.cancel();
 
     transformationController.dispose();
     super.dispose();
