@@ -172,8 +172,6 @@ class _MathTutorWhiteboardState extends ConsumerState<MathTutorWhiteboardImpl> {
     super.initState();
   }
 
-  
-
   void _inputDrawingStreamListener(BroadcastPaintData event) {
     /// Command가 clear면 모든 데이터를 지웁니다.
     if (event.command == BroadcastCommand.clear) {
@@ -346,7 +344,7 @@ class _MathTutorWhiteboardState extends ConsumerState<MathTutorWhiteboardImpl> {
       if (result) {
         if (ref.read(recordingStateProvider).recorderState ==
             RecorderState.recording) {
-          await _cancelRecording();
+          _cancelRecording();
         }
         return true;
       } else {
@@ -469,8 +467,8 @@ class _MathTutorWhiteboardState extends ConsumerState<MathTutorWhiteboardImpl> {
     }
   }
 
-  void _pauseRecorder() {
-    screenRecorder.pauseRecord();
+  Future<void> _pauseRecorder() async {
+    await screenRecorder.pauseRecord();
     ref.read(recordingStateProvider.notifier).pauseRecording();
     timer?.cancel();
     widget.onRecordingEvent(const RecordingEvent.pause());

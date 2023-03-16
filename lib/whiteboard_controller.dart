@@ -83,7 +83,7 @@ class _WhiteboardControllerState extends ConsumerState<WhiteboardController> {
         children: [
           SizedBox(
               width: 72 / 360 * MediaQuery.of(context).size.width,
-              child: widget.hostID == widget.me.id
+              child: !widget.isLive || widget.hostID == widget.me.id
                   ? Consumer(builder: (context, ref, child) {
                       return RecordButton(
                         isRecording:
