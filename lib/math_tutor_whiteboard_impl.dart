@@ -483,9 +483,6 @@ class _MathTutorWhiteboardState extends ConsumerState<MathTutorWhiteboardImpl> {
         widget.onRecordingEvent(RecordingEvent.finished(res['file']));
       },
     );
-    if (context.mounted) {
-      Navigator.of(context).pop();
-    }
   }
 
   Future<void> _startRecording() async {
