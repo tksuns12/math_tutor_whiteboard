@@ -111,6 +111,10 @@ class _MathTutorWhiteboardState extends ConsumerState<MathTutorWhiteboardImpl> {
       }
     });
     if (widget.inputStream != null) {
+      widget.inputStream?.listen((event) {
+        log('Whiteboard Received Event: $event');
+      });
+
       /// 여기서는 서버의 데이터를 받습니다.
       _inputDrawingStreamSubscription = widget.inputStream
           ?.where((event) => event is BroadcastPaintData)
