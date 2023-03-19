@@ -36,8 +36,10 @@ class MathTutorWhiteboardImpl extends ConsumerStatefulWidget {
   final Future<void> Function() onBeforeTimeLimitReached;
   final Future<void> Function() onTimeLimitReached;
   final String? hostID;
+  final Future<InitialUserListEvent> Function()? onGetInitialUserList;
   const MathTutorWhiteboardImpl(
-      {this.hostID,
+      {required this.onGetInitialUserList,
+      this.hostID,
       required this.onBeforeTimeLimitReached,
       required this.onTimeLimitReached,
       required this.onOutput,
@@ -71,7 +73,6 @@ class _MathTutorWhiteboardState extends ConsumerState<MathTutorWhiteboardImpl> {
   StreamSubscription<UserEvent>? _userStreamSubscription;
   StreamSubscription<ViewportChangeEvent>? _viewportChangeStreamSubscription;
   StreamSubscription<PermissionChangeEvent>? _authorityChangeStreamSubscription;
-  StreamSubscription<InitialUserListEvent>? _initialUserListStreamSubscription;
   final transformationController = TransformationController();
   late final Size boardSize;
   ImageProvider? image;
@@ -166,12 +167,7 @@ class _MathTutorWhiteboardState extends ConsumerState<MathTutorWhiteboardImpl> {
           });
         }
       });
-      _initialUserListStreamSubscription = widget.inputStream
-          ?.where((event) => event is InitialUserListEvent)
-          .map((event) => event as InitialUserListEvent)
-          .listen((event) {
-        ref.read(userListStateProvider.notifier).refreshUsers(event.users);
-      });
+      widget.onGetInitialUserList?.call();
     }
     super.initState();
   }
@@ -244,7 +240,6 @@ class _MathTutorWhiteboardState extends ConsumerState<MathTutorWhiteboardImpl> {
     _inputChatStreamSubscription?.cancel();
     _viewportChangeStreamSubscription?.cancel();
     _authorityChangeStreamSubscription?.cancel();
-    _initialUserListStreamSubscription?.cancel();
 
     transformationController.dispose();
     super.dispose();

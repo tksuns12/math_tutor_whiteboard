@@ -20,6 +20,7 @@ class MathTutorWhiteBoard extends StatelessWidget {
   final Future<void> Function() onBeforeTimeLimitReached;
   final Future<void> Function() onTimeLimitReached;
   final String? hostID;
+  final Future<InitialUserListEvent> Function()? onGetInitialUserList;
   const MathTutorWhiteBoard({
     Key? key,
     this.preloadImage,
@@ -32,7 +33,7 @@ class MathTutorWhiteBoard extends StatelessWidget {
     required this.onOutput,
     required this.onRecordingEvent,
     required this.onBeforeTimeLimitReached,
-    required this.onTimeLimitReached, this.hostID,
+    required this.onTimeLimitReached, this.hostID, this.onGetInitialUserList,
   }) : super(key: key);
 
   @override
@@ -45,7 +46,7 @@ class MathTutorWhiteBoard extends StatelessWidget {
             onRecordingEvent: onRecordingEvent,
             hostID: hostID,
             preloadImage: preloadImage,
-            recordDuration: recordDuration,
+            recordDuration: recordDuration,onGetInitialUserList: onGetInitialUserList,
             mode: mode,
             me: me,
             inputStream: inputStream,
