@@ -505,7 +505,7 @@ class _MathTutorWhiteboardState extends ConsumerState<MathTutorWhiteboardImpl> {
           ref.read(recordingStateProvider.notifier).tick();
           if (ref.read(recordingStateProvider).remainingTime == 0) {
             _pauseRecorder();
-            widget.onBeforeTimeLimitReached().then((value) {
+            widget.onTimeLimitReached().then((value) {
               _stopRecording();
             });
           } else if (ref.read(recordingStateProvider).remainingTime == 60 * 5) {
