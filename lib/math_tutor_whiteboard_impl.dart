@@ -457,6 +457,9 @@ class _MathTutorWhiteboardState extends ConsumerState<MathTutorWhiteboardImpl> {
         final result = await widget.onAttemptToCompleteRecording();
         if (result == true) {
           _stopRecording();
+        } else {
+          screenRecorder.resumeRecord();
+          ref.read(recordingStateProvider.notifier).startRecording();
         }
         break;
       case RecorderState.paused:
