@@ -490,11 +490,10 @@ class _MathTutorWhiteboardState extends ConsumerState<MathTutorWhiteboardImpl> {
     final notificationPermission = await Permission.notification.request();
     if (micPermission.isGranted && notificationPermission.isGranted) {
       log('Permission granted');
-      await ref.read(recordingStateProvider.notifier).doAsync(() async =>
-          await screenRecorder.startRecordScreen(
-              fileName: 'math_record_temp',
-              audioEnable: true,
-              dirPathToSave: (await getTemporaryDirectory()).path));
+      await screenRecorder.startRecordScreen(
+          fileName: 'math_record_temp',
+          audioEnable: true,
+          dirPathToSave: (await getTemporaryDirectory()).path);
       widget.onRecordingEvent(const RecordingEvent.recording());
       log('start recording');
       ref.read(recordingStateProvider.notifier).startRecording();
