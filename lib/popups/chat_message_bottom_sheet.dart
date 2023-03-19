@@ -3,17 +3,16 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:math_tutor_whiteboard/states/chat_message_state.dart';
 import 'package:math_tutor_whiteboard/types/types.dart';
 
-class ChatMessageBottomSheet extends StatefulWidget {
+class ChatMessageBottomSheet extends ConsumerStatefulWidget {
   final void Function(String message) onSend;
-  final WidgetRef ref;
-  const ChatMessageBottomSheet({required this.ref, super.key, required this.onSend});
+  const ChatMessageBottomSheet({super.key, required this.onSend});
 
   @override
-  State<ChatMessageBottomSheet> createState() =>
+  ConsumerState<ChatMessageBottomSheet> createState() =>
       _ChatMessageBottomSheetState();
 }
 
-class _ChatMessageBottomSheetState extends State<ChatMessageBottomSheet>
+class _ChatMessageBottomSheetState extends ConsumerState<ChatMessageBottomSheet>
     with WidgetsBindingObserver {
   var chatMessages = <WhiteboardChatMessage>[];
   final scrollContrller = ScrollController();
@@ -55,7 +54,7 @@ class _ChatMessageBottomSheetState extends State<ChatMessageBottomSheet>
 
   @override
   void didChangeDependencies() {
-    chatMessages = widget.ref.watch(chatMessageStateProvider);
+    chatMessages = ref.watch(chatMessageStateProvider);
     if (isViewAttached) {
       if (scrollContrller.position.maxScrollExtent - scrollContrller.offset <=
           50) {

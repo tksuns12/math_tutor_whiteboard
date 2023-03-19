@@ -259,12 +259,14 @@ class _WhiteboardControllerState extends ConsumerState<WhiteboardController> {
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.transparent,
-      builder: (context) => UserListBottomSheet(
-        ref: ref,
-        onChangeDrawPermission: widget.onDrawingPermissionChanged,
-        onChangeMicPermission: widget.onMicPermissionChanged,
-        hostID: widget.hostID!,
-        me: widget.me,
+      builder: (c) => ProviderScope(
+        parent: ProviderScope.containerOf(context),
+        child: UserListBottomSheet(
+          onChangeDrawPermission: widget.onDrawingPermissionChanged,
+          onChangeMicPermission: widget.onMicPermissionChanged,
+          hostID: widget.hostID!,
+          me: widget.me,
+        ),
       ),
       isScrollControlled: true,
     );
@@ -274,9 +276,11 @@ class _WhiteboardControllerState extends ConsumerState<WhiteboardController> {
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.transparent,
-      builder: (context) => ChatMessageBottomSheet(
-        onSend: widget.onSendChatMessage,
-        ref: ref,
+      builder: (c) => ProviderScope(
+        parent: ProviderScope.containerOf(context),
+        child: ChatMessageBottomSheet(
+          onSend: widget.onSendChatMessage,
+        ),
       ),
       isScrollControlled: true,
     );

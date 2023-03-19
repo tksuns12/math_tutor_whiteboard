@@ -5,8 +5,7 @@ import 'package:flutter_svg/svg.dart';
 import 'package:math_tutor_whiteboard/states/user_list_state.dart';
 import 'package:math_tutor_whiteboard/types/types.dart';
 
-class UserListBottomSheet extends StatefulWidget {
-  final WidgetRef ref;
+class UserListBottomSheet extends ConsumerStatefulWidget {
   final WhiteboardUser me;
   final String hostID;
   final void Function(WhiteboardUser user, bool allow) onChangeDrawPermission;
@@ -16,19 +15,19 @@ class UserListBottomSheet extends StatefulWidget {
       required this.onChangeDrawPermission,
       required this.onChangeMicPermission,
       required this.me,
-      required this.hostID,
-      required this.ref});
+      required this.hostID});
 
   @override
-  State<UserListBottomSheet> createState() => _UserListBottomSheetState();
+  ConsumerState<UserListBottomSheet> createState() =>
+      _UserListBottomSheetState();
 }
 
-class _UserListBottomSheetState extends State<UserListBottomSheet> {
+class _UserListBottomSheetState extends ConsumerState<UserListBottomSheet> {
   List<WhiteboardUser> userList = [];
 
   @override
   void didChangeDependencies() {
-    userList = widget.ref.watch(userListStateProvider);
+    userList = ref.watch(userListStateProvider);
     super.didChangeDependencies();
   }
 
