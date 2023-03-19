@@ -61,6 +61,15 @@ class _WhiteboardViewState extends State<WhiteboardView> {
   }
 
   @override
+  void dispose() {
+    if (widget.mode == WhiteboardMode.liveTeaching ||
+        widget.mode == WhiteboardMode.participant) {
+      channel.logout();
+    }
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Material(
       child: widget.mode != WhiteboardMode.liveTeaching &&

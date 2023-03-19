@@ -47,12 +47,6 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
-  late final PlatformChannelImpl _platformChannel;
-  @override
-  void initState() {
-    _platformChannel = PlatformChannelImpl();
-    super.initState();
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -77,88 +71,34 @@ class _MyHomePageState extends State<MyHomePage> {
               child: const Text('Record Mode')),
           ElevatedButton(
               onPressed: () async {
-                // Ask my id and host id first
-                final myID = await showDialog(
-                    context: context,
-                    builder: (context) {
-                      String id = '';
-                      return AlertDialog(
-                        title: const Text('Enter your id'),
-                        content: TextField(onChanged: (value) => id = value),
-                        actions: [
-                          TextButton(
-                            onPressed: () => Navigator.pop(context, id),
-                            child: const Text('OK'),
-                          ),
-                        ],
-                      );
-                    });
-                if (myID != null && mounted) {
-                  final hostID = await showDialog(
-                      context: context,
-                      builder: (context) {
-                        String id = '';
-                        return AlertDialog(
-                          title: const Text('host id'),
-                          content: TextField(
-                            onChanged: (value) => id = value,
-                          ),
-                          actions: [
-                            TextButton(
-                              onPressed: () => Navigator.pop(context, id),
-                              child: const Text('OK'),
-                            ),
-                          ],
-                        );
-                      });
-                  if (hostID != null && mounted) {
-                    Navigator.of(context).push(MaterialPageRoute(
-                      builder: (context) => WhiteboardView(
-                          mode: myID == hostID
-                              ? WhiteboardMode.liveTeaching
-                              : WhiteboardMode.participant,
-                          hostID: hostID,
-                          me: WhiteboardUser(
-                              nickname: myID,
-                              isHost: myID == hostID,
-                              micEnabled: true,
-                              drawingEnabled: true,
-                              id: myID)),
-                    ));
-                  }
-                }
+                Navigator.of(context).push(MaterialPageRoute(
+                  builder: (context) => const WhiteboardView(
+                      mode: WhiteboardMode.liveTeaching,
+                      hostID: 'tutor119',
+                      me: WhiteboardUser(
+                          nickname: '튜터',
+                          isHost: true,
+                          micEnabled: true,
+                          drawingEnabled: true,
+                          id: 'tutor119')),
+                ));
               },
-              child: const Text('Realtime Mode')),
+              child: const Text('Realtime Mode as Tutor')),
           ElevatedButton(
               onPressed: () async {
-                await _platformChannel.initialize(
-                    userID: 'owner', nickname: '튜터', ownerID: 'owner');
+                Navigator.of(context).push(MaterialPageRoute(
+                  builder: (context) => const WhiteboardView(
+                      mode: WhiteboardMode.participant,
+                      hostID: 'tutor119',
+                      me: WhiteboardUser(
+                          nickname: '학생',
+                          isHost: true,
+                          micEnabled: true,
+                          drawingEnabled: true,
+                          id: 'student119')),
+                ));
               },
-              child: const Text('Force Init')),
-          ElevatedButton(
-              onPressed: () async {
-                await _platformChannel.login();
-
-                _platformChannel.incomingStream.listen((event) {
-                  dev.log(event.toString());
-                });
-              },
-              child: const Text('Force Tutor Enter')),
-          ElevatedButton(
-              onPressed: () async {
-                await _platformChannel.login();
-
-                _platformChannel.incomingStream.listen((event) {
-                  dev.log(event.toString());
-                });
-              },
-              child: const Text('Force Student Enter')),
-          ElevatedButton(
-              onPressed: () {
-                _platformChannel.sendMessage(const WhiteboardChatMessage(
-                    message: 'Test Test', nickname: 'Test'));
-              },
-              child: const Text('Force Send Data'))
+              child: const Text('Realtime Mode as Student')),
         ],
       ),
     ));

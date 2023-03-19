@@ -274,8 +274,8 @@ class _WhiteboardControllerState extends ConsumerState<WhiteboardController> {
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.transparent,
-      builder: (context) =>
-          ChatMessageBottomSheet(ref, onSend: widget.onSendChatMessage),
+      builder: (context) => ProviderScope(
+          child: ChatMessageBottomSheet(onSend: widget.onSendChatMessage)),
       isScrollControlled: true,
     );
   }

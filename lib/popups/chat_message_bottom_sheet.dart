@@ -3,17 +3,16 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:math_tutor_whiteboard/states/chat_message_state.dart';
 import 'package:math_tutor_whiteboard/types/types.dart';
 
-class ChatMessageBottomSheet extends StatefulWidget {
-  final WidgetRef ref;
+class ChatMessageBottomSheet extends ConsumerStatefulWidget {
   final void Function(String message) onSend;
-  const ChatMessageBottomSheet(this.ref,
-      {super.key, required this.onSend});
+  const ChatMessageBottomSheet({super.key, required this.onSend});
 
   @override
-  State<ChatMessageBottomSheet> createState() => _ChatMessageBottomSheetState();
+  ConsumerState<ChatMessageBottomSheet> createState() =>
+      _ChatMessageBottomSheetState();
 }
 
-class _ChatMessageBottomSheetState extends State<ChatMessageBottomSheet>
+class _ChatMessageBottomSheetState extends ConsumerState<ChatMessageBottomSheet>
     with WidgetsBindingObserver {
   var chatMessages = <WhiteboardChatMessage>[];
   final scrollContrller = ScrollController();
@@ -55,7 +54,7 @@ class _ChatMessageBottomSheetState extends State<ChatMessageBottomSheet>
 
   @override
   void didChangeDependencies() {
-    chatMessages = widget.ref.watch(chatMessageStateProvider);
+    chatMessages = ref.watch(chatMessageStateProvider);
     if (isViewAttached) {
       if (scrollContrller.position.maxScrollExtent - scrollContrller.offset <=
           50) {
@@ -96,16 +95,16 @@ class _ChatMessageBottomSheetState extends State<ChatMessageBottomSheet>
                 itemBuilder: _chatMessageItemBuilder,
               ),
             ),
-              TextField(
-                  controller: textEditingController,
-                  onSubmitted: (value) {
-                    widget.onSend(value);
-                    textEditingController.clear();
-                  },
-                  decoration: InputDecoration(
-                      hintText: '메시지 입력',
-                      filled: true,
-                      fillColor: Colors.grey[200])),
+            TextField(
+                controller: textEditingController,
+                onSubmitted: (value) {
+                  widget.onSend(value);
+                  textEditingController.clear();
+                },
+                decoration: InputDecoration(
+                    hintText: '메시지 입력',
+                    filled: true,
+                    fillColor: Colors.grey[200])),
             SizedBox(
               height: bottomInset,
             )
