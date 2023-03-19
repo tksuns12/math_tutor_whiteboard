@@ -274,7 +274,8 @@ class _MathTutorWhiteboardState extends ConsumerState<MathTutorWhiteboardImpl> {
                     onTapClear: _onTapClear,
                     onTapClose: _onTapClose,
                     onColorSelected: _onColorSelected,
-                    isLive: widget.mode == WhiteboardMode.liveTeaching,
+                    isLive: widget.mode == WhiteboardMode.liveTeaching ||
+                        widget.mode == WhiteboardMode.participant,
                     onTapRedo: _onTapRedo,
                     penType: penType,
                     selectedColor: color,
