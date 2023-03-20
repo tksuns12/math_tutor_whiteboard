@@ -190,19 +190,6 @@ class PlatformChannelImpl implements MathtutorNeotechPluginPlatform {
             return PermissionChangeEvent.fromJson(event['data']);
           case kServerEventCode:
             log('WhiteboardPlatformChannel | kServerEventCode: $event');
-            if (event.toString().contains('방입장 성공')) {
-              final userList = await getUserList();
-              final users = jsonDecode(userList['data']);
-              return InitialUserListEvent(
-                  users: users
-                      .map<WhiteboardUser>((e) => WhiteboardUser(
-                          nickname: e['nickname'],
-                          micEnabled: e['isAudioOn'] ?? false,
-                          drawingEnabled: e['isDocOn'] ?? false,
-                          id: '',
-                          isHost: e['nickname'] == nickname))
-                      .toList());
-            }
             break;
           default:
             return event;

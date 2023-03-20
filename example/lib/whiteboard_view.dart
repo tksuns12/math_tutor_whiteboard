@@ -1,5 +1,5 @@
 import 'dart:async';
-import 'dart:developer';
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:example/platform_channel.dart';
@@ -7,8 +7,8 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 import 'package:math_tutor_whiteboard/math_tutor_whiteboard.dart';
-import 'package:math_tutor_whiteboard/types/recording_event.dart';
 import 'package:math_tutor_whiteboard/types/types.dart';
+import 'package:math_tutor_whiteboard/whiteboard_controller.dart';
 
 const kFileCode = 100;
 
@@ -42,6 +42,7 @@ class _WhiteboardViewState extends State<WhiteboardView> {
   StreamController? outputStream;
   late final MathtutorNeotechPluginPlatform channel;
   late final Future initFuture;
+  late final WhiteboardController controller;
   @override
   void initState() {
     if (widget.mode == WhiteboardMode.liveTeaching ||
@@ -57,6 +58,10 @@ class _WhiteboardViewState extends State<WhiteboardView> {
         }
       })();
     }
+    controller = WhiteboardController(
+        recordDuration: const Duration(minutes: 20),
+        recorder: DefaultRecorder());
+    controller.addListener(_controllerListener);
     super.initState();
   }
 
@@ -66,6 +71,7 @@ class _WhiteboardViewState extends State<WhiteboardView> {
         widget.mode == WhiteboardMode.participant) {
       channel.logout();
     }
+    controller.removeListener(_controllerListener);
     super.dispose();
   }
 
@@ -76,9 +82,9 @@ class _WhiteboardViewState extends State<WhiteboardView> {
               widget.mode != WhiteboardMode.participant
           ? MathTutorWhiteBoard(
               mode: widget.mode,
+              controller: controller,
               preloadImage: const NetworkImage('https://picsum.photos/640/320'),
               me: widget.me,
-              recordDuration: const Duration(minutes: 15),
               hostID: widget.hostID,
               onAttemptToClose: () async {
                 return await showDialog(
@@ -100,72 +106,50 @@ class _WhiteboardViewState extends State<WhiteboardView> {
                   ),
                 );
               },
-              onAttemptToCompleteRecording: () async {
-                return await showDialog(
-                  context: context,
-                  builder: (context) => AlertDialog(
-                    title: const Text('Are you sure?'),
-                    content: const Text(
-                        'You will lose all unsaved changes if you close the whiteboard.'),
-                    actions: [
-                      TextButton(
-                        onPressed: () => Navigator.pop(context, false),
-                        child: const Text('Cancel'),
-                      ),
-                      TextButton(
-                        onPressed: () => Navigator.pop(context, true),
-                        child: const Text('Close'),
-                      ),
-                    ],
-                  ),
-                );
-              },
               onOutput: (data) {},
-              onRecordingEvent: (RecordingEvent event) {
-                log(event.toString());
-                if (event is RecordingFinished) {
-                  Navigator.of(context).pop();
+              onTapRecordButton: () async {
+                switch (controller.recordingState) {
+                  case RecordingState.idle:
+                    controller.startRecording();
+                    break;
+                  case RecordingState.recording:
+                    controller.pauseRecording();
+                    final result = await showDialog(
+                      context: context,
+                      builder: (context) => AlertDialog(
+                        title: const Text('Are you sure?'),
+                        content: const Text(
+                            'You will lose all unsaved changes if you close the whiteboard.'),
+                        actions: [
+                          TextButton(
+                            onPressed: () => Navigator.pop(context, false),
+                            child: const Text('Cancel'),
+                          ),
+                          TextButton(
+                            onPressed: () => Navigator.pop(context, true),
+                            child: const Text('Close'),
+                          ),
+                        ],
+                      ),
+                    );
+                    if (result == true) {
+                      await controller.stopRecording();
+                      if (mounted) {
+                        Navigator.of(context).pop();
+                      }
+                    } else {
+                      controller.resumeRecording();
+                    }
+                    break;
+                  case RecordingState.paused:
+                    controller.resumeRecording();
+                    break;
+                  case RecordingState.completed:
+                    break;
+                  case RecordingState.error:
+                    break;
+                  default:
                 }
-              },
-              onBeforeTimeLimitReached: () {
-                return showDialog(
-                  context: context,
-                  builder: (context) => AlertDialog(
-                    title: const Text('Are you sure?'),
-                    content: const Text(
-                        'You will lose all unsaved changes if you close the whiteboard.'),
-                    actions: [
-                      TextButton(
-                        onPressed: () => Navigator.pop(context, false),
-                        child: const Text('Cancel'),
-                      ),
-                      TextButton(
-                        onPressed: () => Navigator.pop(context, true),
-                        child: const Text('Close'),
-                      ),
-                    ],
-                  ),
-                );
-              },
-              onTimeLimitReached: () {
-                return showDialog(
-                  context: context,
-                  builder: (context) => AlertDialog(
-                    title: const Text('Are you sure?'),
-                    content: const Text(
-                        'You will lose all unsaved changes if you close the whiteboard.'),
-                    actions: [
-                      TextButton(
-                        onPressed: () => Navigator.pop(context, false),
-                        child: const Text('Cancel'),
-                      ),
-                      TextButton(
-                        onPressed: () => Navigator.pop(context, true),
-                        child: const Text('Close'),
-                      ),
-                    ],
-                  ),
-                );
               },
             )
           : FutureBuilder(
@@ -174,47 +158,8 @@ class _WhiteboardViewState extends State<WhiteboardView> {
                 if (snapshot.connectionState == ConnectionState.done) {
                   inputStream = channel.incomingStream;
                   return MathTutorWhiteBoard(
+                    controller: controller,
                     hostID: widget.hostID,
-                    onBeforeTimeLimitReached: () {
-                      return showDialog(
-                        context: context,
-                        builder: (context) => AlertDialog(
-                          title: const Text('Are you sure?'),
-                          content: const Text(
-                              'You will lose all unsaved changes if you close the whiteboard.'),
-                          actions: [
-                            TextButton(
-                              onPressed: () => Navigator.pop(context, false),
-                              child: const Text('Cancel'),
-                            ),
-                            TextButton(
-                              onPressed: () => Navigator.pop(context, true),
-                              child: const Text('Close'),
-                            ),
-                          ],
-                        ),
-                      );
-                    },
-                    onTimeLimitReached: () {
-                      return showDialog(
-                        context: context,
-                        builder: (context) => AlertDialog(
-                          title: const Text('Are you sure?'),
-                          content: const Text(
-                              'You will lose all unsaved changes if you close the whiteboard.'),
-                          actions: [
-                            TextButton(
-                              onPressed: () => Navigator.pop(context, false),
-                              child: const Text('Cancel'),
-                            ),
-                            TextButton(
-                              onPressed: () => Navigator.pop(context, true),
-                              child: const Text('Close'),
-                            ),
-                          ],
-                        ),
-                      );
-                    },
                     mode: widget.mode,
                     preloadImage:
                         const NetworkImage('https://picsum.photos/640/320'),
@@ -251,22 +196,100 @@ class _WhiteboardViewState extends State<WhiteboardView> {
                         throw UnimplementedError();
                       }
                     },
-                    onRecordingEvent: (event) {
-                      if (event is RecordingFinished) {
-                        Navigator.of(context).pop();
-                      }
+                    onGetInitialUserList: () async {
+                      final userList = await channel.getUserList();
+                      final users = jsonDecode(userList['data']);
+                      return InitialUserListEvent(
+                          users: users
+                              .map<WhiteboardUser>((e) => WhiteboardUser(
+                                  nickname: e['id'],
+                                  micEnabled: e['isAudioOn'] ?? false,
+                                  drawingEnabled: e['isDocOn'] ?? false,
+                                  id: e['id'],
+                                  isHost: e['id'] == widget.me.id))
+                              .toList());
                     },
                     onAttemptToClose: () async {
-                      if (kDebugMode) {
-                        print('onAttemptToClose');
+                      if (controller.recordingState ==
+                          RecordingState.recording) {
+                        controller.pauseRecording();
                       }
-                      return true;
+                      final result = await showDialog(
+                        context: context,
+                        builder: (context) => AlertDialog(
+                          title: const Text('Are you sure?'),
+                          content: const Text(
+                              'You will lose all unsaved changes if you close the whiteboard.'),
+                          actions: [
+                            TextButton(
+                              onPressed: () => Navigator.pop(context, false),
+                              child: const Text('Cancel'),
+                            ),
+                            TextButton(
+                              onPressed: () => Navigator.pop(context, true),
+                              child: const Text('Close'),
+                            ),
+                          ],
+                        ),
+                      );
+                      if (result == true) {
+                        channel.logout();
+                        controller.stopRecording();
+
+                        if (mounted) {
+                          Navigator.pop(context);
+                        }
+                      } else {
+                        if (controller.recordingState ==
+                            RecordingState.paused) {
+                          controller.resumeRecording();
+                        }
+                      }
                     },
-                    onAttemptToCompleteRecording: () async {
-                      if (kDebugMode) {
-                        print('onAttemptToCompleteRecording');
+                    onTapRecordButton: () async {
+                      switch (controller.recordingState) {
+                        case RecordingState.idle:
+                          controller.startRecording();
+                          break;
+                        case RecordingState.recording:
+                          controller.pauseRecording();
+                          final result = await showDialog(
+                            context: context,
+                            builder: (context) => AlertDialog(
+                              title: const Text('Are you sure?'),
+                              content: const Text(
+                                  'You will lose all unsaved changes if you close the whiteboard.'),
+                              actions: [
+                                TextButton(
+                                  onPressed: () =>
+                                      Navigator.pop(context, false),
+                                  child: const Text('Cancel'),
+                                ),
+                                TextButton(
+                                  onPressed: () => Navigator.pop(context, true),
+                                  child: const Text('Close'),
+                                ),
+                              ],
+                            ),
+                          );
+                          if (result == true) {
+                            await controller.stopRecording();
+                            if (mounted) {
+                              Navigator.of(context).pop();
+                            }
+                          } else {
+                            controller.resumeRecording();
+                          }
+                          break;
+                        case RecordingState.paused:
+                          controller.resumeRecording();
+                          break;
+                        case RecordingState.completed:
+                          break;
+                        case RecordingState.error:
+                          break;
+                        default:
                       }
-                      return true;
                     },
                   );
                 } else {
@@ -277,4 +300,6 @@ class _WhiteboardViewState extends State<WhiteboardView> {
               }),
     );
   }
+
+  void _controllerListener() {}
 }

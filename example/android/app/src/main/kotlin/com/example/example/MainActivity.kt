@@ -68,7 +68,6 @@ class MainActivity : FlutterActivity(), MethodChannel.MethodCallHandler,
                 try {
                     holdingFilePath = call.argument("preloadImage")
                     neotechServerHandler = ELServerHandler()
-                    application.registerActivityLifecycleCallbacks(AppLifecycleObserver(neotechServerHandler))
                     neotechServerHandler.initial(this)
                     neotechServerHandler.setDownloadDir(getDownloadDir())
                     neotechServerHandler.setServerInfo(
@@ -121,7 +120,7 @@ class MainActivity : FlutterActivity(), MethodChannel.MethodCallHandler,
                     val userList = neotechServerHandler.userList
                     for (user in userList) {
                         val userMap = HashMap<String, Any>()
-                        userMap["nickname"] = user
+                        userMap["id"] = user
                         userMap["isAudioOn"] = neotechServerHandler.getPermissionAudio(user)
                         userMap["isDocOn"] = neotechServerHandler.getPermissionDoc(user)
                         data.add(userMap)
@@ -389,35 +388,4 @@ class OnFileTransferListenerImpl(
 
     }
 
-}
-
-class AppLifecycleObserver(private val serverHandler: ELServerHandler,) : ActivityLifecycleCallbacks {
-
-    override fun onActivityCreated(activity: Activity, savedInstanceState: Bundle?) {
-        TODO("Not yet implemented")
-    }
-
-    override fun onActivityStarted(activity: Activity) {
-        TODO("Not yet implemented")
-    }
-
-    override fun onActivityResumed(activity: Activity) {
-        TODO("Not yet implemented")
-    }
-
-    override fun onActivityPaused(activity: Activity) {
-        TODO("Not yet implemented")
-    }
-
-    override fun onActivityStopped(activity: Activity) {
-        TODO("Not yet implemented")
-    }
-
-    override fun onActivitySaveInstanceState(activity: Activity, outState: Bundle) {
-        TODO("Not yet implemented")
-    }
-
-    override fun onActivityDestroyed(activity: Activity) {
-        serverHandler.logout()
-    }
 }
