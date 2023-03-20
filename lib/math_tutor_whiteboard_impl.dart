@@ -3,55 +3,48 @@ import 'dart:developer';
 import 'dart:io';
 import 'dart:math' hide log;
 import 'dart:ui' as ui;
+
 import 'package:flutter/services.dart';
 // ignore: depend_on_referenced_packages
 import 'package:vector_math/vector_math_64.dart' show Quad;
 
-import 'package:ed_screen_recorder/ed_screen_recorder.dart';
 import 'package:crop_image/crop_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:math_tutor_whiteboard/states/chat_message_state.dart';
-import 'package:math_tutor_whiteboard/states/recording_state.dart';
 import 'package:math_tutor_whiteboard/states/user_list_state.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:perfect_freehand/perfect_freehand.dart';
-import 'package:permission_handler/permission_handler.dart';
-
-import 'types/recording_event.dart';
+import 'change_notifier_builder.dart';
 import 'types/types.dart';
 import 'whiteboard_controller.dart';
+import 'whiteboard_controller_view.dart';
 
 class MathTutorWhiteboardImpl extends ConsumerStatefulWidget {
+  final WhiteboardController? controller;
   final ImageProvider? preloadImage;
-  final Duration? recordDuration;
   final WhiteboardMode mode;
   final Stream? inputStream;
   final void Function(dynamic data)? onOutput;
   final WhiteboardUser me;
-  final void Function(RecordingEvent event) onRecordingEvent;
-  final Future<bool> Function() onAttemptToClose;
-  final Future<bool> Function() onAttemptToCompleteRecording;
-  final Future<void> Function() onBeforeTimeLimitReached;
-  final Future<void> Function() onTimeLimitReached;
+  final FutureOr<void> Function() onAttemptToClose;
+  final VoidCallback onTapRecordButton;
   final String? hostID;
   final Future<InitialUserListEvent> Function()? onGetInitialUserList;
-  const MathTutorWhiteboardImpl(
-      {required this.onGetInitialUserList,
-      this.hostID,
-      required this.onBeforeTimeLimitReached,
-      required this.onTimeLimitReached,
-      required this.onOutput,
-      required this.onRecordingEvent,
-      this.inputStream,
-      required this.onAttemptToCompleteRecording,
-      required this.onAttemptToClose,
-      required this.me,
-      super.key,
-      this.preloadImage,
-      this.recordDuration,
-      required this.mode});
+  const MathTutorWhiteboardImpl({
+    super.key,
+    this.controller,
+    this.preloadImage,
+    required this.mode,
+    this.inputStream,
+    this.onOutput,
+    required this.me,
+    required this.onAttemptToClose,
+    required this.onTapRecordButton,
+    this.hostID,
+    this.onGetInitialUserList,
+  });
 
   @override
   ConsumerState<MathTutorWhiteboardImpl> createState() =>
@@ -64,7 +57,6 @@ class _MathTutorWhiteboardState extends ConsumerState<MathTutorWhiteboardImpl> {
   double strokeWidth = 2;
   Color color = Colors.black;
   int limitCursor = 0;
-  final screenRecorder = EdScreenRecorder();
   Timer? timer;
   final Map<int, int> deletedStrokes = {};
   StreamSubscription<BroadcastPaintData>? _inputDrawingStreamSubscription;
@@ -77,9 +69,15 @@ class _MathTutorWhiteboardState extends ConsumerState<MathTutorWhiteboardImpl> {
   late final Size boardSize;
   ImageProvider? image;
   bool drawable = false;
+  late final WhiteboardController controller;
 
   @override
   void initState() {
+    controller = widget.controller ??
+        WhiteboardController(
+            recordDuration: const Duration(minutes: 20),
+            recorder: DefaultRecorder());
+
     /// 만약 미리 주입된 이미지가 있다면, 그 이미지를 미리 불러옵니다.
     if (widget.preloadImage != null) {
       image = widget.preloadImage;
@@ -91,12 +89,6 @@ class _MathTutorWhiteboardState extends ConsumerState<MathTutorWhiteboardImpl> {
     }
 
     WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
-      ref.read(recordingStateProvider.notifier).initialize();
-      if (widget.recordDuration != null) {
-        ref
-            .read(recordingStateProvider.notifier)
-            .updateDuration(widget.recordDuration!);
-      }
       boardSize = Size(MediaQuery.of(context).size.width,
           MediaQuery.of(context).size.width * (16 / 9));
       // boardSize = MediaQuery.of(context).size;
@@ -249,68 +241,62 @@ class _MathTutorWhiteboardState extends ConsumerState<MathTutorWhiteboardImpl> {
   Widget build(BuildContext context) {
     return WillPopScope(
       onWillPop: () async {
-        final result = await _onTapClose();
-        return result;
+        await widget.onAttemptToClose();
+        return false;
       },
       child: Material(
         child: SafeArea(child: Consumer(builder: (context, ref, _) {
-          final busyState = ref.watch(
-              recordingStateProvider.select((value) => value.precessing));
-          return Stack(
+          return Column(
             children: [
-              Column(
-                children: [
-                  WhiteboardController(
-                    onPenSelected: _onPenSelected,
-                    onTapEraser: _onTapEraser,
-                    onTapUndo: _onTapUndo,
-                    me: widget.me,
-                    hostID: widget.hostID,
-                    onTapClear: _onTapClear,
-                    onTapClose: _onTapClose,
-                    onColorSelected: _onColorSelected,
-                    isLive: widget.mode == WhiteboardMode.liveTeaching ||
-                        widget.mode == WhiteboardMode.participant,
-                    onTapRedo: _onTapRedo,
-                    penType: penType,
-                    selectedColor: color,
-                    isRedoable: limitCursor < drawingData.length,
-                    isUndoable: limitCursor > 0,
-                    strokeWidth: strokeWidth,
-                    onStrokeWidthChanged: _onStrokeWidthChanged,
-                    onTapRecord: _onTapRecord,
-                    onTapStrokeEraser: _onTapStrokeEraswer,
-                    onLoadImage: _onLoadImage,
-                    onSendChatMessage: _onSendChatMessage,
-                    drawable: drawable,
-                    onDrawingPermissionChanged: _onDrawingPermissionChanged,
-                    onMicPermissionChanged: _onMicPermissionChanged,
-                  ),
-                  Expanded(
-                    child: _WhiteBoard(
-                      onStartDrawing: _onStartDrawing,
-                      deletedStrokes: deletedStrokes,
-                      transformationController: transformationController,
-                      onDrawing: _onDrawing,
-                      onEndDrawing: _onEndDrawing,
-                      drawingData: drawingData,
-                      limitCursor: limitCursor,
-                      onViewportChange: _onViewportChange,
-                      preloadImage: image,
-                      drawable: drawable,
-                    ),
-                  )
-                ],
-              ),
-              if (busyState)
-                Positioned.fill(
-                  child: Container(
-                    color: Colors.black.withOpacity(0.5),
-                    child: const Center(
-                      child: CircularProgressIndicator(),
-                    ),
-                  ),
+              ChangeNotifierBuilder(
+                  notifier: controller,
+                  builder: (context, controller, _) {
+                    if (controller != null) {
+                      return WhiteboardControllerView(
+                        controller: controller,
+                        onPenSelected: _onPenSelected,
+                        onTapEraser: _onTapEraser,
+                        onTapUndo: _onTapUndo,
+                        me: widget.me,
+                        hostID: widget.hostID,
+                        onTapClear: _onTapClear,
+                        onTapClose: widget.onAttemptToClose,
+                        onColorSelected: _onColorSelected,
+                        isLive: widget.mode == WhiteboardMode.liveTeaching ||
+                            widget.mode == WhiteboardMode.participant,
+                        onTapRedo: _onTapRedo,
+                        penType: penType,
+                        selectedColor: color,
+                        isRedoable: limitCursor < drawingData.length,
+                        isUndoable: limitCursor > 0,
+                        strokeWidth: strokeWidth,
+                        onStrokeWidthChanged: _onStrokeWidthChanged,
+                        onTapRecord: widget.onTapRecordButton,
+                        onTapStrokeEraser: _onTapStrokeEraswer,
+                        onLoadImage: _onLoadImage,
+                        onSendChatMessage: _onSendChatMessage,
+                        drawable: drawable,
+                        onDrawingPermissionChanged: _onDrawingPermissionChanged,
+                        onMicPermissionChanged: _onMicPermissionChanged,
+                      );
+                    } else {
+                      return const SizedBox();
+                    }
+                  }),
+              Expanded(
+                child: _WhiteBoard(
+                  onStartDrawing: _onStartDrawing,
+                  deletedStrokes: deletedStrokes,
+                  transformationController: transformationController,
+                  onDrawing: _onDrawing,
+                  onEndDrawing: _onEndDrawing,
+                  drawingData: drawingData,
+                  limitCursor: limitCursor,
+                  onViewportChange: _onViewportChange,
+                  preloadImage: image,
+                  drawable: drawable,
                 ),
+              )
             ],
           );
         })),
@@ -333,31 +319,6 @@ class _MathTutorWhiteboardState extends ConsumerState<MathTutorWhiteboardImpl> {
 
   void _onDrawing(event) {
     _draw(event);
-  }
-
-  Future<bool> _onTapClose() async {
-    if (ref.read(recordingStateProvider).recorderState ==
-        RecorderState.recording) {
-      _pauseRecorder();
-
-      final result = await widget.onAttemptToClose();
-      if (result) {
-        if (ref.read(recordingStateProvider).recorderState ==
-            RecorderState.recording) {
-          _cancelRecording();
-        }
-        return true;
-      } else {
-        _startRecording();
-        return false;
-      }
-    } else {
-      final result = await widget.onAttemptToClose();
-      if (result) {
-        return true;
-      }
-    }
-    return false;
   }
 
   void _onTapClear() {
@@ -443,77 +404,6 @@ class _MathTutorWhiteboardState extends ConsumerState<MathTutorWhiteboardImpl> {
       this.strokeWidth = strokeWidth;
       log('stroke width changed: $strokeWidth');
     });
-  }
-
-  Future<void> _onTapRecord() async {
-    switch (ref.read(recordingStateProvider).recorderState) {
-      case RecorderState.recording:
-        _pauseRecorder();
-        final result = await widget.onAttemptToCompleteRecording();
-        if (result == true) {
-          _stopRecording();
-        } else {
-          screenRecorder.resumeRecord();
-          ref.read(recordingStateProvider.notifier).startRecording();
-        }
-        break;
-      case RecorderState.paused:
-        screenRecorder.resumeRecord();
-        ref.read(recordingStateProvider.notifier).startRecording();
-        timer = Timer.periodic(const Duration(seconds: 1), (timer) {
-          ref.read(recordingStateProvider.notifier).tick();
-        });
-        break;
-      case RecorderState.init:
-        _startRecording();
-        break;
-    }
-  }
-
-  Future<void> _pauseRecorder() async {
-    await screenRecorder.pauseRecord();
-    ref.read(recordingStateProvider.notifier).pauseRecording();
-    timer?.cancel();
-    widget.onRecordingEvent(const RecordingEvent.pause());
-  }
-
-  Future<void> _stopRecording() async {
-    await ref.read(recordingStateProvider.notifier).doAsync(
-      () async {
-        final res = await screenRecorder.stopRecord();
-        log('stop recording: ${res['file']}');
-        ref.read(recordingStateProvider.notifier).finishRecording(res['file']);
-        widget.onRecordingEvent(RecordingEvent.finished(res['file']));
-      },
-    );
-  }
-
-  Future<void> _startRecording() async {
-    final micPermission = await Permission.microphone.request();
-    final notificationPermission = await Permission.notification.request();
-    if (micPermission.isGranted && notificationPermission.isGranted) {
-      log('Permission granted');
-      await screenRecorder.startRecordScreen(
-          fileName: 'math_record_temp',
-          audioEnable: true,
-          dirPathToSave: (await getTemporaryDirectory()).path);
-      widget.onRecordingEvent(const RecordingEvent.recording());
-      log('start recording');
-      ref.read(recordingStateProvider.notifier).startRecording();
-      timer = Timer.periodic(const Duration(seconds: 1), (timer) {
-        setState(() {
-          ref.read(recordingStateProvider.notifier).tick();
-          if (ref.read(recordingStateProvider).remainingTime == 0) {
-            _pauseRecorder();
-            widget.onTimeLimitReached().then((value) {
-              _stopRecording();
-            });
-          } else if (ref.read(recordingStateProvider).remainingTime == 60 * 5) {
-            widget.onBeforeTimeLimitReached();
-          }
-        });
-      });
-    }
   }
 
   void _draw(PointerEvent event) {
@@ -620,11 +510,6 @@ class _MathTutorWhiteboardState extends ConsumerState<MathTutorWhiteboardImpl> {
     ref
         .read(userListStateProvider.notifier)
         .updatePermission(user, PermissionChangeEvent(drawing: allow));
-  }
-
-  _cancelRecording() async {
-    await screenRecorder.stopRecord();
-    widget.onRecordingEvent.call(const RecordingEvent.cancelled());
   }
 }
 
