@@ -27,7 +27,6 @@ class _UserListBottomSheetState extends ConsumerState<UserListBottomSheet> {
 
   @override
   void didChangeDependencies() {
-    userList = ref.watch(userListStateProvider);
     super.didChangeDependencies();
   }
 
@@ -50,10 +49,13 @@ class _UserListBottomSheetState extends ConsumerState<UserListBottomSheet> {
           ),
           const Text('유저 목록', style: TextStyle(fontSize: 20)),
           Expanded(
-            child: ListView.builder(
-              itemCount: userList.length,
-              itemBuilder: _userItemBuilder,
-            ),
+            child: Consumer(builder: (context, ref, _) {
+              userList = ref.watch(userListStateProvider);
+              return ListView.builder(
+                itemCount: userList.length,
+                itemBuilder: _userItemBuilder,
+              );
+            }),
           ),
         ],
       ),

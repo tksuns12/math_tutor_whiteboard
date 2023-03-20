@@ -54,7 +54,6 @@ class _ChatMessageBottomSheetState extends ConsumerState<ChatMessageBottomSheet>
 
   @override
   void didChangeDependencies() {
-    chatMessages = ref.watch(chatMessageStateProvider);
     if (isViewAttached) {
       if (scrollContrller.position.maxScrollExtent - scrollContrller.offset <=
           50) {
@@ -89,10 +88,15 @@ class _ChatMessageBottomSheetState extends ConsumerState<ChatMessageBottomSheet>
             ),
             const Text('채팅', style: TextStyle(fontSize: 20)),
             Expanded(
-              child: ListView.builder(
-                controller: scrollContrller,
-                itemCount: chatMessages.length,
-                itemBuilder: _chatMessageItemBuilder,
+              child: Consumer(
+                builder: (context,ref,_) {
+                  chatMessages = ref.watch(chatMessageStateProvider);
+                  return ListView.builder(
+                    controller: scrollContrller,
+                    itemCount: chatMessages.length,
+                    itemBuilder: _chatMessageItemBuilder,
+                  );
+                }
               ),
             ),
             TextField(
