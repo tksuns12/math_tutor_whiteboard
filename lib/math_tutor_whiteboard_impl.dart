@@ -159,7 +159,11 @@ class _MathTutorWhiteboardState extends ConsumerState<MathTutorWhiteboardImpl> {
           });
         }
       });
-      widget.onGetInitialUserList?.call();
+      if (widget.onGetInitialUserList != null) {
+        widget.onGetInitialUserList!.call().then((value) {
+          ref.read(userListStateProvider.notifier).refreshUsers(value.users);
+        });
+      }
     }
     super.initState();
   }
