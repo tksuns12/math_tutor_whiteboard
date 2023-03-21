@@ -1,28 +1,30 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/svg.dart';
-import 'package:math_tutor_whiteboard/states/user_list_state.dart';
+import 'package:math_tutor_whiteboard/change_notifier_builder.dart';
 import 'package:math_tutor_whiteboard/types/types.dart';
+import 'package:math_tutor_whiteboard/whiteboard_controller.dart';
 
-class UserListBottomSheet extends ConsumerStatefulWidget {
+class UserListBottomSheet extends StatefulWidget {
   final WhiteboardUser me;
   final String hostID;
   final void Function(WhiteboardUser user, bool allow) onChangeDrawPermission;
   final void Function(WhiteboardUser user, bool allow) onChangeMicPermission;
+  final WhiteboardController controller;
   const UserListBottomSheet(
-      {super.key,
+      {required this.controller,
+      super.key,
       required this.onChangeDrawPermission,
       required this.onChangeMicPermission,
       required this.me,
       required this.hostID});
 
   @override
-  ConsumerState<UserListBottomSheet> createState() =>
+  State<UserListBottomSheet> createState() =>
       _UserListBottomSheetState();
 }
 
-class _UserListBottomSheetState extends ConsumerState<UserListBottomSheet> {
+class _UserListBottomSheetState extends State<UserListBottomSheet> {
   List<WhiteboardUser> userList = [];
 
   @override
@@ -49,13 +51,15 @@ class _UserListBottomSheetState extends ConsumerState<UserListBottomSheet> {
           ),
           const Text('유저 목록', style: TextStyle(fontSize: 20)),
           Expanded(
-            child: Consumer(builder: (context, ref, _) {
-              userList = ref.watch(userListStateProvider);
-              return ListView.builder(
-                itemCount: userList.length,
-                itemBuilder: _userItemBuilder,
-              );
-            }),
+            child: ChangeNotifierBuilder(
+                notifier: widget.controller,
+                builder: (context, controller, _) {
+                  userList = controller?.users ?? [];
+                  return ListView.builder(
+                    itemCount: userList.length,
+                    itemBuilder: _userItemBuilder,
+                  );
+                }),
           ),
         ],
       ),

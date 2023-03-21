@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:math_tutor_whiteboard/change_notifier_builder.dart';
 import 'package:math_tutor_whiteboard/states/chat_message_state.dart';
-import 'package:math_tutor_whiteboard/states/user_list_state.dart';
 import 'package:math_tutor_whiteboard/whiteboard_controller.dart';
 import 'popups/chat_message_bottom_sheet.dart';
 import 'popups/media_source_selection_bottom_sheet.dart';
@@ -162,10 +162,10 @@ class _WhiteboardControllerState
                 Padding(
                   padding: EdgeInsets.symmetric(
                       horizontal: 7 / 360 * MediaQuery.of(context).size.width),
-                  child: Consumer(
-                    builder: (context, ref, child) {
-                      final chatUserListState =
-                          ref.watch(userListStateProvider);
+                  child: ChangeNotifierBuilder(
+                    notifier: widget.controller,
+                    builder: (context, controller, _) {
+                      final chatUserListState = controller?.users ?? [];
                       if (chatUserListState.isEmpty) {
                         return const SizedBox();
                       } else {
@@ -257,6 +257,7 @@ class _WhiteboardControllerState
         parent: ProviderScope.containerOf(context),
         child: UserListBottomSheet(
           onChangeDrawPermission: widget.onDrawingPermissionChanged,
+          controller: widget.controller,
           onChangeMicPermission: widget.onMicPermissionChanged,
           hostID: widget.hostID!,
           me: widget.me,

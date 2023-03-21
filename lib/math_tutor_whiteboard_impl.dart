@@ -13,7 +13,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:math_tutor_whiteboard/states/chat_message_state.dart';
-import 'package:math_tutor_whiteboard/states/user_list_state.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:perfect_freehand/perfect_freehand.dart';
 import 'change_notifier_builder.dart';
@@ -62,7 +61,6 @@ class _MathTutorWhiteboardState extends ConsumerState<MathTutorWhiteboardImpl> {
   StreamSubscription<BroadcastPaintData>? _inputDrawingStreamSubscription;
   StreamSubscription<File>? _inputImageStreamSubscription;
   StreamSubscription<WhiteboardChatMessage>? _inputChatStreamSubscription;
-  StreamSubscription<UserEvent>? _userStreamSubscription;
   StreamSubscription<ViewportChangeEvent>? _viewportChangeStreamSubscription;
   StreamSubscription<PermissionChangeEvent>? _authorityChangeStreamSubscription;
   final transformationController = TransformationController();
@@ -100,7 +98,6 @@ class _MathTutorWhiteboardState extends ConsumerState<MathTutorWhiteboardImpl> {
               nickname: '시스템',
               message: '채팅방에 입장하셨습니다.',
             ));
-        ref.read(userListStateProvider.notifier).addUser(widget.me);
       }
     });
     if (widget.inputStream != null) {
@@ -118,23 +115,6 @@ class _MathTutorWhiteboardState extends ConsumerState<MathTutorWhiteboardImpl> {
           ?.where((event) => event is File)
           .map((event) => event as File)
           .listen(_inputImageStreamListener);
-
-      _userStreamSubscription = widget.inputStream
-          ?.where((event) => event is UserEvent)
-          .map((event) => event as UserEvent)
-          .listen((event) {
-        if (event.isJoin) {
-          if (event.user.id != widget.me.id) {
-            Fluttertoast.showToast(msg: '${event.user.nickname}님이 입장하셨습니다.');
-            ref.read(userListStateProvider.notifier).addUser(event.user);
-          }
-        } else {
-          if (event.user.id != widget.me.id) {
-            Fluttertoast.showToast(msg: '${event.user.nickname}님이 퇴장하셨습니다.');
-            ref.read(userListStateProvider.notifier).removeUser(event.user);
-          }
-        }
-      });
 
       _inputChatStreamSubscription = widget.inputStream
           ?.where((event) => event is WhiteboardChatMessage)
@@ -159,11 +139,6 @@ class _MathTutorWhiteboardState extends ConsumerState<MathTutorWhiteboardImpl> {
           });
         }
       });
-      if (widget.onGetInitialUserList != null) {
-        widget.onGetInitialUserList!.call().then((value) {
-          ref.read(userListStateProvider.notifier).refreshUsers(value.users);
-        });
-      }
     }
     super.initState();
   }
@@ -232,7 +207,6 @@ class _MathTutorWhiteboardState extends ConsumerState<MathTutorWhiteboardImpl> {
 
     _inputDrawingStreamSubscription?.cancel();
     _inputImageStreamSubscription?.cancel();
-    _userStreamSubscription?.cancel();
     _inputChatStreamSubscription?.cancel();
     _viewportChangeStreamSubscription?.cancel();
     _authorityChangeStreamSubscription?.cancel();
@@ -504,16 +478,16 @@ class _MathTutorWhiteboardState extends ConsumerState<MathTutorWhiteboardImpl> {
 
   void _onMicPermissionChanged(WhiteboardUser user, bool allow) {
     widget.onOutput?.call(PermissionChangeEvent(microphone: allow));
-    ref
-        .read(userListStateProvider.notifier)
-        .updatePermission(user, PermissionChangeEvent(microphone: allow));
+    controller.adjustPermissionOfUser(
+        userID: user.id,
+        permissionEvent: PermissionChangeEvent(microphone: allow));
   }
 
   void _onDrawingPermissionChanged(WhiteboardUser user, bool allow) {
     widget.onOutput?.call(PermissionChangeEvent(drawing: allow));
-    ref
-        .read(userListStateProvider.notifier)
-        .updatePermission(user, PermissionChangeEvent(drawing: allow));
+    controller.adjustPermissionOfUser(
+        userID: user.id,
+        permissionEvent: PermissionChangeEvent(drawing: allow));
   }
 }
 
