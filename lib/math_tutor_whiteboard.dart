@@ -19,7 +19,6 @@ class MathTutorWhiteBoard extends StatelessWidget {
   final VoidCallback onAttemptToClose;
   final VoidCallback onTapRecordButton;
   final String? hostID;
-  final Future<InitialUserListEvent> Function()? onGetInitialUserList;
   const MathTutorWhiteBoard({
     Key? key,
     this.controller,
@@ -31,7 +30,6 @@ class MathTutorWhiteBoard extends StatelessWidget {
     required this.onAttemptToClose,
     required this.onTapRecordButton,
     this.hostID,
-    this.onGetInitialUserList,
   }) : super(key: key);
 
   @override
@@ -42,7 +40,6 @@ class MathTutorWhiteBoard extends StatelessWidget {
             onOutput: onOutput,
             hostID: hostID,
             preloadImage: preloadImage,
-            onGetInitialUserList: onGetInitialUserList,
             mode: mode,
             me: me,
             inputStream: inputStream,

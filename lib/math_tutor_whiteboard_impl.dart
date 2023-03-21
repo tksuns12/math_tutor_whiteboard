@@ -11,7 +11,6 @@ import 'package:vector_math/vector_math_64.dart' show Quad;
 import 'package:crop_image/crop_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:fluttertoast/fluttertoast.dart';
 import 'package:math_tutor_whiteboard/states/chat_message_state.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:perfect_freehand/perfect_freehand.dart';
@@ -30,7 +29,6 @@ class MathTutorWhiteboardImpl extends ConsumerStatefulWidget {
   final FutureOr<void> Function() onAttemptToClose;
   final VoidCallback onTapRecordButton;
   final String? hostID;
-  final Future<InitialUserListEvent> Function()? onGetInitialUserList;
   const MathTutorWhiteboardImpl({
     super.key,
     this.controller,
@@ -42,7 +40,6 @@ class MathTutorWhiteboardImpl extends ConsumerStatefulWidget {
     required this.onAttemptToClose,
     required this.onTapRecordButton,
     this.hostID,
-    this.onGetInitialUserList,
   });
 
   @override
