@@ -75,7 +75,7 @@ class _UserListBottomSheetState extends ConsumerState<UserListBottomSheet> {
         const SizedBox(width: 8),
         Text(widget.me.id != user.id ? user.nickname : '**나**'),
         const Spacer(),
-        if (widget.me.id != user.id) ...[
+        if (widget.me.id != user.id && widget.hostID == widget.me.id) ...[
           IconButton(
             icon: SvgPicture.asset(
                 user.drawingEnabled
