@@ -364,25 +364,28 @@ class ViewportChangeEvent extends Equatable {
 class PermissionChangeEvent extends Equatable {
   final bool? drawing;
   final bool? microphone;
-  const PermissionChangeEvent({
+  final String? userID;
+  const PermissionChangeEvent({this.userID, 
     this.drawing,
     this.microphone,
   });
 
   @override
-  List<Object?> get props => [drawing, microphone];
+  List<Object?> get props => [drawing, microphone, userID];
 
   Map<String, dynamic> toMap() {
     return {
       'drawing': drawing,
       'chat': microphone,
+      'userID': userID,
     };
   }
 
   factory PermissionChangeEvent.fromMap(Map map) {
     return PermissionChangeEvent(
       drawing: map['drawing'],
-      microphone: map['chat'],
+      microphone: map['mic'],
+      userID: map['userID'],
     );
   }
 

@@ -474,17 +474,21 @@ class _MathTutorWhiteboardState extends ConsumerState<MathTutorWhiteboardImpl> {
   }
 
   void _onMicPermissionChanged(WhiteboardUser user, bool allow) {
-    widget.onOutput?.call(PermissionChangeEvent(microphone: allow));
+    widget.onOutput
+        ?.call(PermissionChangeEvent(microphone: allow, userID: user.id));
     controller.adjustPermissionOfUser(
         userID: user.id,
-        permissionEvent: PermissionChangeEvent(microphone: allow));
+        permissionEvent:
+            PermissionChangeEvent(microphone: allow, userID: user.id));
   }
 
   void _onDrawingPermissionChanged(WhiteboardUser user, bool allow) {
-    widget.onOutput?.call(PermissionChangeEvent(drawing: allow));
+    widget.onOutput
+        ?.call(PermissionChangeEvent(drawing: allow, userID: user.id));
     controller.adjustPermissionOfUser(
         userID: user.id,
-        permissionEvent: PermissionChangeEvent(drawing: allow));
+        permissionEvent:
+            PermissionChangeEvent(drawing: allow, userID: user.id));
   }
 }
 
