@@ -38,13 +38,14 @@ abstract class MathtutorNeotechPluginPlatform {
   Future<bool> isMicrophoneOn();
   Future<void> sendImage(File file);
   Future<void> sendMessage(WhiteboardChatMessage message);
-  Stream get incomingStream;
+  late final StreamController incomingStream;
+  late final StreamController<Map> onServerEventStream;
 }
 
 class PlatformChannelImpl implements MathtutorNeotechPluginPlatform {
   final methodChannel = const MethodChannel('mathtutor_neotech_plugin');
-  final eventChannel = const EventChannel('mathtutor_neotech_plugin_event');
-  final onServerEventStream = StreamController<Map>.broadcast();
+  @override
+  late final onServerEventStream = StreamController<Map>.broadcast();
   late final String userID;
   late final String hostID;
   late final String nickname;
@@ -54,36 +55,80 @@ class PlatformChannelImpl implements MathtutorNeotechPluginPlatform {
     methodChannel.setMethodCallHandler((call) async {
       if (call.method == 'onServerEvent') {
         onServerEventStream.add(call.arguments);
-      } else {
-        log('WhiteboardPlatformChannel | Unknown method: ${call.method}');
+      } else if (call.method == "onUserEvent") {
+      } else if (call.method == 'onPermissionChanged') {
+        onServerEventStream.add(call.arguments);
+      } else if (call.method == "eventSinkAlt") {
+        final event = call.arguments as Map;
+        switch (event['type']) {
+          case kChatMessageCode:
+            incomingStream.sink
+                .add(WhiteboardChatMessage.fromJson(event['data']));
+            break;
+          case kFileCode:
+            incomingStream.sink.add(File(event['data'] as String));
+            break;
+          case kDrawingCode:
+            incomingStream.sink.add(BroadcastPaintData.fromJson(event['data']));
+            break;
+          case kUserCode:
+            final data = jsonDecode(event['data']);
+            final user = WhiteboardUser(
+                nickname: data['id'],
+                micEnabled: data['isAudioOn'] ?? false,
+                drawingEnabled: data['isDocOn'] ?? false,
+                id: data['id'],
+                avatar: null,
+                isHost: data['id'] == nickname);
+            incomingStream.sink
+                .add(UserEvent(user: user, isJoin: data['isEnter']));
+            break;
+          case kViewportCode:
+            incomingStream.sink
+                .add(ViewportChangeEvent.fromJson(event['data']));
+            break;
+          case kPermissionCode:
+            incomingStream.sink
+                .add(PermissionChangeEvent.fromMap(event['data']));
+            break;
+          case kServerEventCode:
+            log('WhiteboardPlatformChannel | kServerEventCode: $event');
+            incomingStream.sink.add(event);
+            break;
+          default:
+            incomingStream.sink.add(event);
+        }
+      } else if (call.method == "onUploadComplete") {
+        log('WhiteboardPlatformChannel | onUploadComplete: ${call.arguments}');
       }
     });
   }
   @override
   Future<void> changePermissionAudio(String userID) async {
-    final reuslt =
-        await methodChannel.invokeMethod('changePermissionAudio', userID);
+    final reuslt = await methodChannel
+        .invokeMethod('changePermissionAudio', {"userID": userID});
     log('WhiteboardPlatformChannel | changePermissionAudio: $reuslt');
   }
 
   @override
   Future<void> changePermissionDoc(String userID) async {
-    final result =
-        await methodChannel.invokeMethod('changePermissionDoc', userID);
+    final result = await methodChannel
+        .invokeMethod('changePermissionDoc', {"userID": userID});
     log('WhiteboardPlatformChannel | changePermissionDoc: $result');
   }
 
   @override
   Future<bool> getPermissionAudio(String userID) async {
-    final result =
-        await methodChannel.invokeMethod('getPermissionAudio', userID);
+    final result = await methodChannel
+        .invokeMethod('getPermissionAudio', {"userID": userID});
     log('WhiteboardPlatformChannel | getPermissionAudio: $result');
     return result;
   }
 
   @override
   Future<bool> getPermissionDoc(String userID) async {
-    final result = await methodChannel.invokeMethod('getPermissionDoc', userID);
+    final result = await methodChannel
+        .invokeMethod('getPermissionDoc', {"userID": userID});
     log('WhiteboardPlatformChannel | getPermissionDoc: $result');
     return result;
   }
@@ -104,14 +149,12 @@ class PlatformChannelImpl implements MathtutorNeotechPluginPlatform {
     await methodChannel.invokeMethod('initialize', {
       'host': serverHost,
       'port': serverPort,
-      'preloadImage': preloadImage?.path
+      'preloadImage': preloadImage?.path,
+      'userID': userID
     });
     this.userID = userID;
     this.nickname = nickname;
     hostID = ownerID;
-    await Future.delayed(const Duration(seconds: 1), () {
-      login();
-    });
   }
 
   @override
@@ -123,12 +166,12 @@ class PlatformChannelImpl implements MathtutorNeotechPluginPlatform {
 
   @override
   Future<void> login() async {
+    await logout();
     final result = await methodChannel.invokeMethod('login', {
-      'userID': userID,
       'nickname': nickname,
       'ownerID': hostID,
     });
-    log('WhiteboardPlatformChannel | login: $result');
+    log('WhiteboardPlatformChannel | login: $result, Data: $userID, $nickname, $hostID');
   }
 
   @override
@@ -166,35 +209,18 @@ class PlatformChannelImpl implements MathtutorNeotechPluginPlatform {
   }
 
   @override
-  Stream get incomingStream =>
-      eventChannel.receiveBroadcastStream().asyncMap((event) async {
-        switch (event['type']) {
-          case kChatMessageCode:
-            return WhiteboardChatMessage.fromJson(event['data']);
-          case kFileCode:
-            return File(event['data'] as String);
-          case kDrawingCode:
-            return BroadcastPaintData.fromJson(event['data']);
-          case kUserCode:
-            final data = jsonDecode(event['data']);
-            final user = WhiteboardUser(
-                nickname: data['nickname'],
-                micEnabled: data['isAudioOn'] ?? false,
-                drawingEnabled: data['isDocOn'] ?? false,
-                id: '',
-                isHost: data['nickname'] == nickname);
-            return UserEvent(user: user, isJoin: data['isEnter']);
-          case kViewportCode:
-            return ViewportChangeEvent.fromJson(event['data']);
-          case kPermissionCode:
-            return PermissionChangeEvent.fromJson(event['data']);
-          case kServerEventCode:
-            log('WhiteboardPlatformChannel | kServerEventCode: $event');
-            break;
-          default:
-            return event;
-        }
-      });
+  late final StreamController incomingStream =
+      StreamController<dynamic>.broadcast();
+
+  @override
+  set onServerEventStream(StreamController<Map> onServerEventStream) {
+    onServerEventStream = onServerEventStream;
+  }
+
+  @override
+  set incomingStream(StreamController incomingStream) {
+    incomingStream = incomingStream;
+  }
 }
 
 extension IterableX<T> on Iterable<T> {

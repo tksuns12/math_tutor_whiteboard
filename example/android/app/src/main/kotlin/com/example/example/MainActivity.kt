@@ -1,8 +1,5 @@
 package com.example.example
 
-import android.app.Activity
-import android.app.Application.ActivityLifecycleCallbacks
-import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
 import android.os.Message
@@ -12,11 +9,8 @@ import com.neo.api.EmeetplusApi.IELServerHandler.OnFileTransferListener
 import com.neo.net.ELServerHandler
 import io.flutter.embedding.android.FlutterActivity
 import io.flutter.embedding.engine.FlutterEngine
-import io.flutter.plugin.common.EventChannel
-import io.flutter.plugin.common.EventChannel.EventSink
 import io.flutter.plugin.common.MethodCall
 import io.flutter.plugin.common.MethodChannel
-import io.flutter.plugin.common.MethodChannel.MethodCallHandler
 import io.flutter.plugins.GeneratedPluginRegistrant
 import org.json.JSONObject
 import java.nio.ByteBuffer
@@ -37,15 +31,15 @@ const val PERMISSION_CODE = 700
 
 const val CID = "agcoding"
 
-class MainActivity : FlutterActivity(), MethodChannel.MethodCallHandler,
-    EventChannel.StreamHandler {
+class MainActivity : FlutterActivity(), MethodChannel.MethodCallHandler{
+    private var initResult: MethodChannel.Result? = null
+    private var loginResult: MethodChannel.Result? = null
+    private var sendFileResult: MethodChannel.Result? = null
     companion object {
         const val METHOD_CHANNEL = "mathtutor_neotech_plugin"
-        const val EVENT_CHANNEL = "mathtutor_neotech_plugin_event"
     }
 
     private lateinit var methodChannel: MethodChannel
-    private lateinit var eventChannel: EventChannel
     private lateinit var neotechServerHandler: ELServerHandler
     private lateinit var id: String
     var holdingFilePath: String? = null
@@ -57,35 +51,66 @@ class MainActivity : FlutterActivity(), MethodChannel.MethodCallHandler,
             flutterEngine.dartExecutor.binaryMessenger, METHOD_CHANNEL
         )
         methodChannel.setMethodCallHandler(this)
-        eventChannel = EventChannel(flutterEngine.dartExecutor, EVENT_CHANNEL)
-        eventChannel.setStreamHandler(this)
-
     }
+
 
     override fun onMethodCall(call: MethodCall, result: MethodChannel.Result) {
         when (call.method) {
             "initialize" -> {
                 try {
-                    holdingFilePath = call.argument("preloadImage")
+                    initResult = result
                     neotechServerHandler = ELServerHandler()
-                    neotechServerHandler.initial(this)
+                    id = call.argument("userID")!!
+                    neotechServerHandler.setEventHandler(
+                        NeotechServerHandler(methodChannel, neotechServerHandler, id, onUserEntered = {
+                            sendImage()
+                        },
+                        onInitDone = {
+                            initResult?.success(if(it) "Init Done" else "Init Failed")
+                        },
+                        onRoomEnteringDone = {
+                            loginResult?.success(if(it) "Login Done" else "Login Failed")
+                        },
+                        )
+                    )
+                    neotechServerHandler.setOnFileTransferListener(
+                        OnFileTransferListenerImpl(
+                            methodChannel,
+                            onFileSent = {
+                                sendFileResult?.success(if (it) "File Sent" else "File Not Sent")
+                            }
+
+                        )
+                    )
+
+                    neotechServerHandler.setOnPacketListener { i: Int, byteBuffer: ByteBuffer ->
+                        run {
+                            val stringified = String(byteBuffer.array())
+                            val jsono = JSONObject(stringified)
+                            val map = HashMap<String, Any>()
+                            for (key in jsono.keys()) {
+                                map[key] = jsono[key]
+                            }
+                            methodChannel.invokeMethod("eventSinkAlt",map)
+
+                        }
+                    }
+                    holdingFilePath = call.argument("preloadImage")
                     neotechServerHandler.setDownloadDir(getDownloadDir())
                     neotechServerHandler.setServerInfo(
                         call.argument("host"), call.argument("port")!!
                     )
-                    result.success("Successfully Initialized")
+                    neotechServerHandler.initial(this)
                 } catch (e: Exception) {
                     result.error("Failed to Initialize", e.message, e)
                 }
             }
             "login" -> {
                 try {
-                    val userId: String = call.argument("userID")!!
+                    loginResult = result
                     val nickname: String = call.argument("nickname")!!
                     val ownerId: String = call.argument("ownerID")!!
-                    neotechServerHandler.login(userId, nickname, ownerId, CID)
-                    id = userId
-                    result.success("Successfully Logged in")
+                    neotechServerHandler.login(id, nickname, ownerId, CID)
                 } catch (e: Exception) {
                     result.error("Failed to log in", e.message, e)
                 }
@@ -118,11 +143,11 @@ class MainActivity : FlutterActivity(), MethodChannel.MethodCallHandler,
                     val res = HashMap<String, Any>()
                     val data = mutableListOf<HashMap<String, Any>>()
                     val userList = neotechServerHandler.userList
-                    for (user in userList) {
+                    for (userId in userList) {
                         val userMap = HashMap<String, Any>()
-                        userMap["id"] = user
-                        userMap["isAudioOn"] = neotechServerHandler.getPermissionAudio(user)
-                        userMap["isDocOn"] = neotechServerHandler.getPermissionDoc(user)
+                        userMap["id"] = userId
+                        userMap["isAudioOn"] = neotechServerHandler.getPermissionAudio(userId)
+                        userMap["isDocOn"] = neotechServerHandler.getPermissionDoc(userId)
                         data.add(userMap)
                     }
                     val gson = Gson()
@@ -150,7 +175,7 @@ class MainActivity : FlutterActivity(), MethodChannel.MethodCallHandler,
                     result.error("Failed to get audio permission", e.message, e)
                 }
             }
-            "changePermissinoDoc" -> {
+            "changePermissionDoc" -> {
                 try {
                     val userId: String = call.argument("userID")!!
                     neotechServerHandler.changePermissionDoc(userId)
@@ -187,8 +212,6 @@ class MainActivity : FlutterActivity(), MethodChannel.MethodCallHandler,
                 try {
                     holdingFilePath = call.argument("filePath")!!
                     sendImage()
-
-                    result.success("Successfully sent file")
                 } catch (e: Exception) {
                     result.error("Failed to send file", e.message, e)
                 }
@@ -213,45 +236,15 @@ class MainActivity : FlutterActivity(), MethodChannel.MethodCallHandler,
         return cacheDir.absolutePath + "/live_downloaded_image"
     }
 
-    override fun onListen(arguments: Any?, events: EventSink?) {
-        if (events != null) {
-            neotechServerHandler.setEventHandler(
-                NeotechServerHandler(events, neotechServerHandler, id, onUserEntered = {
-                    sendImage()
-                })
-            )
-            neotechServerHandler.setOnFileTransferListener(
-                OnFileTransferListenerImpl(
-                    methodChannel, events
-                )
-            )
-
-            neotechServerHandler.setOnPacketListener { i: Int, byteBuffer: ByteBuffer ->
-                run {
-                    val stringified = String(byteBuffer.array())
-                    val jsono = JSONObject(stringified)
-                    val map = HashMap<String, Any>()
-                    for (key in jsono.keys()) {
-                        map[key] = jsono[key]
-                    }
-                    events.success(map)
-                }
-            }
-        }
-    }
-
-    override fun onCancel(arguments: Any?) {
-        neotechServerHandler.setEventHandler(null)
-        neotechServerHandler.setOnFileTransferListener(null)
-        neotechServerHandler.setOnPacketListener(null)
-    }
 }
 
 class NeotechServerHandler(
-    private val eventSink: EventSink,
+    private val methodChannel: MethodChannel,
     private val serverHandler: ELServerHandler,
     private val id: String,
-    private val onUserEntered: () -> Unit
+    private val onUserEntered: () -> Unit,
+    private val onInitDone: (result:Boolean) -> Unit,
+    private val onRoomEnteringDone: (result:Boolean) -> Unit
 
 ) : Handler(Looper.getMainLooper()) {
 
@@ -261,13 +254,10 @@ class NeotechServerHandler(
                 //초기화 결과
                 val result = HashMap<String, Any>()
                 if (msg.arg1 == EmeetplusApi.IELServerHandler.EL_RESULT_OK) {
-                    result["type"] = SERVER_EVENT_CODE
-                    result["data"] = "초기화 성공"
-                    eventSink.success(result)
+                    onInitDone(true)
                 } else {
-                    eventSink.error("Server: 초기화 실패", null, null)
+                    onInitDone(false)
                 }
-
             }
             EmeetplusApi.IELServerHandler.EL_MSG_LOGIN -> {
                 // 로그인 결과
@@ -275,43 +265,41 @@ class NeotechServerHandler(
                     val result = HashMap<String, Any>()
                     result["type"] = SERVER_EVENT_CODE
                     result["data"] = msg.obj.toString() + " 로그인 성공"
-                    eventSink.success(result)
-
-
+                    this.methodChannel.invokeMethod("onServerEvent", result)
                 } else {
-                    eventSink.error("Server: 로그인 실패", null, null)
+                    val result = HashMap<String, Any>()
+                    result["type"] = SERVER_EVENT_CODE
+                    result["data"] = msg.obj.toString() + " 로그인 실패"
+                    onRoomEnteringDone(false)
                 }
-           }
+            }
             EmeetplusApi.IELServerHandler.EL_MSG_ENTER_ROOM -> {
                 // 방입장 결과
                 if (msg.arg1 == EmeetplusApi.IELServerHandler.EL_RESULT_OK) {
                     //강의실 입장 성공
-                    val result = HashMap<String, Any>()
-                    result["type"] = SERVER_EVENT_CODE
-                    result["data"] = msg.obj.toString() + "방입장 성공"
-                    eventSink.success(result)
+                    onRoomEnteringDone(true)
 
                 } else {
                     //강의실 입장 실패
-eventSink.error("Server: 방입장 실패", null, null)
+                    onRoomEnteringDone(false)
                 }
             }
             EmeetplusApi.IELServerHandler.EL_MSG_REMOTE_ENTER_ROOM -> {
                 //상대편 방입장 이벤트
-                
+
                 val result = HashMap<String, Any>()
                 val data = HashMap<String, Any>()
                 result["type"] = USER_CODE
                 data["isEnter"] = true
-                data["nickname"]=msg.obj.toString()
+                data["id"]=msg.obj.toString()
                 data["isAudioOn"] = serverHandler.getPermissionAudio(msg.obj.toString())
                 data["isDocOn"] = serverHandler.getPermissionDoc(msg.obj.toString())
                 val gson = Gson()
                 val json = gson.toJson(data)
                 result["data"] = json
                 onUserEntered()
+                methodChannel.invokeMethod("eventSinkAlt", result)
 
-                eventSink.success(result)
             }
             EmeetplusApi.IELServerHandler.EL_MSG_REMOTE_EXIT_ROOM -> {
                 //상대편 방퇴장 이벤트
@@ -319,11 +307,11 @@ eventSink.error("Server: 방입장 실패", null, null)
                 val data = HashMap<String, Any>()
                 result["type"] = USER_CODE
                 data["isEnter"] = false
-                data["nickname"]=msg.obj.toString()
+                data["id"]=msg.obj.toString()
                 val gson = Gson()
                 val json = gson.toJson(data)
                 result["data"] = json
-                eventSink.success(result)
+                methodChannel.invokeMethod("eventSinkAlt", result)
             }
             EmeetplusApi.IELServerHandler.EL_MSG_OVERLAPPED_USER_ID -> {
                 //다른 사용자가 동일한 내아이디로 로그인 함
@@ -338,14 +326,14 @@ eventSink.error("Server: 방입장 실패", null, null)
                     put("mic", audioPermission)
                     put("drawing", docPermission)
                 }
-                eventSink.success(result)
+                methodChannel.invokeMethod("eventSinkAlt", result)
             }
             EmeetplusApi.IELServerHandler.EL_MSG_DISCONNECTED_SERVER -> {
                 //서버와의 연결종료
                 val result = HashMap<String, Any>()
                 result["type"] = SERVER_EVENT_CODE
                 result["data"] = "terminated"
-                eventSink.success(result)
+                this.methodChannel.invokeMethod("onServerEvent", result)
             }
         }
 
@@ -354,20 +342,21 @@ eventSink.error("Server: 방입장 실패", null, null)
 }
 
 class OnFileTransferListenerImpl(
-    private val methodChannel: MethodChannel, private val eventSink: EventSink
+    private val methodChannel: MethodChannel,
+    private val onFileSent: (result: Boolean) -> Unit
 ) : OnFileTransferListener {
     override fun uploadCompleted(filePath: String?) {
         val result = HashMap<String, Any>()
         result["event"] = "fileUploaded"
         result["filePath"] = filePath ?: ""
-        methodChannel.invokeMethod("onUploadComplete", result)
+        onFileSent(true)
     }
 
     override fun uploadFailed(filePath: String?) {
         val result = HashMap<String, Any>()
         result["event"] = "fileUploadFailed"
         result["filePath"] = filePath ?: ""
-        methodChannel.invokeMethod("onUploadFailed", result)
+        onFileSent(false)
     }
 
     override fun downloadCompleted(senderID: String?, filePath: String?) {
@@ -376,7 +365,7 @@ class OnFileTransferListenerImpl(
         result["senderID"] = senderID ?: ""
         result["type"] = FILE_CODE
         result["data"] = filePath ?: ""
-        eventSink.success(result)
+        methodChannel.invokeMethod("eventSinkAlt", result)
     }
 
     override fun downloadFailed(senderID: String?, filePath: String?) {

@@ -1,7 +1,4 @@
-import 'dart:developer' as dev;
 import 'dart:math';
-
-import 'package:example/platform_channel.dart';
 import 'package:example/whiteboard_view.dart';
 import 'package:flutter/material.dart';
 import 'package:math_tutor_whiteboard/types/types.dart';
@@ -47,6 +44,13 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
+  @override
+  void initState() {
+    WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
+      
+    });
+    super.initState();
+  }
 
   @override
   Widget build(BuildContext context) {
