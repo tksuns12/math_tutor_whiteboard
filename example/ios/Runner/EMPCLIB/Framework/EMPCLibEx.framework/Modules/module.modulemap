@@ -1,0 +1,6 @@
+framework module EMPCLibEx {
+  umbrella header "EMPCLibEx.h"
+
+  export *
+  module * { export * }
+}
