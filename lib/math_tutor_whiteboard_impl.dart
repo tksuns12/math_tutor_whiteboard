@@ -283,6 +283,10 @@ class _MathTutorWhiteboardState extends ConsumerState<MathTutorWhiteboardImpl> {
 
   void _onStartDrawing() {
     if (penType != PenType.strokeEraser) {
+      // If there is redo data, delete all of them and start from there
+      if (limitCursor < drawingData.length) {
+        drawingData.removeRange(limitCursor, drawingData.length);
+      }
       drawingData.add([]);
       limitCursor++;
     }
