@@ -162,32 +162,36 @@ class _WhiteboardViewState extends State<WhiteboardView> {
                     controller.startRecording();
                     break;
                   case RecordingState.recording:
-                    controller.pauseRecording();
-                    final result = await showDialog(
-                      context: context,
-                      builder: (context) => AlertDialog(
-                        title: const Text('Are you sure?'),
-                        content: const Text(
-                            'You will lose all unsaved changes if you close the whiteboard.'),
-                        actions: [
-                          TextButton(
-                            onPressed: () => Navigator.pop(context, false),
-                            child: const Text('Cancel'),
-                          ),
-                          TextButton(
-                            onPressed: () => Navigator.pop(context, true),
-                            child: const Text('Close'),
-                          ),
-                        ],
-                      ),
-                    );
-                    if (result == true) {
-                      await controller.stopRecording();
-                      if (mounted) {
-                        Navigator.of(context).pop();
+                    await controller.pauseRecording();
+                    if (context.mounted) {
+                      final result = await showDialog(
+                        context: context,
+                        builder: (context) => AlertDialog(
+                          title: const Text('Are you sure?'),
+                          content: const Text(
+                              'You will lose all unsaved changes if you close the whiteboard.'),
+                          actions: [
+                            TextButton(
+                              onPressed: () => Navigator.pop(context, false),
+                              child: const Text('Cancel'),
+                            ),
+                            TextButton(
+                              onPressed: () => Navigator.pop(context, true),
+                              child: const Text('Close'),
+                            ),
+                          ],
+                        ),
+                      );
+                      if (result == true) {
+                        await controller.stopRecording();
+                        if (mounted) {
+                          Navigator.of(context).pop();
+                        }
+                      } else {
+                        await controller.resumeRecording();
                       }
                     } else {
-                      controller.resumeRecording();
+                      await controller.resumeRecording();
                     }
                     break;
                   case RecordingState.paused:
