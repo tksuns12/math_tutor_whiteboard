@@ -3,6 +3,7 @@ import 'package:ed_screen_recorder/ed_screen_recorder.dart';
 import 'package:flutter/material.dart';
 import 'package:math_tutor_whiteboard/types/types.dart';
 import 'package:path_provider/path_provider.dart';
+import 'package:uuid/uuid.dart';
 
 enum RecordingState {
   idle,
@@ -145,9 +146,7 @@ class DefaultRecorder implements WhiteboardRecorder {
   @override
   Future<void> startRecording() async {
     await _recorder.startRecordScreen(
-        audioEnable: true,
-        fileName: DateTime.now().millisecondsSinceEpoch.toString(),
-        dirPathToSave: (await getTemporaryDirectory()).path);
+        audioEnable: true, fileName: const Uuid().v4());
   }
 
   @override
