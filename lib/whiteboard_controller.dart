@@ -3,6 +3,7 @@ import 'package:ed_screen_recorder/ed_screen_recorder.dart';
 import 'package:flutter/material.dart';
 import 'package:math_tutor_whiteboard/types/types.dart';
 import 'package:path_provider/path_provider.dart';
+import 'package:flutter_screen_recorder/flutter_screen_recorder.dart';
 
 enum RecordingState {
   idle,
@@ -143,5 +144,42 @@ class DefaultRecorder implements WhiteboardRecorder {
   @override
   Future<String> stopRecording() async {
     return (await _recorder.stopRecord())['file'].path;
+  }
+}
+
+class NewDefaultRecorder implements WhiteboardRecorder {
+  final FlutterScreenRecorder _recorder = FlutterScreenRecorder();
+  @override
+  Future<void> pauseRecording() async {
+    final result = await _recorder.pauseRecordScreen();
+    if (result) {
+      return;
+    } else {
+      throw Exception('Failed to pause recording');
+    }
+  }
+
+  @override
+  Future<void> resumeRecording() async {
+    final result = await _recorder.resumeRecordScreen();
+    if (result) {
+      return;
+    } else {
+      throw Exception('Failed to resume recording');
+    }
+  }
+
+  @override
+  Future<void> startRecording() async {
+    final result =
+        await _recorder.startRecordScreen(DateTime.now().toIso8601String());
+    if (!result) {
+      throw Exception('Failed to start recording');
+    }
+  }
+
+  @override
+  Future<String> stopRecording() async {
+    return await _recorder.stopRecordScreen();
   }
 }
