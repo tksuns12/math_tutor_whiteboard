@@ -146,7 +146,9 @@ class DefaultRecorder implements WhiteboardRecorder {
   @override
   Future<void> startRecording() async {
     await _recorder.startRecordScreen(
-        audioEnable: true, fileName: const Uuid().v4());
+        audioEnable: true,
+        fileName: const Uuid().v4(),
+        dirPathToSave: (await getApplicationDocumentsDirectory()).path);
   }
 
   @override
