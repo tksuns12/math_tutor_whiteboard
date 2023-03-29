@@ -527,7 +527,6 @@ class _WhiteBoard extends StatefulWidget {
 
 class _WhiteBoardState extends State<_WhiteBoard> {
   bool panMode = false;
-  bool isPanning = false;
   Set<int> pointers = {};
   late final TransformationController transformationController;
 
@@ -535,7 +534,7 @@ class _WhiteBoardState extends State<_WhiteBoard> {
   void initState() {
     transformationController = widget.transformationController;
     transformationController.addListener(() {
-      if (isPanning && panMode) {
+      if (panMode) {
         widget.onViewportChange(transformationController.value);
       }
     });
@@ -560,6 +559,7 @@ class _WhiteBoardState extends State<_WhiteBoard> {
   Widget build(BuildContext context) {
     return LayoutBuilder(builder: (context, constraints) {
       return Scaffold(
+        floatingActionButtonLocation: FloatingActionButtonLocation.startFloat,
         floatingActionButton: widget.drawable
             ? FloatingActionButton.small(
                 onPressed: () {
@@ -575,19 +575,12 @@ class _WhiteBoardState extends State<_WhiteBoard> {
         body: InteractiveViewer.builder(
           panEnabled: panMode,
           scaleEnabled: false,
-          onInteractionStart: (details) => isPanning = true,
-          onInteractionEnd: (details) => isPanning = false,
           transformationController: transformationController,
           builder: (BuildContext context, Quad viewport) {
             return Listener(
               onPointerDown: (event) {
                 if (widget.drawable) {
                   pointers.add(event.pointer);
-                  if (pointers.length > 1) {
-                    setState(() {
-                      panMode = true;
-                    });
-                  }
                   if (panMode) {
                     return;
                   }
@@ -596,7 +589,7 @@ class _WhiteBoardState extends State<_WhiteBoard> {
               },
               onPointerMove: (event) {
                 if (widget.drawable) {
-                  if (panMode) {
+                  if (panMode || pointers.length > 1) {
                     return;
                   }
                   widget.onDrawing(event);
