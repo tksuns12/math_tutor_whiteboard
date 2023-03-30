@@ -1,5 +1,8 @@
 import 'dart:async';
+import 'dart:developer';
+import 'dart:io';
 import 'package:ed_screen_recorder/ed_screen_recorder.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:math_tutor_whiteboard/types/types.dart';
 import 'package:path_provider/path_provider.dart';
@@ -28,16 +31,19 @@ class WhiteboardController extends ChangeNotifier {
 
   void addUser(WhiteboardUser user) {
     users.add(user);
+    log('Added user: ${user.id}');
     notifyListeners();
   }
 
   void removeUser(WhiteboardUser user) {
     users.remove(user);
+    log('Removed user: ${user.id}');
     notifyListeners();
   }
 
   void clearUsers() {
     users.clear();
+    log('Cleared users');
     notifyListeners();
   }
 
@@ -51,6 +57,7 @@ class WhiteboardController extends ChangeNotifier {
           micEnabled: permissionEvent.microphone);
       notifyListeners();
     }
+    log('Adjusted permission of user: $userID');
   }
 
   Future<void> startRecording() async {
@@ -67,6 +74,7 @@ class WhiteboardController extends ChangeNotifier {
     });
     await recorder?.startRecording();
     recordingState = RecordingState.recording;
+    log('Started recording');
     notifyListeners();
   }
 
@@ -85,6 +93,7 @@ class WhiteboardController extends ChangeNotifier {
       recordingState = RecordingState.error;
       notifyListeners();
     }
+    log('Stopped recording');
   }
 
   Future<void> pauseRecording() async {
@@ -92,9 +101,10 @@ class WhiteboardController extends ChangeNotifier {
       return;
     }
     _timer?.cancel();
-    recorder?.pauseRecording();
+    await recorder?.pauseRecording();
     recordingState = RecordingState.paused;
     notifyListeners();
+    log('Paused recording');
   }
 
   Future<void> resumeRecording() async {
@@ -108,9 +118,10 @@ class WhiteboardController extends ChangeNotifier {
       }
       notifyListeners();
     });
-    recorder?.resumeRecording();
+    await recorder?.resumeRecording();
     recordingState = RecordingState.recording;
     notifyListeners();
+    log('Resumed recording');
   }
 }
 
@@ -125,30 +136,37 @@ class DefaultRecorder implements WhiteboardRecorder {
   final EdScreenRecorder _recorder = EdScreenRecorder();
   @override
   Future<void> pauseRecording() async {
-    final result = await _recorder.pauseRecord();
-    if (result == true) {
-      return;
-    } else {
-      throw Exception('Unable to pause recording');
+    if (Platform.isAndroid) {
+      final result = await _recorder.pauseRecord();
+      if (result == true) {
+        return;
+      } else {
+        throw Exception('Unable to pause recording');
+      }
     }
   }
 
   @override
   Future<void> resumeRecording() async {
-    final result = await _recorder.resumeRecord();
-    if (result == true) {
-      return;
-    } else {
-      throw Exception('Unable to resume recording');
+    if (Platform.isAndroid) {
+      final result = await _recorder.resumeRecord();
+      if (result == true) {
+        return;
+      } else {
+        throw Exception('Unable to resume recording');
+      }
     }
   }
 
   @override
   Future<void> startRecording() async {
+    final path = '${(await getTemporaryDirectory()).path}/math_tutor_temp';
+    final savingDirectory = Directory(path);
+    if (!await savingDirectory.exists()) {
+      await savingDirectory.create(recursive: true);
+    }
     await _recorder.startRecordScreen(
-        audioEnable: true,
-        fileName: const Uuid().v4(),
-        dirPathToSave: (await getApplicationDocumentsDirectory()).path);
+        audioEnable: true, fileName: const Uuid().v4(), dirPathToSave: path);
   }
 
   @override
