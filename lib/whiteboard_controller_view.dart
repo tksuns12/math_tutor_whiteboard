@@ -110,7 +110,7 @@ class _WhiteboardControllerState
                         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          if (widget.isLive && widget.drawable)
+                          if (widget.drawable)
                             InkWell(
                               onTap: () {
                                 // Show modal bottom sheet to choose camera or gallery
