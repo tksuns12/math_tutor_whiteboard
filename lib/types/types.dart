@@ -12,7 +12,9 @@ class DrawingData extends Equatable {
   final PenType penType;
   final double strokeWidth;
   final Color color;
+  final String userID;
   const DrawingData({
+    required this.userID,
     required this.point,
     required this.penType,
     required this.strokeWidth,
@@ -20,7 +22,7 @@ class DrawingData extends Equatable {
   });
 
   @override
-  List<Object> get props => [point, penType, strokeWidth, color];
+  List<Object> get props => [point, penType, strokeWidth, color, userID];
 
   Map<String, dynamic> toMap() {
     return {
@@ -28,6 +30,7 @@ class DrawingData extends Equatable {
       'penType': penType.toMap(),
       'strokeWidth': strokeWidth,
       'color': color.value,
+      'userID': userID,
     };
   }
 
@@ -37,6 +40,7 @@ class DrawingData extends Equatable {
       penType: PenType.fromMap(map['penType']),
       strokeWidth: map['strokeWidth']?.toDouble() ?? 0.0,
       color: Color(map['color']),
+      userID: map['userID'],
     );
   }
 
@@ -50,12 +54,14 @@ class DrawingData extends Equatable {
     PenType? penType,
     double? strokeWidth,
     Color? color,
+    String? userID,
   }) {
     return DrawingData(
       point: point ?? this.point,
       penType: penType ?? this.penType,
       strokeWidth: strokeWidth ?? this.strokeWidth,
       color: color ?? this.color,
+      userID: userID ?? this.userID,
     );
   }
 }
@@ -147,7 +153,8 @@ class BroadcastPaintData extends Equatable {
   final BroadcastCommand command;
   final int? removeStrokeIndex;
   final Size boardSize;
-  const BroadcastPaintData({
+  final String userID;
+  const BroadcastPaintData({required this.userID, 
     required this.boardSize,
     required this.drawingData,
     required this.limitCursor,
@@ -159,9 +166,11 @@ class BroadcastPaintData extends Equatable {
     return {
       'drawingData': drawingData?.toMap(),
       'limitCursor': limitCursor,
+
       'command': command.toMap(),
       'removeStrokeIndex': removeStrokeIndex,
       'boardSize': boardSize.toMap(),
+      'userID': userID,
     };
   }
 
@@ -174,6 +183,7 @@ class BroadcastPaintData extends Equatable {
       command: BroadcastCommand.fromMap(map['command']),
       removeStrokeIndex: map['removeStrokeIndex']?.toInt(),
       boardSize: Size(map['boardSize']['width'], map['boardSize']['height']),
+      userID: map['userID'],
     );
   }
 
@@ -189,6 +199,7 @@ class BroadcastPaintData extends Equatable {
       limitCursor,
       command,
       removeStrokeIndex,
+      boardSize,
     ];
   }
 }
@@ -365,7 +376,8 @@ class PermissionChangeEvent extends Equatable {
   final bool? drawing;
   final bool? microphone;
   final String? userID;
-  const PermissionChangeEvent({this.userID, 
+  const PermissionChangeEvent({
+    this.userID,
     this.drawing,
     this.microphone,
   });
