@@ -49,7 +49,7 @@ class _UserListBottomSheetState extends State<UserListBottomSheet> {
           const SizedBox(
             height: 16,
           ),
-          const Text('유저 목록', style: TextStyle(fontSize: 20)),
+          const Text('접속자', style: TextStyle(fontSize: 20)),
           Expanded(
             child: ChangeNotifierBuilder(
                 notifier: widget.controller,
