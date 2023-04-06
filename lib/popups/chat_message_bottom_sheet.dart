@@ -12,67 +12,55 @@ class ChatMessageBottomSheet extends ConsumerStatefulWidget {
       _ChatMessageBottomSheetState();
 }
 
-class _ChatMessageBottomSheetState extends ConsumerState<ChatMessageBottomSheet>
-    with WidgetsBindingObserver {
+class _ChatMessageBottomSheetState
+    extends ConsumerState<ChatMessageBottomSheet> {
   var chatMessages = <WhiteboardChatMessage>[];
   final scrollContrller = ScrollController();
-  bool isViewAttached = false;
-  double bottomInset = 0;
   final textEditingController = TextEditingController();
 
   @override
   void initState() {
     WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
-      isViewAttached = true;
-      scrollContrller.animateTo(
-        scrollContrller.position.maxScrollExtent,
-        duration: const Duration(milliseconds: 300),
-        curve: Curves.easeOut,
-      );
-    });
-    WidgetsBinding.instance.addObserver(this);
-    super.initState();
-  }
-
-  @override
-  void dispose() {
-    WidgetsBinding.instance.removeObserver(this);
-    scrollContrller.dispose();
-    textEditingController.dispose();
-    super.dispose();
-  }
-
-  @override
-  void didChangeMetrics() {
-    if (isViewAttached) {
-      setState(() {
-        bottomInset = MediaQuery.of(context).viewInsets.bottom;
-      });
-    }
-    super.didChangeMetrics();
-  }
-
-  @override
-  void didChangeDependencies() {
-    if (isViewAttached) {
-      if (scrollContrller.position.maxScrollExtent - scrollContrller.offset <=
-          50) {
+      if (scrollContrller.hasClients) {
         scrollContrller.animateTo(
           scrollContrller.position.maxScrollExtent,
           duration: const Duration(milliseconds: 300),
           curve: Curves.easeOut,
         );
       }
+    });
+    super.initState();
+  }
+
+  @override
+  void dispose() {
+    scrollContrller.dispose();
+    textEditingController.dispose();
+    super.dispose();
+  }
+
+  @override
+  void didChangeDependencies() {
+    if (scrollContrller.hasClients &&
+        scrollContrller.position.maxScrollExtent - scrollContrller.offset <=
+            50) {
+      scrollContrller.animateTo(
+        scrollContrller.position.maxScrollExtent,
+        duration: const Duration(milliseconds: 300),
+        curve: Curves.easeOut,
+      );
     }
+
     super.didChangeDependencies();
   }
 
   @override
   Widget build(BuildContext context) {
-    return AnimatedSize(
-      duration: const Duration(milliseconds: 300),
+    return Padding(
+      padding:
+          EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
       child: Container(
-        height: MediaQuery.of(context).size.height * 0.4 + bottomInset,
+        height: MediaQuery.of(context).size.height * 0.4,
         width: double.infinity,
         decoration: const BoxDecoration(
           color: Colors.white,
@@ -88,16 +76,14 @@ class _ChatMessageBottomSheetState extends ConsumerState<ChatMessageBottomSheet>
             ),
             const Text('채팅', style: TextStyle(fontSize: 20)),
             Expanded(
-              child: Consumer(
-                builder: (context,ref,_) {
-                  chatMessages = ref.watch(chatMessageStateProvider);
-                  return ListView.builder(
-                    controller: scrollContrller,
-                    itemCount: chatMessages.length,
-                    itemBuilder: _chatMessageItemBuilder,
-                  );
-                }
-              ),
+              child: Consumer(builder: (context, ref, _) {
+                chatMessages = ref.watch(chatMessageStateProvider);
+                return ListView.builder(
+                  controller: scrollContrller,
+                  itemCount: chatMessages.length,
+                  itemBuilder: _chatMessageItemBuilder,
+                );
+              }),
             ),
             TextField(
                 controller: textEditingController,
@@ -109,9 +95,6 @@ class _ChatMessageBottomSheetState extends ConsumerState<ChatMessageBottomSheet>
                     hintText: '메시지 입력',
                     filled: true,
                     fillColor: Colors.grey[200])),
-            SizedBox(
-              height: bottomInset,
-            )
           ],
         ),
       ),
