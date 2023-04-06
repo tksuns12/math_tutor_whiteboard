@@ -133,28 +133,18 @@ abstract class WhiteboardRecorder {
 }
 
 class DefaultRecorder implements WhiteboardRecorder {
-  final EdScreenRecorder _recorder = EdScreenRecorder();
+  final _recorder = EdScreenRecorder();
   @override
   Future<void> pauseRecording() async {
     if (Platform.isAndroid) {
-      final result = await _recorder.pauseRecord();
-      if (result == true) {
-        return;
-      } else {
-        throw Exception('Unable to pause recording');
-      }
+      _recorder.pauseRecord();
     }
   }
 
   @override
   Future<void> resumeRecording() async {
     if (Platform.isAndroid) {
-      final result = await _recorder.resumeRecord();
-      if (result == true) {
-        return;
-      } else {
-        throw Exception('Unable to resume recording');
-      }
+      _recorder.resumeRecord();
     }
   }
 
