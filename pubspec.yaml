@@ -12,8 +12,6 @@ dependencies:
   cached_network_image: ^3.2.3
   collection: ^1.16.0
   ed_screen_recorder:
-    git:
-      url: https://github.com/tksuns12/ed_screen_recorder.git
   equatable: ^2.0.5
   flutter:
     sdk: flutter
