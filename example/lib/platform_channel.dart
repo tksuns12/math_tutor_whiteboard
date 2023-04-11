@@ -40,6 +40,7 @@ abstract class MathtutorNeotechPluginPlatform {
   Future<void> sendMessage(WhiteboardChatMessage message);
   late final StreamController incomingStream;
   late final StreamController<Map> onServerEventStream;
+  void dispose();
 }
 
 class PlatformChannelImpl implements MathtutorNeotechPluginPlatform {
@@ -51,6 +52,7 @@ class PlatformChannelImpl implements MathtutorNeotechPluginPlatform {
   late final String nickname;
   final String serverHost = "demo6.gonts.net";
   final int serverPort = 27084;
+  late final DrawingBuffer buffer;
   PlatformChannelImpl() {
     methodChannel.setMethodCallHandler((call) async {
       if (call.method == 'onServerEvent') {
@@ -69,7 +71,8 @@ class PlatformChannelImpl implements MathtutorNeotechPluginPlatform {
             incomingStream.sink.add(File(event['data'] as String));
             break;
           case kDrawingCode:
-            incomingStream.sink.add(BroadcastPaintData.fromJson(event['data']));
+            incomingStream.sink
+                .add(BroadcastPaintData.fromJson(event['data']));
             break;
           case kUserCode:
             final data = jsonDecode(event['data']);
@@ -101,6 +104,14 @@ class PlatformChannelImpl implements MathtutorNeotechPluginPlatform {
       } else if (call.method == "onUploadComplete") {
         log('WhiteboardPlatformChannel | onUploadComplete: ${call.arguments}');
       }
+    });
+    buffer = DrawingBuffer((buffer) async {
+      final result = await methodChannel.invokeMethod('sendPacket', {
+        'type': kDrawingCode,
+        'data': buffer,
+      });
+
+      log('WhiteboardPlatformChannel | sendPacket: $result');
     });
   }
   @override
@@ -182,9 +193,7 @@ class PlatformChannelImpl implements MathtutorNeotechPluginPlatform {
 
   @override
   Future<void> sendPacket(Map data) async {
-    final result = await methodChannel
-        .invokeMethod('sendPacket', {'type': kDrawingCode, 'data': data});
-    log('WhiteboardPlatformChannel | sendPacket: $result');
+    buffer.add(data);
   }
 
   @override
@@ -221,6 +230,58 @@ class PlatformChannelImpl implements MathtutorNeotechPluginPlatform {
   set incomingStream(StreamController incomingStream) {
     incomingStream = incomingStream;
   }
+
+  @override
+  void dispose() {
+    incomingStream.close();
+    buffer.dispose();
+  }
+}
+
+class DrawingBuffer {
+  final List<Map> _buffer = [];
+  final int maxBufferSize;
+  final Future<void> Function(List<Map> buffer) onBufferFull;
+  DrawingBuffer(this.onBufferFull, {this.maxBufferSize = 9000});
+  Timer? _timer;
+  int _lastTime = DateTime.now().millisecondsSinceEpoch;
+
+  void dispose() {
+    _timer?.cancel();
+  }
+
+  Future<void> _burst() async {
+    log('Burst!');
+    if (_buffer.isNotEmpty) {
+      await onBufferFull(_buffer);
+      _buffer.clear();
+    }
+    _timer?.cancel();
+    _timer = null;
+  }
+
+  void startTimer() {
+    if (_timer != null) {
+      return;
+    }
+    _lastTime = DateTime.now().millisecondsSinceEpoch;
+    _timer = Timer.periodic(const Duration(milliseconds: 100), (timer) async {
+      if (DateTime.now().millisecondsSinceEpoch - _lastTime > 1000) {
+        await _burst();
+      }
+    });
+  }
+
+  Future<void> add(Map data) async {
+    startTimer();
+    _buffer.add(data);
+    final bufferSize = jsonEncode(_buffer).length;
+    if (bufferSize > maxBufferSize - 1000) {
+      _burst();
+    }
+  }
+
+  List<Map> get buffer => _buffer;
 }
 
 extension IterableX<T> on Iterable<T> {

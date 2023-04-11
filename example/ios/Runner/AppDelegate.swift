@@ -35,6 +35,36 @@ import EMPCLibEx
     return super.application(application, didFinishLaunchingWithOptions: launchOptions)
   }
     
+    func receivedPacket(_ type: Int32, buffer: UnsafePointer<CChar>, length: Int32) {
+        let data = Data(bytes: buffer, count: Int(length))
+        if let stringified = String(data: data, encoding: .utf8) {
+            do {
+                let jsonObject = try JSONSerialization.jsonObject(with: data, options: [])
+                print("JSON Object: \(jsonObject)")
+
+                if let jsono = jsonObject as? [String: Any] {
+                    var map = [String: Any]()
+                    for (key, value) in jsono {
+                        map[key] = value
+                    }
+                    methodChannel.invokeMethod("eventSinkAlt", arguments: map)
+                } else {
+                    if let jsonArrayO = jsonObject as? [NSDictionary] {
+                        for obj in jsonArrayO {
+                            var map = [String: Any]()
+                            for (key, value) in obj {
+                                map[key as! String] = value
+                            }
+                            methodChannel.invokeMethod("eventSinkAlt", arguments: map)
+                        }
+                    }
+                }
+            } catch {
+                print("Error occurred: \(error)")
+            }
+        }
+    }
+    
     private func methodCallHandler(call:FlutterMethodCall, result:@escaping FlutterResult) -> Void{
         let args = call.arguments as? Dictionary<String, Any>
         switch call.method {
@@ -48,22 +78,33 @@ import EMPCLibEx
             result(true)
         case "login":
             self.loginResult = result
-                let userId:String? = args!["userID"] as? String ?? args!["nickname"] as? String
+            self.id = args!["userID"] as? String ?? args!["nickname"] as? String
             let nickname:String? = args!["nickname"]! as? String
             let ownerId:String? = args!["ownerID"]! as? String
-            self.neotechServerHandler.login(userId!, alias: nickname!, ownerID: ownerId!, company: CID)
+            self.neotechServerHandler.login(self.id!, alias: nickname!, ownerID: ownerId!, company: CID)
         case "logout":
             self.neotechServerHandler.logout()
             result("Successfully Logged out")
         case "sendPacket":
-            do{let type: Int32? = args!["type"] as? Int32
-            let data: [String:Any]? = args!["data"] as? Dictionary
-            let decoded = try JSONSerialization.data(withJSONObject: data!)
-            self.neotechServerHandler.sendPacket(type!, buffer: String(decoding:decoded, as:UTF8.self), length: Int32(decoded.count))}
-            catch {
+            do {
+                guard let type = args!["type"] as? Int32,
+                      let data = args!["data"] as? [[String: Any]] else {
+                    throw NSError(domain: "Invalid arguments", code: -1, userInfo: nil)
+                }
+
+                let jsonData: Data
+                if data.count == 1 {
+                    jsonData = try JSONSerialization.data(withJSONObject: data[0], options: [])
+                } else {
+                    jsonData = try JSONSerialization.data(withJSONObject: data, options: [])
+                }
+
+                let stringified = String(data: jsonData, encoding: .utf8) ?? ""
+                self.neotechServerHandler.sendPacket(type, buffer: stringified, length: Int32(stringified.utf8.count))
+                result("Packet Sent")
+            } catch {
                 result("Failed to send packet")
             }
-            result("Packet Sent")
         case "getUserList":
             do {
                     var res = [String: Any]()

@@ -12,7 +12,9 @@ import io.flutter.embedding.engine.FlutterEngine
 import io.flutter.plugin.common.MethodCall
 import io.flutter.plugin.common.MethodChannel
 import io.flutter.plugins.GeneratedPluginRegistrant
+import org.json.JSONArray
 import org.json.JSONObject
+import org.json.JSONTokener
 import java.nio.ByteBuffer
 
 const val FILE_CODE = 100
@@ -73,6 +75,11 @@ class MainActivity : FlutterActivity(), MethodChannel.MethodCallHandler{
                         },
                         )
                     )
+                    neotechServerHandler.setDownloadDir(getDownloadDir())
+                    neotechServerHandler.setServerInfo(
+                        call.argument("host"), call.argument("port")!!
+                    )
+                    neotechServerHandler.initial(this)
                     neotechServerHandler.setOnFileTransferListener(
                         OnFileTransferListenerImpl(
                             methodChannel,
@@ -86,21 +93,28 @@ class MainActivity : FlutterActivity(), MethodChannel.MethodCallHandler{
                     neotechServerHandler.setOnPacketListener { i: Int, byteBuffer: ByteBuffer ->
                         run {
                             val stringified = String(byteBuffer.array())
-                            val jsono = JSONObject(stringified)
-                            val map = HashMap<String, Any>()
-                            for (key in jsono.keys()) {
-                                map[key] = jsono[key]
+                            if (determineJsonType(stringified) is JSONObject) {
+                                val jsono = JSONObject(stringified)
+                                val map = HashMap<String, Any>()
+                                for (key in jsono.keys()) {
+                                    map[key] = jsono[key]
+                                }
+                                methodChannel.invokeMethod("eventSinkAlt",map)
+                            } else if (determineJsonType(stringified) is JSONArray) {
+                                val jsona = JSONArray(stringified)
+                                for (i in 0 until jsona.length()) {
+                                    val jsono = jsona.getJSONObject(i)
+                                    val map = HashMap<String, Any>()
+                                    for (key in jsono.keys()) {
+                                        map[key] = jsono[key]
+                                    }
+                                    methodChannel.invokeMethod("eventSinkAlt",map)
+                                }
                             }
-                            methodChannel.invokeMethod("eventSinkAlt",map)
 
                         }
                     }
                     holdingFilePath = call.argument("preloadImage")
-                    neotechServerHandler.setDownloadDir(getDownloadDir())
-                    neotechServerHandler.setServerInfo(
-                        call.argument("host"), call.argument("port")!!
-                    )
-                    neotechServerHandler.initial(this)
                 } catch (e: Exception) {
                     result.error("Failed to Initialize", e.message, e)
                 }
@@ -127,12 +141,19 @@ class MainActivity : FlutterActivity(), MethodChannel.MethodCallHandler{
             "sendPacket" -> {
                 try {
                     val type: Int = call.argument("type")!!
-                    val data: HashMap<String, Any> = call.argument("data")!!
+                    val data: ArrayList<HashMap<String, Any>> = call.argument("data")!!
                     val gson = Gson()
-                    val stringified = gson.toJson(data)
-                    neotechServerHandler.sendPacket(
-                        type, ByteBuffer.wrap(stringified.toByteArray())
-                    )
+                    if (data.size == 1) {
+                        val stringified = gson.toJson(data[0])
+                        neotechServerHandler.sendPacket(
+                            type, ByteBuffer.wrap(stringified.toByteArray())
+                        )
+                    } else {
+                        val stringified = gson.toJson(data)
+                        neotechServerHandler.sendPacket(
+                            type, ByteBuffer.wrap(stringified.toByteArray())
+                        )
+                    }
                     result.success("Packet Sent")
                 } catch (e: Exception) {
                     result.error("Failed to send packet", e.message, e)
@@ -235,6 +256,11 @@ class MainActivity : FlutterActivity(), MethodChannel.MethodCallHandler{
     private fun getDownloadDir(): String {
         return cacheDir.absolutePath + "/live_downloaded_image"
     }
+
+    fun determineJsonType(jsonString: String): Any? {
+        return JSONTokener(jsonString).nextValue()
+    }
+
 
 }
 
