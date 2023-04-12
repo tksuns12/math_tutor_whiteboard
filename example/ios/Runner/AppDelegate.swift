@@ -148,6 +148,8 @@ import EMPCLibEx
         case "isMicrophoneOn":
             result(self.neotechServerHandler.getSpeakerphoneOn())
         case "sendImage":
+            holdingFilePath = args!["filePath"] as? String
+            sendFileResult = result
             if (self.holdingFilePath != nil){
                 self.neotechServerHandler.uploadFile(self.holdingFilePath!)}
         default:

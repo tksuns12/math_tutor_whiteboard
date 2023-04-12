@@ -75,20 +75,13 @@ class MainActivity : FlutterActivity(), MethodChannel.MethodCallHandler{
                         },
                         )
                     )
+                    holdingFilePath = call.argument("preloadImage")
                     neotechServerHandler.setDownloadDir(getDownloadDir())
                     neotechServerHandler.setServerInfo(
                         call.argument("host"), call.argument("port")!!
                     )
                     neotechServerHandler.initial(this)
-                    neotechServerHandler.setOnFileTransferListener(
-                        OnFileTransferListenerImpl(
-                            methodChannel,
-                            onFileSent = {
-                                sendFileResult?.success(if (it) "File Sent" else "File Not Sent")
-                            }
 
-                        )
-                    )
 
                     neotechServerHandler.setOnPacketListener { i: Int, byteBuffer: ByteBuffer ->
                         run {
@@ -114,7 +107,15 @@ class MainActivity : FlutterActivity(), MethodChannel.MethodCallHandler{
 
                         }
                     }
-                    holdingFilePath = call.argument("preloadImage")
+                    neotechServerHandler.setOnFileTransferListener(
+                        OnFileTransferListenerImpl(
+                            methodChannel,
+                            onFileSent = {
+                                sendFileResult?.success(if (it) "File Sent" else "File Not Sent")
+                            }
+
+                        )
+                    )
                 } catch (e: Exception) {
                     result.error("Failed to Initialize", e.message, e)
                 }
@@ -231,6 +232,7 @@ class MainActivity : FlutterActivity(), MethodChannel.MethodCallHandler{
             }
             "sendImage" -> {
                 try {
+                    sendFileResult = result
                     holdingFilePath = call.argument("filePath")!!
                     sendImage()
                 } catch (e: Exception) {
