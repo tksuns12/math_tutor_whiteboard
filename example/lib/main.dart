@@ -2,6 +2,7 @@ import 'dart:math';
 import 'package:example/whiteboard_view.dart';
 import 'package:flutter/material.dart';
 import 'package:math_tutor_whiteboard/types/types.dart';
+import 'package:permission_handler/permission_handler.dart';
 import 'package:uuid/uuid.dart';
 
 void main() {
@@ -46,8 +47,12 @@ class MyHomePage extends StatefulWidget {
 class _MyHomePageState extends State<MyHomePage> {
   @override
   void initState() {
-    WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
-      
+    WidgetsBinding.instance.addPostFrameCallback((timeStamp) async {
+      await Permission.microphone.request();
+      await Permission.camera.request();
+      await Permission.mediaLibrary.request();
+      await Permission.storage.request();
+      await Permission.photos.request();
     });
     super.initState();
   }
