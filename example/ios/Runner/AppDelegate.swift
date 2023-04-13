@@ -36,8 +36,10 @@ import EMPCLibEx
   }
     
     func receivedPacket(_ type: Int32, buffer: UnsafePointer<CChar>, length: Int32) {
+        print("receivedPacket length=\(length)")
+
         let data = Data(bytes: buffer, count: Int(length))
-        if let stringified = String(data: data, encoding: .utf8) {
+        if String(data: data, encoding: .utf8) != nil {
             do {
                 let jsonObject = try JSONSerialization.jsonObject(with: data, options: [])
                 print("JSON Object: \(jsonObject)")
@@ -72,9 +74,11 @@ import EMPCLibEx
             self.neotechServerHandler = ELServerHandler.getInstance()
             self.neotechServerHandler.initial()
             self.neotechServerHandler.setEventDelegate(self)
+            self.neotechServerHandler.setDpwnloadDir(getDocumentsDirectory().path)
             let host = args!["host"] as? String
             let port = args!["port"] as? Int32
             self.neotechServerHandler.setServerInfo(host!, serverPort: port!)
+            
             result(true)
         case "login":
             self.loginResult = result
@@ -251,6 +255,11 @@ import EMPCLibEx
             result["event"] = "fileDownloadFailed"
             result["filePath"] = filePath
             methodChannel.invokeMethod("onDownloadFailed", arguments: result)
+    }
+    
+    func getDocumentsDirectory() -> URL {
+        let paths = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)
+        return paths[0]
     }
 }
 
