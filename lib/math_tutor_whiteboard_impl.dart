@@ -680,10 +680,15 @@ class _WhiteBoardState extends State<_WhiteBoard> {
     /// limitCursor 이전의 key값이 [deletedStrokes]에 존재한다면
     /// [deletedStrokes]의 value값에 해당하는 index를 지워줍니다.
     final Map<String, List<List<DrawingData>>> realDrawingData = {};
+
+    /// 유저 별로 그림을 따로 그려줍니다.
     for (final drawingData in widget.userDrawingData.entries) {
+      /// 유저 ID를 먼저 가져옵니다.
       final userID = drawingData.key;
-      final drawingBeforeLimitCursor = widget.userDrawingData[drawingData.key]!
-          .sublist(0, widget.userLimitCursor[drawingData.key]!);
+
+      /// 해당 유저의 limitCursor 이전의 스트로크들을 가져옵니다.
+      final drawingBeforeLimitCursor = widget.userDrawingData[userID]!
+          .sublist(0, widget.userLimitCursor[userID]!);
       for (int i = 0; i < drawingBeforeLimitCursor.length; i++) {
         for (final deleteStroke in widget.userDeletedStrokes[userID]!.entries) {
           if (deleteStroke.key <= widget.userLimitCursor[userID]!) {
