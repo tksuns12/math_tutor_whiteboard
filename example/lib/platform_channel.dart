@@ -71,8 +71,7 @@ class PlatformChannelImpl implements MathtutorNeotechPluginPlatform {
             incomingStream.sink.add(File(event['data'] as String));
             break;
           case kDrawingCode:
-            incomingStream.sink
-                .add(BroadcastPaintData.fromJson(event['data']));
+            incomingStream.sink.add(BroadcastPaintData.fromJson(event['data']));
             break;
           case kUserCode:
             final data = jsonDecode(event['data']);
@@ -111,7 +110,7 @@ class PlatformChannelImpl implements MathtutorNeotechPluginPlatform {
         'data': buffer,
       });
 
-      log('WhiteboardPlatformChannel | sendPacket: $result');
+      log('WhiteboardPlatformChannel | sendPacket: $result | data: ${buffer.toString()}');
     });
   }
   @override
@@ -242,7 +241,7 @@ class DrawingBuffer {
   final List<Map> _buffer = [];
   final int maxBufferSize;
   final Future<void> Function(List<Map> buffer) onBufferFull;
-  DrawingBuffer(this.onBufferFull, {this.maxBufferSize = 9000});
+  DrawingBuffer(this.onBufferFull, {this.maxBufferSize = 6000});
   Timer? _timer;
   int _lastTime = DateTime.now().millisecondsSinceEpoch;
 
@@ -266,7 +265,8 @@ class DrawingBuffer {
     }
     _lastTime = DateTime.now().millisecondsSinceEpoch;
     _timer = Timer.periodic(const Duration(milliseconds: 100), (timer) async {
-      if (DateTime.now().millisecondsSinceEpoch - _lastTime > 1000) {
+      final bufferSize = jsonEncode(_buffer).length;
+      if (DateTime.now().millisecondsSinceEpoch - _lastTime > 1000 || bufferSize > maxBufferSize - 1000) {
         await _burst();
       }
     });
@@ -275,10 +275,6 @@ class DrawingBuffer {
   Future<void> add(Map data) async {
     startTimer();
     _buffer.add(data);
-    final bufferSize = jsonEncode(_buffer).length;
-    if (bufferSize > maxBufferSize - 1000) {
-      _burst();
-    }
   }
 
   List<Map> get buffer => _buffer;
