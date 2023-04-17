@@ -1,8 +1,9 @@
 import 'dart:io';
 
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
-import 'package:image_picker/image_picker.dart';
 import 'package:math_tutor_whiteboard/camera_capture_page.dart';
+import 'package:math_tutor_whiteboard/const.dart';
 import 'package:math_tutor_whiteboard/image_crop_page.dart';
 import 'dart:ui' as ui;
 
@@ -40,13 +41,14 @@ class MediaSourceSelectionBottomSheet extends StatelessWidget {
             title: const Text('갤러리'),
             onTap: () async {
               final navigator = Navigator.of(context);
-              final imagePicker = ImagePicker();
-              final pickedImage =
-                  await imagePicker.pickImage(source: ImageSource.gallery);
-              if (pickedImage != null) {
+              final pickedImage = await FilePicker.platform.pickFiles(
+                  allowMultiple: false,
+                  allowedExtensions: imageExtensions,
+                  type: FileType.custom);
+              if (pickedImage != null && pickedImage.files.isNotEmpty) {
                 final result = await navigator.push(MaterialPageRoute(
-                  builder: (context) =>
-                      ImageCropPage(sourceFile: File(pickedImage.path)),
+                  builder: (context) => ImageCropPage(
+                      sourceFile: File(pickedImage.files.first.path!)),
                 ));
                 if (result != null) {
                   onImageSelected(result);
