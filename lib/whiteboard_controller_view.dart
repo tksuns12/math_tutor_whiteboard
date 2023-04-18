@@ -37,9 +37,11 @@ class WhiteboardControllerView extends ConsumerStatefulWidget {
   final WhiteboardUser me;
   final String? hostID;
   final WhiteboardController controller;
+  final bool recordable;
 
   const WhiteboardControllerView(
-      {required this.controller,
+      {required this.recordable,
+      required this.controller,
       required this.me,
       this.hostID,
       required this.onMicPermissionChanged,
@@ -85,7 +87,7 @@ class _WhiteboardControllerState
         children: [
           SizedBox(
               width: 72 / 360 * MediaQuery.of(context).size.width,
-              child: !widget.isLive || widget.hostID == widget.me.id
+              child: widget.recordable
                   ? RecordButton(
                       isRecording: widget.controller.recordingState ==
                           RecordingState.recording,

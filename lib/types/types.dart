@@ -67,6 +67,7 @@ class DrawingData extends Equatable {
 }
 
 enum WhiteboardMode {
+  live,
   liveTeaching,
   recordTeaching,
   record,

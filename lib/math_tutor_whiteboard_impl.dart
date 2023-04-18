@@ -245,6 +245,8 @@ class _MathTutorWhiteboardState extends ConsumerState<MathTutorWhiteboardImpl> {
                   builder: (context, controller, _) {
                     if (controller != null) {
                       return WhiteboardControllerView(
+                        recordable: widget.mode != WhiteboardMode.live &&
+                            widget.mode != WhiteboardMode.participant,
                         controller: controller,
                         onPenSelected: _onPenSelected,
                         onTapEraser: _onTapEraser,
