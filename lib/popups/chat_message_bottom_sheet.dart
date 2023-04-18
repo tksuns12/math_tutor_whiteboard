@@ -40,21 +40,6 @@ class _ChatMessageBottomSheetState
   }
 
   @override
-  void didChangeDependencies() {
-    if (scrollContrller.hasClients &&
-        scrollContrller.position.maxScrollExtent - scrollContrller.offset <=
-            50) {
-      scrollContrller.animateTo(
-        scrollContrller.position.maxScrollExtent,
-        duration: const Duration(milliseconds: 300),
-        curve: Curves.easeOut,
-      );
-    }
-
-    super.didChangeDependencies();
-  }
-
-  @override
   Widget build(BuildContext context) {
     return Padding(
       padding:
@@ -78,10 +63,28 @@ class _ChatMessageBottomSheetState
             Expanded(
               child: Consumer(builder: (context, ref, _) {
                 chatMessages = ref.watch(chatMessageStateProvider);
-                return ListView.builder(
+                ref.listen(chatMessageStateProvider, (messages, message) {
+                  Future.delayed(
+                    const Duration(milliseconds: 300),
+                    () {
+                      if (scrollContrller.hasClients) {
+                        scrollContrller.animateTo(
+                          scrollContrller.position.maxScrollExtent,
+                          duration: const Duration(milliseconds: 300),
+                          curve: Curves.easeOut,
+                        );
+                      }
+                    },
+                  );
+                });
+                return Scrollbar(
                   controller: scrollContrller,
-                  itemCount: chatMessages.length,
-                  itemBuilder: _chatMessageItemBuilder,
+                  thumbVisibility: true,
+                  child: ListView.builder(
+                    controller: scrollContrller,
+                    itemCount: chatMessages.length,
+                    itemBuilder: _chatMessageItemBuilder,
+                  ),
                 );
               }),
             ),
@@ -90,6 +93,14 @@ class _ChatMessageBottomSheetState
                 onSubmitted: (value) {
                   widget.onSend(value);
                   textEditingController.clear();
+                  Future.delayed(
+                    const Duration(milliseconds: 300),
+                    () => scrollContrller.animateTo(
+                      scrollContrller.position.maxScrollExtent,
+                      duration: const Duration(milliseconds: 300),
+                      curve: Curves.easeOut,
+                    ),
+                  );
                 },
                 decoration: InputDecoration(
                     hintText: '메시지 입력',
