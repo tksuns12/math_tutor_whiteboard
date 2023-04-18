@@ -433,9 +433,9 @@ class _MathTutorWhiteboardState extends ConsumerState<MathTutorWhiteboardImpl> {
         /// 그러나 deletedStrokes에 이미 지워진 stroke의 index가 있으면 지우지 않습니다.
         /// 또한 흰색은 펜 지우개 모드가 아니면 선택할 수가 없는 색상이므로
         /// 흰색은 지우개 모드에서 그린 선으로 간주하고 지우지 않습니다.
-        for (int i = 0; i < userDrawingData.length; i++) {
+        for (int i = 0; i < userDrawingData[widget.me.id]!.length; i++) {
           for (int j = 0; j < userDrawingData[widget.me.id]![i].length; j++) {
-            if (userDeletedStrokes.containsValue(i) ||
+            if (userDeletedStrokes[widget.me.id]!.containsValue(i) ||
                 userDrawingData[widget.me.id]![i][j].color == Colors.white) {
               continue;
             }
