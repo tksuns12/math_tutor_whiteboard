@@ -1,25 +1,31 @@
 {
-    // Use IntelliSense to learn about possible attributes.
-    // Hover to view descriptions of existing attributes.
-    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
-    "version": "0.2.0",
-    "configurations": [
-        {
-            "name": "math_tutor_whiteboard",
-            "request": "launch",
-            "type": "dart"
-        },
-        {
-            "name": "math_tutor_whiteboard (profile mode)",
-            "request": "launch",
-            "type": "dart",
-            "flutterMode": "profile"
-        },
-        {
-            "name": "math_tutor_whiteboard (release mode)",
-            "request": "launch",
-            "type": "dart",
-            "flutterMode": "release"
-        }
-    ]
+  // Use IntelliSense to learn about possible attributes.
+  // Hover to view descriptions of existing attributes.
+  // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "math_tutor_whiteboard",
+      "request": "launch",
+      "type": "dart"
+    },
+    {
+      "name": "Note 7",
+      "request": "launch",
+      "type": "dart",
+      "deviceId": "ce071717c4c220ce0c7e"
+    },
+    {
+      "name": "iPhone 7",
+      "request": "launch",
+      "type": "dart",
+      "deviceId": "5ce09b102fdf6b2a8e51287191755e1dda0e4bc2"
+    }
+  ],
+  "compounds": [
+    {
+      "name": "All Devices",
+      "configurations": ["Note 7", "iPhone 7"]
+    }
+  ]
 }
