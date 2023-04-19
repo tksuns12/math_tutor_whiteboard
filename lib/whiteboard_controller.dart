@@ -160,7 +160,7 @@ class DefaultRecorder implements WhiteboardRecorder {
 
   @override
   Future<void> startRecording() async {
-    final path = '${(await getTemporaryDirectory()).path}/math_tutor_temp';
+    final path = '${(await getApplicationDocumentsDirectory()).path}/math_tutor_temp';
     final savingDirectory = Directory(path);
     if (!await savingDirectory.exists()) {
       await savingDirectory.create(recursive: true);
