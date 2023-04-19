@@ -608,7 +608,7 @@ class _WhiteBoardState extends State<_WhiteBoard> {
                 },
                 backgroundColor: Colors.black,
                 child:
-                    Center(child: Icon(!panMode ? Icons.pan_tool : Icons.edit)),
+                    Center(child: Icon(!panMode ? Icons.pan_tool : Icons.edit, color: Colors.white,)),
               )
             : null,
         body: InteractiveViewer.builder(
