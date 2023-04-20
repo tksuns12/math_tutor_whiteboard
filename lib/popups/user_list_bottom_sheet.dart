@@ -20,8 +20,7 @@ class UserListBottomSheet extends StatefulWidget {
       required this.hostID});
 
   @override
-  State<UserListBottomSheet> createState() =>
-      _UserListBottomSheetState();
+  State<UserListBottomSheet> createState() => _UserListBottomSheetState();
 }
 
 class _UserListBottomSheetState extends State<UserListBottomSheet> {
@@ -55,9 +54,14 @@ class _UserListBottomSheetState extends State<UserListBottomSheet> {
                 notifier: widget.controller,
                 builder: (context, controller, _) {
                   userList = controller?.users ?? [];
-                  return ListView.builder(
+                  return ListView.separated(
                     itemCount: userList.length,
                     itemBuilder: _userItemBuilder,
+                    separatorBuilder: (BuildContext context, int index) {
+                      return const SizedBox(
+                        height: 10,
+                      );
+                    },
                   );
                 }),
           ),

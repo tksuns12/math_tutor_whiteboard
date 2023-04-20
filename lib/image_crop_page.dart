@@ -63,7 +63,9 @@ class _ImageCropPage extends State<ImageCropPage> {
                   child: Padding(
                     padding: const EdgeInsets.only(top: 8.0),
                     child: Image.asset('assets/images/back.png',
-                        width: 40, height: 40,package: 'math_tutor_whiteboard'),
+                        width: 40,
+                        height: 40,
+                        package: 'math_tutor_whiteboard'),
                   ),
                 ),
               ),
@@ -81,21 +83,24 @@ class _ImageCropPage extends State<ImageCropPage> {
               width: 66,
               height: 66,
               decoration: BoxDecoration(
-                  color: const Color(0xFF446D8C), borderRadius: BorderRadius.circular(33)),
-              child:
-                  Center(child: Image.asset('assets/images/camera_shot.png',package: 'math_tutor_whiteboard')),
+                  color: const Color(0xFF446D8C),
+                  borderRadius: BorderRadius.circular(33)),
+              child: Center(
+                  child: Image.asset('assets/images/camera_shot.png',
+                      package: 'math_tutor_whiteboard')),
             ),
           )),
         ),
       ],
     );
   }
+
   _onOk() async {
     if (controller != null) {
       final navigator = Navigator.of(context);
       ui.Image croppedImage =
           await controller!.croppedBitmap(quality: FilterQuality.low);
-      navigator.pop( croppedImage);
+      navigator.pop(croppedImage);
     }
   }
 }
