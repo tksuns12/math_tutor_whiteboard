@@ -71,7 +71,12 @@ enum WhiteboardMode {
   liveTeaching,
   recordTeaching,
   record,
-  participant,
+  participant;
+
+  bool get isUsingWebSocket =>
+      this == WhiteboardMode.liveTeaching ||
+      this == WhiteboardMode.live ||
+      this == WhiteboardMode.participant;
 }
 
 extension PointSede on Point {
@@ -155,7 +160,8 @@ class BroadcastPaintData extends Equatable {
   final int? removeStrokeIndex;
   final Size boardSize;
   final String userID;
-  const BroadcastPaintData({required this.userID, 
+  const BroadcastPaintData({
+    required this.userID,
     required this.boardSize,
     required this.drawingData,
     required this.limitCursor,
@@ -167,7 +173,6 @@ class BroadcastPaintData extends Equatable {
     return {
       'drawingData': drawingData?.toMap(),
       'limitCursor': limitCursor,
-
       'command': command.toMap(),
       'removeStrokeIndex': removeStrokeIndex,
       'boardSize': boardSize.toMap(),
