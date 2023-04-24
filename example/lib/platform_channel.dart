@@ -6,6 +6,8 @@ import 'dart:io';
 import 'package:flutter/services.dart';
 import 'package:math_tutor_whiteboard/types/types.dart';
 
+import 'mock/math_tutor_api_client_impl.dart';
+
 const kFileCode = 100;
 
 const kDrawingCode = 200;
@@ -22,10 +24,7 @@ const kPermissionCode = 700;
 
 abstract class MathtutorNeotechPluginPlatform {
   Future<void> initialize(
-      {File? preloadImage,
-      required String userID,
-      required String nickname,
-      required String ownerID});
+      {File? preloadImage, required String userID, required String ownerID});
   Future<void> login();
   Future<void> logout();
   Future<void> sendPacket(Map data);
@@ -49,7 +48,6 @@ class PlatformChannelImpl implements MathtutorNeotechPluginPlatform {
   late final onServerEventStream = StreamController<Map>.broadcast();
   late final String userID;
   late final String hostID;
-  late final String nickname;
   final String serverHost = "demo6.gonts.net";
   final int serverPort = 27084;
   late final DrawingBuffer buffer;
@@ -75,13 +73,16 @@ class PlatformChannelImpl implements MathtutorNeotechPluginPlatform {
             break;
           case kUserCode:
             final data = jsonDecode(event['data']);
+            final api = MathTutorAPIClientImpl();
+            final remoteUserData = await api.getUserThumbnails([data['id']]);
+
             final user = WhiteboardUser(
-                nickname: data['id'],
+                nickname: remoteUserData.data.first['displayName'],
                 micEnabled: data['isAudioOn'] ?? false,
                 drawingEnabled: data['isDocOn'] ?? false,
                 id: data['id'],
-                avatar: null,
-                isHost: data['id'] == nickname);
+                avatar: remoteUserData.data.first['avatar'],
+                isHost: data['id'] == userID);
             incomingStream.sink
                 .add(UserEvent(user: user, isJoin: data['isEnter']));
             break;
@@ -110,7 +111,7 @@ class PlatformChannelImpl implements MathtutorNeotechPluginPlatform {
         'data': buffer,
       });
 
-      log('WhiteboardPlatformChannel | sendPacket: $result | data: ${buffer.toString()}');
+      log('WhiteboardPlatformChannel | sendPacket: $result');
     });
   }
   @override
@@ -154,7 +155,6 @@ class PlatformChannelImpl implements MathtutorNeotechPluginPlatform {
   Future<void> initialize(
       {File? preloadImage,
       required String userID,
-      required String nickname,
       required String ownerID}) async {
     await methodChannel.invokeMethod('initialize', {
       'host': serverHost,
@@ -163,7 +163,6 @@ class PlatformChannelImpl implements MathtutorNeotechPluginPlatform {
       'userID': userID
     });
     this.userID = userID;
-    this.nickname = nickname;
     hostID = ownerID;
   }
 
@@ -178,10 +177,10 @@ class PlatformChannelImpl implements MathtutorNeotechPluginPlatform {
   Future<void> login() async {
     await logout();
     final result = await methodChannel.invokeMethod('login', {
-      'nickname': nickname,
+      'userID': userID,
       'ownerID': hostID,
     });
-    log('WhiteboardPlatformChannel | login: $result, Data: $userID, $nickname, $hostID');
+    log('WhiteboardPlatformChannel | login: $result, Data: $userID, $hostID');
   }
 
   @override
@@ -241,15 +240,19 @@ class DrawingBuffer {
   final List<Map> _buffer = [];
   final int maxBufferSize;
   final Future<void> Function(List<Map> buffer) onBufferFull;
-  DrawingBuffer(this.onBufferFull, {this.maxBufferSize = 6000});
+  DrawingBuffer(this.onBufferFull, {this.maxBufferSize = 3000});
   Timer? _timer;
   int _lastTime = DateTime.now().millisecondsSinceEpoch;
+    bool _isBursting = false;
 
   void dispose() {
     _timer?.cancel();
   }
 
   Future<void> _burst() async {
+    if (_isBursting) return;
+    _isBursting = true;
+
     log('Burst!');
     if (_buffer.isNotEmpty) {
       await onBufferFull(_buffer);
@@ -257,6 +260,8 @@ class DrawingBuffer {
     }
     _timer?.cancel();
     _timer = null;
+
+    _isBursting = false;
   }
 
   void startTimer() {
@@ -266,7 +271,8 @@ class DrawingBuffer {
     _lastTime = DateTime.now().millisecondsSinceEpoch;
     _timer = Timer.periodic(const Duration(milliseconds: 100), (timer) async {
       final bufferSize = jsonEncode(_buffer).length;
-      if (DateTime.now().millisecondsSinceEpoch - _lastTime > 1000 || bufferSize > maxBufferSize - 1000) {
+      if (DateTime.now().millisecondsSinceEpoch - _lastTime > 1000 ||
+          bufferSize > maxBufferSize - 1000) {
         await _burst();
       }
     });

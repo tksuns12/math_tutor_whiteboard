@@ -63,7 +63,7 @@ class _MathTutorWhiteboardState extends ConsumerState<MathTutorWhiteboardImpl> {
   final transformationController = TransformationController();
   late final Size boardSize;
   ImageProvider? image;
-  bool drawable = false;
+  bool drawable = true;
   late final WhiteboardController controller;
 
   @override
@@ -79,11 +79,6 @@ class _MathTutorWhiteboardState extends ConsumerState<MathTutorWhiteboardImpl> {
     /// 만약 미리 주입된 이미지가 있다면, 그 이미지를 미리 불러옵니다.
     if (widget.preloadImage != null) {
       image = widget.preloadImage;
-    }
-
-    // 모드에 따라 권한을 초기화합니다.
-    if (widget.mode != WhiteboardMode.participant) {
-      drawable = true;
     }
 
     WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
@@ -415,7 +410,7 @@ class _MathTutorWhiteboardState extends ConsumerState<MathTutorWhiteboardImpl> {
       if (penType == PenType.penEraser) {
         // 펜 지우개 모드일 때에는 그냥 흰색으로 똑같이 그려줍니다.
         userDrawingData[widget.me.id]!.last.add(DrawingData(
-            point: Point(event.localPosition.dx, event.localPosition.dy),
+            point: Point(event.localPosition.dx, event.localPosition.dy,event.pressure),
             color: Colors.white,
             userID: widget.me.id,
             penType: penType,
@@ -606,8 +601,11 @@ class _WhiteBoardState extends State<_WhiteBoard> {
                   });
                 },
                 backgroundColor: Colors.black,
-                child:
-                    Center(child: Icon(!panMode ? Icons.pan_tool : Icons.edit, color: Colors.white,)),
+                child: Center(
+                    child: Icon(
+                  !panMode ? Icons.pan_tool : Icons.edit,
+                  color: Colors.white,
+                )),
               )
             : null,
         body: InteractiveViewer.builder(

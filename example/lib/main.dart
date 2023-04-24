@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:math_tutor_whiteboard/types/types.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:uuid/uuid.dart';
+import 'package:video_player/video_player.dart';
 
 void main() {
   runApp(const MyApp());
@@ -50,12 +51,12 @@ class _MyHomePageState extends State<MyHomePage> {
   void initState() {
     WidgetsBinding.instance.addPostFrameCallback((timeStamp) async {
       await Permission.microphone.request();
-      if (Platform.isIOS) {
-        await Permission.photos.request();
-      }
+      await Permission.photos.request();
     });
     super.initState();
   }
+
+  File? recordedFile;
 
   @override
   Widget build(BuildContext context) {
@@ -64,9 +65,69 @@ class _MyHomePageState extends State<MyHomePage> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
+          if (recordedFile != null) ...[
+            TextButton(
+                onPressed: () async {
+                  await recordedFile!.delete();
+                  setState(() {
+                    recordedFile = null;
+                  });
+                },
+                child: const Text('Delete recorded file')),
+            TextButton(
+                onPressed: () {
+                  final controller = VideoPlayerController.file(recordedFile!)
+                    ..initialize();
+                  Navigator.of(context)
+                      .push(MaterialPageRoute(builder: (context) {
+                    return SafeArea(
+                        child: Scaffold(
+                      appBar: AppBar(),
+                      body: Column(
+                        children: [
+                          Expanded(child: VideoPlayer(controller)),
+                          // PlayerControllers
+                          Row(
+                            children: [
+                              IconButton(
+                                icon: Icon(
+                                  controller.value.isPlaying
+                                      ? Icons.pause
+                                      : Icons.play_arrow,
+                                ),
+                                onPressed: () {
+                                  controller.value.isPlaying
+                                      ? controller.pause()
+                                      : controller.play();
+                                  setState(() {});
+                                },
+                              ),
+                              IconButton(
+                                icon: Icon(
+                                  controller.value.isLooping
+                                      ? Icons.loop
+                                      : Icons.loop_outlined,
+                                ),
+                                onPressed: () {
+                                  controller.value.isLooping
+                                      ? controller.setLooping(false)
+                                      : controller.setLooping(true);
+                                  setState(() {});
+                                },
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ));
+                  }));
+                },
+                child: const Text('Play Video')),
+          ],
           ElevatedButton(
-              onPressed: () {
-                Navigator.of(context).push(MaterialPageRoute(
+              onPressed: () async {
+                final result =
+                    await Navigator.of(context).push(MaterialPageRoute(
                   builder: (context) => WhiteboardView(
                       mode: WhiteboardMode.record,
                       me: WhiteboardUser(
@@ -76,6 +137,9 @@ class _MyHomePageState extends State<MyHomePage> {
                           id: const Uuid().v4(),
                           isHost: Random().nextBool())),
                 ));
+                setState(() {
+                  recordedFile = result;
+                });
               },
               child: const Text('Record Mode')),
           ElevatedButton(

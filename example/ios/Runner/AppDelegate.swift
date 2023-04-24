@@ -77,15 +77,14 @@ import EMPCLibEx
             self.neotechServerHandler.setDpwnloadDir(getDocumentsDirectory().path)
             let host = args!["host"] as? String
             let port = args!["port"] as? Int32
+            self.id = args!["userID"] as? String
             self.neotechServerHandler.setServerInfo(host!, serverPort: port!)
             
             result(true)
         case "login":
             self.loginResult = result
-            self.id = args!["userID"] as? String ?? args!["nickname"] as? String
-            let nickname:String? = args!["nickname"]! as? String
             let ownerId:String? = args!["ownerID"]! as? String
-            self.neotechServerHandler.login(self.id!, alias: nickname!, ownerID: ownerId!, company: CID)
+            self.neotechServerHandler.login(self.id!,alias:self.id!, ownerID: ownerId!, company: CID)
         case "logout":
             self.neotechServerHandler.logout()
             result("Successfully Logged out")
@@ -171,13 +170,16 @@ import EMPCLibEx
                 self.methodChannel.invokeMethod("onServerEvent", arguments: result)
             } else {
                 self.loginResult!(false)
+                self.loginResult = nil
             }
                 break
             case EL_MSG_ENTER_ROOM:
             if arg1 == EL_RESULT_OK{
                 self.loginResult!(true)
+                self.loginResult = nil
             } else {
                 self.loginResult!(false)
+                self.loginResult = nil
             }
                 break
             case EL_MSG_REMOTE_ENTER_ROOM:
@@ -236,10 +238,12 @@ import EMPCLibEx
     }
     func uploadComplited(_ filePath: String) {
         self.sendFileResult!(true)
+        self.sendFileResult = nil
     }
     
     func uploadFailed(_ filePath: String) {
         self.sendFileResult!(false)
+        self.sendFileResult = nil
     }
     
     func downloadComplited(_ filePath: String) {

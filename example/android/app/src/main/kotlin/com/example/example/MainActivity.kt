@@ -69,9 +69,11 @@ class MainActivity : FlutterActivity(), MethodChannel.MethodCallHandler{
                         },
                         onInitDone = {
                             initResult?.success(if(it) "Init Done" else "Init Failed")
+                            initResult = null
                         },
                         onRoomEnteringDone = {
                             loginResult?.success(if(it) "Login Done" else "Login Failed")
+                            loginResult = null
                         },
                         )
                     )
@@ -112,6 +114,7 @@ class MainActivity : FlutterActivity(), MethodChannel.MethodCallHandler{
                             methodChannel,
                             onFileSent = {
                                 sendFileResult?.success(if (it) "File Sent" else "File Not Sent")
+                                sendFileResult = null
                             }
 
                         )
@@ -123,9 +126,8 @@ class MainActivity : FlutterActivity(), MethodChannel.MethodCallHandler{
             "login" -> {
                 try {
                     loginResult = result
-                    val nickname: String = call.argument("nickname")!!
                     val ownerId: String = call.argument("ownerID")!!
-                    neotechServerHandler.login(id, nickname, ownerId, CID)
+                    neotechServerHandler.login(id, id, ownerId, CID)
                 } catch (e: Exception) {
                     result.error("Failed to log in", e.message, e)
                 }
