@@ -226,70 +226,64 @@ class _MathTutorWhiteboardState extends ConsumerState<MathTutorWhiteboardImpl> {
 
   @override
   Widget build(BuildContext context) {
-    return WillPopScope(
-      onWillPop: () async {
-        await widget.onAttemptToClose();
-        return false;
-      },
-      child: Material(
-        child: SafeArea(child: Consumer(builder: (context, ref, _) {
-          return Column(
-            children: [
-              ChangeNotifierBuilder(
-                  notifier: controller,
-                  builder: (context, controller, _) {
-                    if (controller != null) {
-                      return WhiteboardControllerView(
-                        recordable: widget.mode != WhiteboardMode.live &&
-                            widget.mode != WhiteboardMode.participant,
-                        controller: controller,
-                        onPenSelected: _onPenSelected,
-                        onTapEraser: _onTapEraser,
-                        onTapUndo: _onTapUndo,
-                        me: widget.me,
-                        hostID: widget.hostID,
-                        onTapClear: _onTapClear,
-                        onTapClose: widget.onAttemptToClose,
-                        onColorSelected: _onColorSelected,
-                        isLive: widget.mode.isUsingWebSocket,
-                        onTapRedo: _onTapRedo,
-                        penType: penType,
-                        selectedColor: color,
-                        isRedoable: userLimitCursor[widget.me.id]! <
-                            userDrawingData[widget.me.id]!.length,
-                        isUndoable: userLimitCursor[widget.me.id]! > 0,
-                        strokeWidth: strokeWidth,
-                        onStrokeWidthChanged: _onStrokeWidthChanged,
-                        onTapRecord: widget.onTapRecordButton,
-                        onTapStrokeEraser: _onTapStrokeEraswer,
-                        onLoadImage: _onLoadImage,
-                        onSendChatMessage: _onSendChatMessage,
-                        drawable: drawable,
-                        onDrawingPermissionChanged: _onDrawingPermissionChanged,
-                        onMicPermissionChanged: _onMicPermissionChanged,
-                      );
-                    } else {
-                      return const SizedBox();
-                    }
-                  }),
-              Expanded(
-                child: _WhiteBoard(
-                  onStartDrawing: _onStartDrawing,
-                  userDeletedStrokes: userDeletedStrokes,
-                  transformationController: transformationController,
-                  onDrawing: _onDrawing,
-                  onEndDrawing: _onEndDrawing,
-                  userDrawingData: userDrawingData,
-                  userLimitCursor: userLimitCursor,
-                  onViewportChange: _onViewportChange,
-                  preloadImage: image,
-                  drawable: drawable,
-                ),
-              )
-            ],
-          );
-        })),
-      ),
+    return Material(
+      child: SafeArea(child: Consumer(builder: (context, ref, _) {
+        return Column(
+          children: [
+            ChangeNotifierBuilder(
+                notifier: controller,
+                builder: (context, controller, _) {
+                  if (controller != null) {
+                    return WhiteboardControllerView(
+                      recordable: widget.mode != WhiteboardMode.live &&
+                          widget.mode != WhiteboardMode.participant,
+                      controller: controller,
+                      onPenSelected: _onPenSelected,
+                      onTapEraser: _onTapEraser,
+                      onTapUndo: _onTapUndo,
+                      me: widget.me,
+                      hostID: widget.hostID,
+                      onTapClear: _onTapClear,
+                      onTapClose: widget.onAttemptToClose,
+                      onColorSelected: _onColorSelected,
+                      isLive: widget.mode.isUsingWebSocket,
+                      onTapRedo: _onTapRedo,
+                      penType: penType,
+                      selectedColor: color,
+                      isRedoable: userLimitCursor[widget.me.id]! <
+                          userDrawingData[widget.me.id]!.length,
+                      isUndoable: userLimitCursor[widget.me.id]! > 0,
+                      strokeWidth: strokeWidth,
+                      onStrokeWidthChanged: _onStrokeWidthChanged,
+                      onTapRecord: widget.onTapRecordButton,
+                      onTapStrokeEraser: _onTapStrokeEraswer,
+                      onLoadImage: _onLoadImage,
+                      onSendChatMessage: _onSendChatMessage,
+                      drawable: drawable,
+                      onDrawingPermissionChanged: _onDrawingPermissionChanged,
+                      onMicPermissionChanged: _onMicPermissionChanged,
+                    );
+                  } else {
+                    return const SizedBox();
+                  }
+                }),
+            Expanded(
+              child: _WhiteBoard(
+                onStartDrawing: _onStartDrawing,
+                userDeletedStrokes: userDeletedStrokes,
+                transformationController: transformationController,
+                onDrawing: _onDrawing,
+                onEndDrawing: _onEndDrawing,
+                userDrawingData: userDrawingData,
+                userLimitCursor: userLimitCursor,
+                onViewportChange: _onViewportChange,
+                preloadImage: image,
+                drawable: drawable,
+              ),
+            )
+          ],
+        );
+      })),
     );
   }
 
