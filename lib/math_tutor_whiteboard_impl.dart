@@ -326,8 +326,8 @@ class _MathTutorWhiteboardState extends ConsumerState<MathTutorWhiteboardImpl> {
 
   void _onReceiveClear(String userID) {
     setState(() {
-      userDrawingData[userID]!.clear();
-      userDeletedStrokes[userID]!.clear();
+      userDrawingData[userID]?.clear();
+      userDeletedStrokes[userID]?.clear();
       userLimitCursor[userID] = 0;
     });
   }
@@ -404,7 +404,8 @@ class _MathTutorWhiteboardState extends ConsumerState<MathTutorWhiteboardImpl> {
       if (penType == PenType.penEraser) {
         // 펜 지우개 모드일 때에는 그냥 흰색으로 똑같이 그려줍니다.
         userDrawingData[widget.me.id]!.last.add(DrawingData(
-            point: Point(event.localPosition.dx, event.localPosition.dy,event.pressure),
+            point: Point(
+                event.localPosition.dx, event.localPosition.dy, event.pressure),
             color: Colors.white,
             userID: widget.me.id,
             penType: penType,
