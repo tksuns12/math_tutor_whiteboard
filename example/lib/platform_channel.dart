@@ -238,12 +238,11 @@ class PlatformChannelImpl implements MathtutorNeotechPluginPlatform {
 
 class DrawingBuffer {
   final List<Map> _buffer = [];
-  final int maxBufferSize;
   final Future<void> Function(List<Map> buffer) onBufferFull;
-  DrawingBuffer(this.onBufferFull, {this.maxBufferSize = 3000});
+  DrawingBuffer(this.onBufferFull);
   Timer? _timer;
   int _lastTime = DateTime.now().millisecondsSinceEpoch;
-    bool _isBursting = false;
+  bool _isBursting = false;
 
   void dispose() {
     _timer?.cancel();
@@ -270,15 +269,16 @@ class DrawingBuffer {
     }
     _lastTime = DateTime.now().millisecondsSinceEpoch;
     _timer = Timer.periodic(const Duration(milliseconds: 100), (timer) async {
-      final bufferSize = jsonEncode(_buffer).length;
-      if (DateTime.now().millisecondsSinceEpoch - _lastTime > 1000 ||
-          bufferSize > maxBufferSize - 1000) {
+      if (DateTime.now().millisecondsSinceEpoch - _lastTime > 1000) {
         await _burst();
       }
     });
   }
 
   Future<void> add(Map data) async {
+    if (_buffer.length >= 10) {
+      _burst();
+    }
     startTimer();
     _buffer.add(data);
   }
