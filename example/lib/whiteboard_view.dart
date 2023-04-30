@@ -26,7 +26,7 @@ class WhiteboardView extends StatefulWidget {
   final WhiteboardMode mode;
   final WhiteboardUser me;
   final String? hostID;
-  
+
   const WhiteboardView({
     Key? key,
     required this.mode,
@@ -51,8 +51,7 @@ class _WhiteboardViewState extends State<WhiteboardView> {
       initFuture = (() async {
         try {
           await channel.initialize(
-              userID: widget.me.id,
-              ownerID: widget.hostID!);
+              userID: widget.me.id, ownerID: widget.hostID!);
           await channel.login();
 
           final userList = await channel.getUserList();
@@ -182,7 +181,8 @@ class _WhiteboardViewState extends State<WhiteboardView> {
                       if (result == true) {
                         await controller.stopRecording();
                         if (mounted) {
-                          Navigator.of(context).pop(File(controller.recordingPath!));
+                          Navigator.of(context)
+                              .pop(File(controller.recordingPath!));
                         }
                       } else {
                         await controller.resumeRecording();

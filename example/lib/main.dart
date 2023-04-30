@@ -7,6 +7,8 @@ import 'package:permission_handler/permission_handler.dart';
 import 'package:uuid/uuid.dart';
 import 'package:video_player/video_player.dart';
 
+import 'simple_neotech_recording_compat_test_screen.dart';
+
 void main() {
   runApp(const MyApp());
 }
@@ -172,6 +174,14 @@ class _MyHomePageState extends State<MyHomePage> {
                 ));
               },
               child: const Text('Realtime Mode as Student')),
+          ElevatedButton(
+              onPressed: () async {
+                Navigator.of(context).push(MaterialPageRoute(
+                  builder: (context) =>
+                      const SimpleNeotechRecordingCompatibilityTestScreen(),
+                ));
+              },
+              child: const Text('Record + Neotech')),
         ],
       ),
     ));
