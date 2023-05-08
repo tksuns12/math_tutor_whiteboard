@@ -64,6 +64,7 @@ class WhiteboardController extends ChangeNotifier {
     if (recordingState != RecordingState.idle) {
       return;
     }
+    await recorder?.startRecording();
     currentSecond = recordDuration.inSeconds;
     _timer ??= Timer.periodic(const Duration(seconds: 1), (timer) {
       currentSecond--;
@@ -72,7 +73,6 @@ class WhiteboardController extends ChangeNotifier {
       }
       notifyListeners();
     });
-    await recorder?.startRecording();
     recordingState = RecordingState.recording;
     log('Started recording');
     notifyListeners();
@@ -83,8 +83,8 @@ class WhiteboardController extends ChangeNotifier {
         recordingState != RecordingState.paused) {
       return;
     }
-    _timer?.cancel();
     recordingPath = (await recorder?.stopRecording());
+    _timer?.cancel();
     if (recordingPath != null) {
       recordingState = RecordingState.completed;
 
