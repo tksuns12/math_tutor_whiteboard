@@ -394,7 +394,7 @@ class PermissionChangeEvent extends Equatable {
   Map<String, dynamic> toMap() {
     return {
       'drawing': drawing,
-      'chat': microphone,
+      'microphone': microphone,
       'userID': userID,
     };
   }
@@ -402,7 +402,7 @@ class PermissionChangeEvent extends Equatable {
   factory PermissionChangeEvent.fromMap(Map map) {
     return PermissionChangeEvent(
       drawing: map['drawing'],
-      microphone: map['mic'],
+      microphone: map['microphone'],
       userID: map['userID'],
     );
   }

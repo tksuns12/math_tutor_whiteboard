@@ -1,9 +1,6 @@
 import 'dart:async';
-import 'dart:convert';
-import 'dart:developer';
 import 'dart:io';
-
-import 'package:example/platform_channel.dart';
+import 'package:example/livekit_service.dart';
 import 'package:flutter/material.dart';
 
 import 'package:math_tutor_whiteboard/math_tutor_whiteboard.dart';
@@ -41,39 +38,32 @@ class WhiteboardView extends StatefulWidget {
 class _WhiteboardViewState extends State<WhiteboardView> {
   Stream? inputStream;
   StreamController? outputStream;
-  late final MathtutorNeotechPluginPlatform channel;
+  late final LivekitService service;
   late final Future initFuture;
   late final WhiteboardController controller;
   @override
   void initState() {
     if (widget.mode.isUsingWebSocket) {
-      channel = PlatformChannelImpl();
+      service = LivekitService();
       initFuture = (() async {
         try {
-          await channel.initialize(
-              userID: widget.me.id, ownerID: widget.hostID!);
-          await channel.login();
-
-          final userList = await channel.getUserList();
-          final users = jsonDecode(userList['data']) as List;
-          final whiteboardUsers = users
-              .map<WhiteboardUser>((e) => WhiteboardUser(
-                  nickname: e['id'],
-                  micEnabled: e['isAudioOn'] ?? false,
-                  drawingEnabled: e['isDocOn'] ?? false,
-                  id: e['id'],
-                  isHost: e['id'] == widget.me.id))
-              .toList();
-          for (final user in whiteboardUsers) {
-            controller.addUser(user);
+          await service.joinRoom(widget.hostID != widget.me.id, widget.me);
+          controller.addUser(
+            WhiteboardUser(
+                isHost: widget.hostID == widget.me.id,
+                nickname: widget.me.nickname,
+                micEnabled: true,
+                drawingEnabled: widget.hostID == widget.me.id,
+                id: widget.me.id),
+          );
+          final whiteboardUsers = service.getUserList();
+          if (whiteboardUsers.isNotEmpty) {
+            for (final user in whiteboardUsers) {
+              controller.addUser(user);
+            }
           }
         } catch (e) {
           Navigator.of(context).pop();
-        }
-        if (widget.me.id == widget.hostID) {
-          await channel.turnOnMicrophone(true);
-        } else {
-          await channel.turnOnMicrophone(false);
         }
       })();
     }
@@ -83,25 +73,22 @@ class _WhiteboardViewState extends State<WhiteboardView> {
     controller.addListener(_controllerListener);
     super.initState();
     if (widget.mode.isUsingWebSocket) {
-      channel.incomingStream.stream.listen((event) {
-        if (event is UserEvent) {
-          if (event.isJoin) {
-            if (controller.users.any((element) =>
-                element.id.toLowerCase() == event.user.id.toLowerCase())) {
-              log('비정상 종료된 ${event.user.nickname}님이 접속했습니다.');
-            } else {
-              controller.addUser(event.user);
-              log('${event.user.nickname}님이 접속했습니다.');
-            }
-          } else {
-            controller.removeUser(event.user);
-            log('${event.user.nickname}님이 나갔습니다.');
-          }
-        } else if (event is PermissionChangeEvent) {
+      service.incomingStream.listen((event) {
+        if (event is PermissionChangeEvent) {
           controller.adjustPermissionOfUser(
               userID: widget.me.id, permissionEvent: event);
           if (event.microphone != null) {
-            channel.turnOnMicrophone(event.microphone!);
+            service.changeMyMicrophone(event.microphone!);
+          }
+        } else if (event is UserEvent) {
+          if (event.isJoin) {
+            if (controller.users
+                .any((element) => element.id == event.user.id)) {
+              return;
+            }
+            controller.addUser(event.user);
+          } else {
+            controller.removeUser(event.user);
           }
         }
       });
@@ -111,7 +98,7 @@ class _WhiteboardViewState extends State<WhiteboardView> {
   @override
   void dispose() {
     if (widget.mode.isUsingWebSocket) {
-      channel.logout();
+      service.leaveRoom();
     }
     controller.removeListener(_controllerListener);
     super.dispose();
@@ -206,7 +193,7 @@ class _WhiteboardViewState extends State<WhiteboardView> {
               future: initFuture,
               builder: (context, snapshot) {
                 if (snapshot.connectionState == ConnectionState.done) {
-                  inputStream = channel.incomingStream.stream;
+                  inputStream = service.incomingStream;
                   return MathTutorWhiteBoard(
                     controller: controller,
                     hostID: widget.hostID,
@@ -217,37 +204,21 @@ class _WhiteboardViewState extends State<WhiteboardView> {
                     inputStream: inputStream,
                     onOutput: (event) {
                       if (event is WhiteboardChatMessage) {
-                        channel.sendPacket({
-                          'id': widget.me.id,
-                          'type': kChatMessageCode,
-                          'data': event.toJson(),
-                        });
+                        service.sendChatMessage(event);
                       } else if (event is File) {
-                        channel.sendImage(event);
+                        service.shareImageFile(event);
                       } else if (event is BroadcastPaintData) {
-                        channel.sendPacket({
-                          'id': widget.me.id,
-                          'type': kDrawingCode,
-                          'data': event.toJson(),
-                        });
-                      } else if (event is UserEvent) {
-                        channel.sendPacket({
-                          'id': widget.me.id,
-                          'type': kUserCode,
-                          'data': event,
-                        });
+                        service.sendDrawingData(event);
                       } else if (event is ViewportChangeEvent) {
-                        channel.sendPacket({
-                          'id': widget.me.id,
-                          'type': kViewportCode,
-                          'data': event.toJson(),
-                        });
+                        service.sendViewportChangeData(event);
                       } else if (event is PermissionChangeEvent) {
                         if (event.microphone != null) {
-                          channel.changePermissionAudio(event.userID!);
+                          service.changeMicrophonePermission(
+                              event.userID!, event.microphone!);
                         }
                         if (event.drawing != null) {
-                          channel.changePermissionDoc(event.userID!);
+                          service.changeDrawingPermission(
+                              event.userID!, event.drawing!);
                         }
                       } else {
                         throw UnimplementedError();
@@ -277,7 +248,7 @@ class _WhiteboardViewState extends State<WhiteboardView> {
                         ),
                       );
                       if (result == true) {
-                        channel.logout();
+                        service.leaveRoom();
                         controller.stopRecording();
 
                         if (mounted) {
@@ -319,7 +290,8 @@ class _WhiteboardViewState extends State<WhiteboardView> {
                           if (result == true) {
                             await controller.stopRecording();
                             if (mounted) {
-                              Navigator.of(context).pop();
+                              Navigator.of(context)
+                                  .pop(File(controller.recordingPath!));
                             }
                           } else {
                             controller.resumeRecording();

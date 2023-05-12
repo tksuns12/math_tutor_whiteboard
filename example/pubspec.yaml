@@ -32,10 +32,8 @@ dependencies:
     sdk: flutter
   uuid: 
   video_player: ^2.6.1
-
-
-  # The following adds the Cupertino Icons font to your application.
-  # Use with the CupertinoIcons class for iOS style icons.
+  path_provider: ^2.0.11
+  livekit_client: ^1.3.0
   cupertino_icons: ^1.0.2
   math_tutor_whiteboard:
     path: ../
