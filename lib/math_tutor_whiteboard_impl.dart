@@ -29,7 +29,9 @@ class MathTutorWhiteboardImpl extends ConsumerStatefulWidget {
   final FutureOr<void> Function() onAttemptToClose;
   final VoidCallback onTapRecordButton;
   final String? hostID;
+  final void Function(File file)? onLoadNewImage;
   const MathTutorWhiteboardImpl({
+    required this.onLoadNewImage,
     super.key,
     this.controller,
     this.preloadImage,
@@ -483,7 +485,7 @@ class _MathTutorWhiteboardState extends ConsumerState<MathTutorWhiteboardImpl> {
     final imageFile = await file.create();
     final imageByte = await uiImage.toByteData(format: ui.ImageByteFormat.png);
     await imageFile.writeAsBytes(imageByte!.buffer.asUint8List());
-    widget.onOutput?.call(imageFile);
+    widget.onLoadNewImage?.call(imageFile);
   }
 
   void _inputImageStreamListener(File event) {

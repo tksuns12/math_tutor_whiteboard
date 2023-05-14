@@ -1,6 +1,7 @@
 library math_tutor_whiteboard;
 
 import 'dart:async';
+import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -19,6 +20,7 @@ class MathTutorWhiteBoard extends StatelessWidget {
   final VoidCallback onAttemptToClose;
   final VoidCallback onTapRecordButton;
   final String? hostID;
+  final void Function(File file)? onLoadNewImage;
   const MathTutorWhiteBoard({
     Key? key,
     this.controller,
@@ -30,6 +32,7 @@ class MathTutorWhiteBoard extends StatelessWidget {
     required this.onAttemptToClose,
     required this.onTapRecordButton,
     this.hostID,
+    this.onLoadNewImage,
   }) : super(key: key);
 
   @override
@@ -37,6 +40,7 @@ class MathTutorWhiteBoard extends StatelessWidget {
     return ProviderScope(
         child: MathTutorWhiteboardImpl(
             onTapRecordButton: onTapRecordButton,
+            onLoadNewImage: onLoadNewImage,
             onOutput: onOutput,
             hostID: hostID,
             preloadImage: preloadImage,
