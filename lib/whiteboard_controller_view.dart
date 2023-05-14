@@ -12,7 +12,7 @@ import 'types/types.dart';
 import 'dart:ui' as ui;
 
 class WhiteboardControllerView extends ConsumerStatefulWidget {
-  final bool isLive;
+  final bool canLoadImage;
   final void Function(PenType type) onPenSelected;
   final VoidCallback onTapEraser;
   final VoidCallback onTapUndo;
@@ -57,7 +57,7 @@ class WhiteboardControllerView extends ConsumerStatefulWidget {
       required this.onTapClear,
       required this.onTapClose,
       required this.onColorSelected,
-      required this.isLive,
+      required this.canLoadImage,
       required this.selectedColor,
       required this.penType,
       required this.onTapRedo,
@@ -112,8 +112,8 @@ class _WhiteboardControllerState
                         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          if (widget.drawable &&
-                              (widget.hostID == widget.me.id || !widget.isLive))
+                          if ((widget.hostID == widget.me.id ||
+                              !widget.canLoadImage))
                             InkWell(
                               onTap: () {
                                 // Show modal bottom sheet to choose camera or gallery
