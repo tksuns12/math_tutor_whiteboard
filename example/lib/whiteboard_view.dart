@@ -202,6 +202,9 @@ class _WhiteboardViewState extends State<WhiteboardView> {
                         const NetworkImage('https://picsum.photos/640/320'),
                     me: widget.me,
                     inputStream: inputStream,
+                    onLoadNewImage: (file) {
+                      service.shareImageFile(file);
+                    },
                     onOutput: (event) {
                       if (event is WhiteboardChatMessage) {
                         service.sendChatMessage(event);
