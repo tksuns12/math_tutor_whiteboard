@@ -4,7 +4,6 @@ import 'dart:typed_data';
 import 'package:equatable/equatable.dart';
 import 'package:flutter/material.dart';
 import 'package:perfect_freehand/perfect_freehand.dart';
-// ignore: depend_on_referenced_packages
 import 'package:vector_math/vector_math_64.dart' show Vector3;
 
 class DrawingData extends Equatable {
@@ -422,4 +421,13 @@ class InitialUserListEvent extends Equatable {
 
   @override
   List<Object> get props => [users];
+}
+
+class ImageChangeEvent extends Equatable {
+  final String imageUrl;
+
+  const ImageChangeEvent(this.imageUrl);
+
+  @override
+  List<Object> get props => [imageUrl];
 }

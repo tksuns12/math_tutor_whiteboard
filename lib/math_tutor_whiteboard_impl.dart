@@ -4,6 +4,7 @@ import 'dart:io';
 import 'dart:math' hide log;
 import 'dart:ui' as ui;
 
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/services.dart';
 // ignore: depend_on_referenced_packages
 import 'package:vector_math/vector_math_64.dart' show Quad;
@@ -58,7 +59,7 @@ class _MathTutorWhiteboardState extends ConsumerState<MathTutorWhiteboardImpl> {
   Timer? timer;
   final Map<String, Map<int, int>> userDeletedStrokes = {};
   StreamSubscription<BroadcastPaintData>? _inputDrawingStreamSubscription;
-  StreamSubscription<File>? _inputImageStreamSubscription;
+  StreamSubscription<ImageChangeEvent>? _inputImageStreamSubscription;
   StreamSubscription<WhiteboardChatMessage>? _inputChatStreamSubscription;
   StreamSubscription<ViewportChangeEvent>? _viewportChangeStreamSubscription;
   StreamSubscription<PermissionChangeEvent>? _authorityChangeStreamSubscription;
@@ -109,8 +110,8 @@ class _MathTutorWhiteboardState extends ConsumerState<MathTutorWhiteboardImpl> {
           .listen((_inputDrawingStreamListener));
 
       _inputImageStreamSubscription = widget.inputStream
-          ?.where((event) => event is File)
-          .map((event) => event as File)
+          ?.where((event) => event is ImageChangeEvent)
+          .map((event) => event as ImageChangeEvent)
           .listen(_inputImageStreamListener);
 
       _inputChatStreamSubscription = widget.inputStream
@@ -488,9 +489,9 @@ class _MathTutorWhiteboardState extends ConsumerState<MathTutorWhiteboardImpl> {
     widget.onLoadNewImage?.call(imageFile);
   }
 
-  void _inputImageStreamListener(File event) {
+  void _inputImageStreamListener(ImageChangeEvent event) {
     setState(() {
-      image = FileImage(event);
+      image = CachedNetworkImageProvider(event.imageUrl);
     });
   }
 
