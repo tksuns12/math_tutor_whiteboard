@@ -156,14 +156,20 @@ class _MathTutorWhiteboardState extends ConsumerState<MathTutorWhiteboardImpl> {
     if (event.command == BroadcastCommand.clear) {
       _onReceiveClear(event.userID);
     } else {
-      /// 중간에 들어온 경우에는 현재의 limitCursor와 서버에서 내려준 limitCursor가 차이가 납니다.
-      /// 정합성을 위해서 부족한 limitCursor 만큼 빈 스트로크를 추가합니다.
       if (userLimitCursor[event.userID] == null) {
         userLimitCursor[event.userID] = 0;
-        userDeletedStrokes[event.userID] = {};
-        userDrawingData[event.userID] = [];
       }
 
+      if (userDeletedStrokes[event.userID] == null) {
+        userDeletedStrokes[event.userID] = {};
+      }
+
+      if (userDrawingData[event.userID] == null) {
+        userDrawingData[event.userID] = [[]];
+      }
+
+      /// 중간에 들어온 경우에는 현재의 limitCursor와 서버에서 내려준 limitCursor가 차이가 납니다.
+      /// 정합성을 위해서 부족한 limit Cursor 만큼 빈 스트로크를 추가합니다.
       if (userLimitCursor[event.userID] == 0 && event.limitCursor > 1) {
         userDrawingData[event.userID]!.addAll(List.generate(
             event.limitCursor - userLimitCursor[event.userID]! - 1,
@@ -197,23 +203,31 @@ class _MathTutorWhiteboardState extends ConsumerState<MathTutorWhiteboardImpl> {
         setState(() {
           if (event.limitCursor == userLimitCursor[event.userID]) {
             if (event.drawingData != null) {
-              userDrawingData[event.userID]!.last.add(event.drawingData!
-                  .copyWith(
+              userDrawingData[event.userID]!.last.add(
+                    event.drawingData!.copyWith(
                       point: event.drawingData!.point.copyWith(
                           x: event.drawingData!.point.x * widthCoefficient,
                           y: event.drawingData!.point.y * heightCoefficient),
-                      userID: event.userID));
+                      userID: event.userID,
+                    ),
+                  );
             }
           } else {
             userLimitCursor[event.userID] = event.limitCursor;
             if (event.drawingData != null) {
-              userDrawingData[event.userID]!.add([
+              if (userDrawingData[event.userID]!.length <
+                  userLimitCursor[event.userID]!) {
+                userDrawingData[event.userID]!.add([]);
+              }
+              userDrawingData[event.userID]![
+                  userLimitCursor[event.userID]! - 1] = [
                 event.drawingData!.copyWith(
-                    point: event.drawingData!.point.copyWith(
-                        x: event.drawingData!.point.x * widthCoefficient,
-                        y: event.drawingData!.point.y * heightCoefficient),
-                    userID: event.userID)
-              ]);
+                  point: event.drawingData!.point.copyWith(
+                      x: event.drawingData!.point.x * widthCoefficient,
+                      y: event.drawingData!.point.y * heightCoefficient),
+                  userID: event.userID,
+                )
+              ];
             }
           }
         });
@@ -349,12 +363,15 @@ class _MathTutorWhiteboardState extends ConsumerState<MathTutorWhiteboardImpl> {
     setState(() {
       if (userLimitCursor[widget.me.id]! > 0) {
         userLimitCursor[widget.me.id] = userLimitCursor[widget.me.id]! - 1;
-        widget.onOutput?.call(BroadcastPaintData(
+        widget.onOutput?.call(
+          BroadcastPaintData(
             drawingData: null,
             command: BroadcastCommand.draw,
             limitCursor: userLimitCursor[widget.me.id]!,
             userID: widget.me.id,
-            boardSize: boardSize));
+            boardSize: boardSize,
+          ),
+        );
       }
       log('undo: $userLimitCursor');
     });
@@ -413,80 +430,96 @@ class _MathTutorWhiteboardState extends ConsumerState<MathTutorWhiteboardImpl> {
   }
 
   void _draw(PointerEvent event) {
-    setState(() {
-      if (penType == PenType.penEraser) {
-        // 펜 지우개 모드일 때에는 그냥 흰색으로 똑같이 그려줍니다.
-        userDrawingData[widget.me.id]!.last.add(DrawingData(
-            point: Point(
-                event.localPosition.dx, event.localPosition.dy, event.pressure),
-            color: Colors.white,
-            userID: widget.me.id,
-            penType: penType,
-            strokeWidth: strokeWidth));
-        widget.onOutput?.call(BroadcastPaintData(
-            drawingData: userDrawingData[widget.me.id]!.last.last,
-            command: BroadcastCommand.draw,
-            limitCursor: userLimitCursor[widget.me.id]!,
-            userID: widget.me.id,
-            boardSize: boardSize));
-      } else if (penType == PenType.strokeEraser) {
-        /// 선지우기 모드일 때에는 좌표가 해당 선을 스칠 때 선을 통째로 지웁니다.
-        /// 지우는 방식은 undo와 redo를 위해서 실제로 지우지 않습니다.
-        /// 대신 [deletedStrokes] 라는 [Map]에 key-value로 {지워진 cursor}-{지워진 stroke의 index}를 저장합니다.
-        /// 그리고 limitCursor의 정합성을 위해 [limitCursor]를 1 증가시키면서 drawingData에는 빈 스트로크를 채워줍니다.
-        /// 그러나 deletedStrokes에 이미 지워진 stroke의 index가 있으면 지우지 않습니다.
-        /// 또한 흰색은 펜 지우개 모드가 아니면 선택할 수가 없는 색상이므로
-        /// 흰색은 지우개 모드에서 그린 선으로 간주하고 지우지 않습니다.
-        for (int i = 0; i < userDrawingData[widget.me.id]!.length; i++) {
-          for (int j = 0; j < userDrawingData[widget.me.id]![i].length; j++) {
-            if (userDeletedStrokes[widget.me.id]!.containsValue(i) ||
-                userDrawingData[widget.me.id]![i][j].color == Colors.white) {
-              continue;
-            }
-            final distance = sqrt(pow(
-                    userDrawingData[widget.me.id]![i][j].point.x -
-                        event.localPosition.dx,
-                    2) +
-                pow(
-                    userDrawingData[widget.me.id]![i][j].point.y -
-                        event.localPosition.dy,
-                    2));
-            if (distance < strokeWidth) {
-              widget.onOutput?.call(BroadcastPaintData(
-                  drawingData: null,
-                  command: BroadcastCommand.removeStroke,
-                  limitCursor: userLimitCursor[widget.me.id]!,
-                  userID: widget.me.id,
-                  boardSize: boardSize,
-                  removeStrokeIndex: i));
+    setState(
+      () {
+        if (penType == PenType.penEraser) {
+          // 펜 지우개 모드일 때에는 그냥 흰색으로 똑같이 그려줍니다.
+          userDrawingData[widget.me.id]!.last.add(DrawingData(
+              point: Point(event.localPosition.dx, event.localPosition.dy,
+                  event.pressure),
+              color: Colors.white,
+              userID: widget.me.id,
+              penType: penType,
+              strokeWidth: strokeWidth));
+          widget.onOutput?.call(
+            BroadcastPaintData(
+              drawingData: userDrawingData[widget.me.id]!.last.last,
+              command: BroadcastCommand.draw,
+              limitCursor: userLimitCursor[widget.me.id]!,
+              userID: widget.me.id,
+              boardSize: boardSize,
+            ),
+          );
+        } else if (penType == PenType.strokeEraser) {
+          /// 선지우기 모드일 때에는 좌표가 해당 선을 스칠 때 선을 통째로 지웁니다.
+          /// 지우는 방식은 undo와 redo를 위해서 실제로 지우지 않습니다.
+          /// 대신 [deletedStrokes] 라는 [Map]에 key-value로 {지워진 cursor}-{지워진 stroke의 index}를 저장합니다.
+          /// 그리고 limitCursor의 정합성을 위해 [limitCursor]를 1 증가시키면서 drawingData에는 빈 스트로크를 채워줍니다.
+          /// 그러나 deletedStrokes에 이미 지워진 stroke의 index가 있으면 지우지 않습니다.
+          /// 또한 흰색은 펜 지우개 모드가 아니면 선택할 수가 없는 색상이므로
+          /// 흰색은 지우개 모드에서 그린 선으로 간주하고 지우지 않습니다.
+          for (int i = 0; i < userDrawingData[widget.me.id]!.length; i++) {
+            for (int j = 0; j < userDrawingData[widget.me.id]![i].length; j++) {
+              if (userDeletedStrokes[widget.me.id]!.containsValue(i) ||
+                  userDrawingData[widget.me.id]![i][j].color == Colors.white) {
+                continue;
+              }
+              final distance = sqrt(pow(
+                      userDrawingData[widget.me.id]![i][j].point.x -
+                          event.localPosition.dx,
+                      2) +
+                  pow(
+                      userDrawingData[widget.me.id]![i][j].point.y -
+                          event.localPosition.dy,
+                      2));
+              if (distance < strokeWidth) {
+                widget.onOutput?.call(
+                  BroadcastPaintData(
+                    drawingData: null,
+                    command: BroadcastCommand.removeStroke,
+                    limitCursor: userLimitCursor[widget.me.id]!,
+                    userID: widget.me.id,
+                    boardSize: boardSize,
+                    removeStrokeIndex: i,
+                  ),
+                );
 
-              setState(() {
-                userDrawingData[widget.me.id]!.add([]);
-                userLimitCursor[widget.me.id] =
-                    userLimitCursor[widget.me.id]! + 1;
-                userDeletedStrokes[widget.me.id]![
-                    userLimitCursor[widget.me.id]!] = i;
-                log('Stroke Erased: $i, $userLimitCursor');
-              });
+                setState(
+                  () {
+                    userDrawingData[widget.me.id]!.add([]);
+                    userLimitCursor[widget.me.id] =
+                        userLimitCursor[widget.me.id]! + 1;
+                    userDeletedStrokes[widget.me.id]![
+                        userLimitCursor[widget.me.id]!] = i;
+                    log('Stroke Erased: $i, $userLimitCursor');
+                  },
+                );
+              }
             }
           }
+        } else {
+          userDrawingData[widget.me.id]!.last.add(
+                DrawingData(
+                  point: Point(event.localPosition.dx, event.localPosition.dy,
+                      penType == PenType.pen ? event.pressure : 0.5),
+                  color: color,
+                  userID: widget.me.id,
+                  penType: penType,
+                  strokeWidth: strokeWidth,
+                ),
+              );
+          widget.onOutput?.call(
+            BroadcastPaintData(
+              drawingData: userDrawingData[widget.me.id]!.last.last,
+              boardSize: boardSize,
+              command: BroadcastCommand.draw,
+              limitCursor: userLimitCursor[widget.me.id]!,
+              userID: widget.me.id,
+            ),
+          );
         }
-      } else {
-        userDrawingData[widget.me.id]!.last.add(DrawingData(
-            point: Point(event.localPosition.dx, event.localPosition.dy,
-                penType == PenType.pen ? event.pressure : 0.5),
-            color: color,
-            userID: widget.me.id,
-            penType: penType,
-            strokeWidth: strokeWidth));
-        widget.onOutput?.call(BroadcastPaintData(
-            drawingData: userDrawingData[widget.me.id]!.last.last,
-            boardSize: boardSize,
-            command: BroadcastCommand.draw,
-            limitCursor: userLimitCursor[widget.me.id]!,
-            userID: widget.me.id));
-      }
-    });
+      },
+    );
   }
 
   Future<void> _onLoadImage(ui.Image uiImage) async {

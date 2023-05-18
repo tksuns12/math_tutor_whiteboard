@@ -290,7 +290,8 @@ class TimeIndicator extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Text(
-      '${(remainingTime.inMinutes).toString().padLeft(2, '0')}:${(remainingTime.inSeconds).toString().padLeft(2, '0')}',
+      '${(remainingTime.inMinutes).toString().padLeft(2, '0')}:${(remainingTime.inSeconds - remainingTime.inMinutes * 60).toString().padLeft(2, '0')}',
+      textAlign: TextAlign.center,
       style: const TextStyle(
           fontSize: 11, color: Color(0xff7d7d7d), fontWeight: FontWeight.w300),
     );
