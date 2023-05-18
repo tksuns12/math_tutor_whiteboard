@@ -94,7 +94,9 @@ class _WhiteboardControllerState
                       onTap: widget.onTapRecord,
                       remainingTime: widget.controller.currentSecond,
                     )
-                  : null),
+                  : TimeIndicator(
+                      remainingTime:
+                          Duration(seconds: widget.controller.currentSecond))),
           Expanded(
             child: Row(
               mainAxisAlignment: MainAxisAlignment.end,
@@ -276,6 +278,21 @@ class _WhiteboardControllerState
         ),
       ),
       isScrollControlled: true,
+    );
+  }
+}
+
+class TimeIndicator extends StatelessWidget {
+  final Duration remainingTime;
+
+  const TimeIndicator({super.key, required this.remainingTime});
+
+  @override
+  Widget build(BuildContext context) {
+    return Text(
+      '${(remainingTime.inMinutes).toString().padLeft(2, '0')}:${(remainingTime.inSeconds).toString().padLeft(2, '0')}',
+      style: const TextStyle(
+          fontSize: 11, color: Color(0xff7d7d7d), fontWeight: FontWeight.w300),
     );
   }
 }

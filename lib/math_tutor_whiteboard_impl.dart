@@ -31,7 +31,9 @@ class MathTutorWhiteboardImpl extends ConsumerStatefulWidget {
   final VoidCallback onTapRecordButton;
   final String? hostID;
   final void Function(File file)? onLoadNewImage;
+  final Duration maxRecordingDuration;
   const MathTutorWhiteboardImpl({
+    required this.maxRecordingDuration,
     required this.onLoadNewImage,
     super.key,
     this.controller,
@@ -63,6 +65,8 @@ class _MathTutorWhiteboardState extends ConsumerState<MathTutorWhiteboardImpl> {
   StreamSubscription<WhiteboardChatMessage>? _inputChatStreamSubscription;
   StreamSubscription<ViewportChangeEvent>? _viewportChangeStreamSubscription;
   StreamSubscription<PermissionChangeEvent>? _authorityChangeStreamSubscription;
+  StreamSubscription<RecordingDurationChangeEvent>?
+      _durationChangeStreamSubscription;
   final transformationController = TransformationController();
   late final Size boardSize;
   ImageProvider? image;
@@ -76,7 +80,7 @@ class _MathTutorWhiteboardState extends ConsumerState<MathTutorWhiteboardImpl> {
     userDrawingData.addAll({widget.me.id: []});
     controller = widget.controller ??
         WhiteboardController(
-            recordDuration: const Duration(minutes: 20),
+            recordDuration: widget.maxRecordingDuration,
             recorder: DefaultRecorder());
 
     /// 만약 미리 주입된 이미지가 있다면, 그 이미지를 미리 불러옵니다.
@@ -136,6 +140,12 @@ class _MathTutorWhiteboardState extends ConsumerState<MathTutorWhiteboardImpl> {
             drawable = event.drawing!;
           });
         }
+      });
+      _durationChangeStreamSubscription = widget.inputStream
+          ?.where((event) => event is RecordingDurationChangeEvent)
+          .map((event) => event as RecordingDurationChangeEvent)
+          .listen((event) {
+        controller.updateCurrentSecond(event.duration.inSeconds);
       });
     }
     super.initState();
@@ -222,6 +232,7 @@ class _MathTutorWhiteboardState extends ConsumerState<MathTutorWhiteboardImpl> {
     _inputChatStreamSubscription?.cancel();
     _viewportChangeStreamSubscription?.cancel();
     _authorityChangeStreamSubscription?.cancel();
+    _durationChangeStreamSubscription?.cancel();
 
     transformationController.dispose();
     super.dispose();

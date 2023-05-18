@@ -21,6 +21,7 @@ class MathTutorWhiteBoard extends StatelessWidget {
   final VoidCallback onTapRecordButton;
   final String? hostID;
   final void Function(File file)? onLoadNewImage;
+  final Duration maxDuration;
   const MathTutorWhiteBoard({
     Key? key,
     this.controller,
@@ -33,6 +34,7 @@ class MathTutorWhiteBoard extends StatelessWidget {
     required this.onTapRecordButton,
     this.hostID,
     this.onLoadNewImage,
+    this.maxDuration = const Duration(minutes: 20),
   }) : super(key: key);
 
   @override
@@ -41,6 +43,7 @@ class MathTutorWhiteBoard extends StatelessWidget {
         child: MathTutorWhiteboardImpl(
             onTapRecordButton: onTapRecordButton,
             onLoadNewImage: onLoadNewImage,
+            maxRecordingDuration: maxDuration,
             onOutput: onOutput,
             hostID: hostID,
             preloadImage: preloadImage,

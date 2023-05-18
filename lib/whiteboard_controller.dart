@@ -29,6 +29,11 @@ class WhiteboardController extends ChangeNotifier {
     currentSecond = recordDuration.inSeconds;
   }
 
+  void updateCurrentSecond(int newSecond) {
+    currentSecond = newSecond;
+    notifyListeners();
+  }
+
   void addUser(WhiteboardUser user) {
     users.add(user);
     log('Added user: ${user.id}');
@@ -160,7 +165,8 @@ class DefaultRecorder implements WhiteboardRecorder {
 
   @override
   Future<void> startRecording() async {
-    final path = '${(await getApplicationDocumentsDirectory()).path}/math_tutor_temp';
+    final path =
+        '${(await getApplicationDocumentsDirectory()).path}/math_tutor_temp';
     final savingDirectory = Directory(path);
     if (!await savingDirectory.exists()) {
       await savingDirectory.create(recursive: true);

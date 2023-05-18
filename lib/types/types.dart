@@ -431,3 +431,13 @@ class ImageChangeEvent extends Equatable {
   @override
   List<Object> get props => [imageUrl];
 }
+
+class RecordingDurationChangeEvent extends Equatable {
+  final Duration duration;
+  const RecordingDurationChangeEvent({
+    required this.duration,
+  });
+
+  @override
+  List<Object> get props => [duration];
+}
