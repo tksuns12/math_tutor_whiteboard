@@ -43,7 +43,7 @@ class WhiteboardController extends ChangeNotifier {
 
   void startUpdatingLiveTime() {
     assert(liveEndAt != null && liveEndExtraDuration != null);
-    _timer ??= Timer.periodic(const Duration(seconds: 1), (timer) {
+    _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
       final now = DateTime.now();
       final liveDuration = liveEndAt!
           .add(liveEndExtraDuration ?? const Duration(seconds: 0))
@@ -95,7 +95,7 @@ class WhiteboardController extends ChangeNotifier {
     }
     await recorder?.startRecording();
     currentSecond = recordDuration.inSeconds;
-    _timer ??= Timer.periodic(const Duration(seconds: 1), (timer) {
+    _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
       currentSecond--;
       if (currentSecond == 0) {
         _timer?.cancel();
@@ -140,7 +140,7 @@ class WhiteboardController extends ChangeNotifier {
     if (recordingState != RecordingState.paused) {
       return;
     }
-    _timer ??= Timer.periodic(const Duration(seconds: 1), (timer) {
+    _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
       currentSecond--;
       if (currentSecond == 0) {
         _timer?.cancel();
