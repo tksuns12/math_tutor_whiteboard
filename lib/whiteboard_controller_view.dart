@@ -86,17 +86,21 @@ class _WhiteboardControllerState
       child: Row(
         children: [
           SizedBox(
-              width: 72 / 360 * MediaQuery.of(context).size.width,
-              child: widget.recordable
-                  ? RecordButton(
-                      isRecording: widget.controller.recordingState ==
-                          RecordingState.recording,
-                      onTap: widget.onTapRecord,
-                      remainingTime: widget.controller.currentSecond,
-                    )
-                  : TimeIndicator(
-                      remainingTime:
-                          Duration(seconds: widget.controller.currentSecond))),
+            width: 72 / 360 * MediaQuery.of(context).size.width,
+            child: widget.recordable
+                ? RecordButton(
+                    isRecording: widget.controller.recordingState ==
+                        RecordingState.recording,
+                    onTap: widget.onTapRecord,
+                    remainingTime: widget.controller.currentSecond,
+                  )
+                : widget.controller.liveEndAt == null
+                    ? const SizedBox()
+                    : TimeIndicator(
+                        remainingTime: widget.controller.liveDuration ??
+                            const Duration(minutes: 20),
+                      ),
+          ),
           Expanded(
             child: Row(
               mainAxisAlignment: MainAxisAlignment.end,

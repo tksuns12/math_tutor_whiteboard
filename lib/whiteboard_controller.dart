@@ -22,11 +22,35 @@ class WhiteboardController extends ChangeNotifier {
   RecordingState recordingState = RecordingState.idle;
   String? recordingPath;
   final Duration recordDuration;
+
+  DateTime? liveEndAt;
+  Duration? liveEndExtraDuration;
+  Duration? liveDuration;
+
   int currentSecond = 0;
   List<WhiteboardUser> users = [];
 
   WhiteboardController({this.recorder, required this.recordDuration}) {
     currentSecond = recordDuration.inSeconds;
+  }
+
+  void setLiveTime(
+      {required DateTime liveEndAt, required Duration liveEndExtraDuration}) {
+    this.liveEndAt = liveEndAt;
+    this.liveEndExtraDuration = liveEndExtraDuration;
+    notifyListeners();
+  }
+
+  void startUpdatingLiveTime() {
+    assert(liveEndAt != null && liveEndExtraDuration != null);
+    _timer ??= Timer.periodic(const Duration(seconds: 1), (timer) {
+      final now = DateTime.now();
+      final liveDuration = liveEndAt!
+          .add(liveEndExtraDuration ?? const Duration(seconds: 0))
+          .difference(now);
+      this.liveDuration = liveDuration;
+      notifyListeners();
+    });
   }
 
   void updateCurrentSecond(int newSecond) {

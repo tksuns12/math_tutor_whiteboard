@@ -432,9 +432,11 @@ class ImageChangeEvent extends Equatable {
   List<Object> get props => [imageUrl];
 }
 
-class RecordingDurationChangeEvent extends Equatable {
+class LiveEndTimeChangeEvent extends Equatable {
   final Duration duration;
-  const RecordingDurationChangeEvent({
+  final DateTime endAt;
+  const LiveEndTimeChangeEvent({
+    required this.endAt,
     required this.duration,
   });
 

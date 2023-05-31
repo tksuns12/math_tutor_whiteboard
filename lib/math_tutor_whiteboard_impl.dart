@@ -65,8 +65,7 @@ class _MathTutorWhiteboardState extends ConsumerState<MathTutorWhiteboardImpl> {
   StreamSubscription<WhiteboardChatMessage>? _inputChatStreamSubscription;
   StreamSubscription<ViewportChangeEvent>? _viewportChangeStreamSubscription;
   StreamSubscription<PermissionChangeEvent>? _authorityChangeStreamSubscription;
-  StreamSubscription<RecordingDurationChangeEvent>?
-      _durationChangeStreamSubscription;
+  StreamSubscription<LiveEndTimeChangeEvent>? _durationChangeStreamSubscription;
   final transformationController = TransformationController();
   late final Size boardSize;
   ImageProvider? image;
@@ -142,10 +141,13 @@ class _MathTutorWhiteboardState extends ConsumerState<MathTutorWhiteboardImpl> {
         }
       });
       _durationChangeStreamSubscription = widget.inputStream
-          ?.where((event) => event is RecordingDurationChangeEvent)
-          .map((event) => event as RecordingDurationChangeEvent)
+          ?.where((event) => event is LiveEndTimeChangeEvent)
+          .map((event) => event as LiveEndTimeChangeEvent)
           .listen((event) {
-        controller.updateCurrentSecond(event.duration.inSeconds);
+        controller.setLiveTime(
+          liveEndAt: event.endAt,
+          liveEndExtraDuration: event.duration,
+        );
       });
     }
     super.initState();
