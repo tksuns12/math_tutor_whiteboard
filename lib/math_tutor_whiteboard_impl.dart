@@ -33,7 +33,8 @@ class MathTutorWhiteboardImpl extends ConsumerStatefulWidget {
   final Duration maxRecordingDuration;
   final Set<WhiteboardFeature> enabledFeatures;
   final String? hostID;
-  const MathTutorWhiteboardImpl({this.hostID, 
+  const MathTutorWhiteboardImpl({
+    this.hostID,
     required this.enabledFeatures,
     required this.maxRecordingDuration,
     required this.onLoadNewImage,
@@ -309,6 +310,8 @@ class _MathTutorWhiteboardState extends ConsumerState<MathTutorWhiteboardImpl> {
                 onViewportChange: _onViewportChange,
                 preloadImage: image,
                 drawable: drawable,
+                isSpannable:
+                    widget.enabledFeatures.contains(WhiteboardFeature.span),
               ),
             )
           ],
@@ -584,6 +587,7 @@ class _WhiteBoard extends StatefulWidget {
   final Map<String, Map<int, int>> userDeletedStrokes;
   final TransformationController transformationController;
   final bool drawable;
+  final bool isSpannable;
   const _WhiteBoard(
       {Key? key,
       required this.onStartDrawing,
@@ -595,7 +599,8 @@ class _WhiteBoard extends StatefulWidget {
       required this.userDeletedStrokes,
       required this.onViewportChange,
       required this.transformationController,
-      required this.drawable})
+      required this.drawable,
+      required this.isSpannable})
       : super(key: key);
 
   @override
@@ -637,7 +642,7 @@ class _WhiteBoardState extends State<_WhiteBoard> {
     return LayoutBuilder(builder: (context, constraints) {
       return Scaffold(
         floatingActionButtonLocation: FloatingActionButtonLocation.startFloat,
-        floatingActionButton: widget.drawable
+        floatingActionButton: widget.drawable && widget.isSpannable
             ? FloatingActionButton.small(
                 onPressed: () {
                   setState(() {
