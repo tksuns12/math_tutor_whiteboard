@@ -35,15 +35,15 @@ class WhiteboardControllerView extends ConsumerStatefulWidget {
   final void Function(WhiteboardUser user, bool allow)
       onDrawingPermissionChanged;
   final WhiteboardUser me;
-  final String? hostID;
   final WhiteboardController controller;
   final bool recordable;
+  final String? hostID;
 
   const WhiteboardControllerView(
-      {required this.recordable,
+      {this.hostID,
+      required this.recordable,
       required this.controller,
       required this.me,
-      this.hostID,
       required this.onMicPermissionChanged,
       required this.onDrawingPermissionChanged,
       required this.drawable,
@@ -118,8 +118,7 @@ class _WhiteboardControllerState
                         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          if ((widget.hostID == widget.me.id ||
-                              !widget.canLoadImage))
+                          if (widget.canLoadImage)
                             InkWell(
                               onTap: () {
                                 // Show modal bottom sheet to choose camera or gallery

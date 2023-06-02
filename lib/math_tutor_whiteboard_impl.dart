@@ -6,6 +6,7 @@ import 'dart:ui' as ui;
 
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/services.dart';
+import 'package:math_tutor_whiteboard/types/features.dart';
 // ignore: depend_on_referenced_packages
 import 'package:vector_math/vector_math_64.dart' show Quad;
 
@@ -23,28 +24,27 @@ import 'whiteboard_controller_view.dart';
 class MathTutorWhiteboardImpl extends ConsumerStatefulWidget {
   final WhiteboardController? controller;
   final ImageProvider? preloadImage;
-  final WhiteboardMode mode;
   final Stream? inputStream;
   final void Function(dynamic data)? onOutput;
   final WhiteboardUser me;
   final FutureOr<void> Function() onAttemptToClose;
   final VoidCallback onTapRecordButton;
-  final String? hostID;
   final void Function(File file)? onLoadNewImage;
   final Duration maxRecordingDuration;
-  const MathTutorWhiteboardImpl({
+  final Set<WhiteboardFeature> enabledFeatures;
+  final String? hostID;
+  const MathTutorWhiteboardImpl({this.hostID, 
+    required this.enabledFeatures,
     required this.maxRecordingDuration,
     required this.onLoadNewImage,
     super.key,
     this.controller,
     this.preloadImage,
-    required this.mode,
     this.inputStream,
     this.onOutput,
     required this.me,
     required this.onAttemptToClose,
     required this.onTapRecordButton,
-    this.hostID,
   });
 
   @override
@@ -91,8 +91,7 @@ class _MathTutorWhiteboardState extends ConsumerState<MathTutorWhiteboardImpl> {
       boardSize = Size(MediaQuery.of(context).size.width,
           MediaQuery.of(context).size.width * (16 / 9));
       // boardSize = MediaQuery.of(context).size;
-      if (widget.mode != WhiteboardMode.record &&
-          widget.mode != WhiteboardMode.recordTeaching) {
+      if (widget.enabledFeatures.contains(WhiteboardFeature.chat)) {
         ref
             .read(chatMessageStateProvider.notifier)
             .addMessage(const WhiteboardChatMessage(
@@ -265,17 +264,19 @@ class _MathTutorWhiteboardState extends ConsumerState<MathTutorWhiteboardImpl> {
                 builder: (context, controller, _) {
                   if (controller != null) {
                     return WhiteboardControllerView(
-                      recordable: !widget.mode.isUsingWebSocket,
+                      recordable: widget.enabledFeatures
+                          .contains(WhiteboardFeature.recording),
                       controller: controller,
                       onPenSelected: _onPenSelected,
                       onTapEraser: _onTapEraser,
                       onTapUndo: _onTapUndo,
                       me: widget.me,
-                      hostID: widget.hostID,
                       onTapClear: _onTapClear,
+                      hostID: widget.hostID,
                       onTapClose: widget.onAttemptToClose,
                       onColorSelected: _onColorSelected,
-                      canLoadImage: widget.mode == WhiteboardMode.live,
+                      canLoadImage: widget.enabledFeatures
+                          .contains(WhiteboardFeature.modifyPhoto),
                       onTapRedo: _onTapRedo,
                       penType: penType,
                       selectedColor: color,

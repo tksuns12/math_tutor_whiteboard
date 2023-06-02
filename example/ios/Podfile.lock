@@ -47,7 +47,7 @@ DEPENDENCIES:
   - flutter_webrtc (from `.symlinks/plugins/flutter_webrtc/ios`)
   - fluttertoast (from `.symlinks/plugins/fluttertoast/ios`)
   - livekit_client (from `.symlinks/plugins/livekit_client/ios`)
-  - path_provider_foundation (from `.symlinks/plugins/path_provider_foundation/ios`)
+  - path_provider_foundation (from `.symlinks/plugins/path_provider_foundation/darwin`)
   - permission_handler_apple (from `.symlinks/plugins/permission_handler_apple/ios`)
   - photo_manager (from `.symlinks/plugins/photo_manager/ios`)
   - sqflite (from `.symlinks/plugins/sqflite/ios`)
@@ -78,7 +78,7 @@ EXTERNAL SOURCES:
   livekit_client:
     :path: ".symlinks/plugins/livekit_client/ios"
   path_provider_foundation:
-    :path: ".symlinks/plugins/path_provider_foundation/ios"
+    :path: ".symlinks/plugins/path_provider_foundation/darwin"
   permission_handler_apple:
     :path: ".symlinks/plugins/permission_handler_apple/ios"
   photo_manager:
@@ -98,7 +98,7 @@ SPEC CHECKSUMS:
   fluttertoast: eb263d302cc92e04176c053d2385237e9f43fad0
   FMDB: 2ce00b547f966261cd18927a3ddb07cb6f3db82a
   livekit_client: 15505f3f1dd596856035cb59a463c7cace4760c3
-  path_provider_foundation: c68054786f1b4f3343858c1e1d0caaded73f0be9
+  path_provider_foundation: eaf5b3e458fc0e5fbb9940fb09980e853fe058b8
   permission_handler_apple: 44366e37eaf29454a1e7b1b7d736c2cceaeb17ce
   photo_manager: 4f6810b7dfc4feb03b461ac1a70dacf91fba7604
   ReachabilitySwift: 985039c6f7b23a1da463388634119492ff86c825
@@ -107,6 +107,6 @@ SPEC CHECKSUMS:
   video_player_avfoundation: 81e49bb3d9fb63dccf9fa0f6d877dc3ddbeac126
   WebRTC-SDK: 566e58d2916cb79d770350169a449ea523f5db7c
 
-PODFILE CHECKSUM: 558ac515bb038b792a6e0c327db0c746ea565bfa
+PODFILE CHECKSUM: 05e4e2b9a9d98568618b16c04423ed171c9ffbbd
 
 COCOAPODS: 1.12.1

@@ -4,6 +4,7 @@ import 'package:example/livekit_service.dart';
 import 'package:flutter/material.dart';
 
 import 'package:math_tutor_whiteboard/math_tutor_whiteboard.dart';
+import 'package:math_tutor_whiteboard/types/features.dart';
 import 'package:math_tutor_whiteboard/types/types.dart';
 import 'package:math_tutor_whiteboard/whiteboard_controller.dart';
 
@@ -110,7 +111,11 @@ class _WhiteboardViewState extends State<WhiteboardView> {
       child: widget.mode != WhiteboardMode.liveTeaching &&
               widget.mode != WhiteboardMode.participant
           ? MathTutorWhiteBoard(
-              mode: widget.mode,
+              enabledFeatures: const {
+                WhiteboardFeature.modifyPhoto,
+                WhiteboardFeature.recording,
+                WhiteboardFeature.span
+              },
               controller: controller,
               preloadImage: const NetworkImage('https://picsum.photos/640/320'),
               me: widget.me,
@@ -195,9 +200,15 @@ class _WhiteboardViewState extends State<WhiteboardView> {
                 if (snapshot.connectionState == ConnectionState.done) {
                   inputStream = service.incomingStream;
                   return MathTutorWhiteBoard(
+                    enabledFeatures: {
+                      if (widget.mode == WhiteboardMode.liveTeaching) ...{
+                        WhiteboardFeature.modifyPhoto,
+                        WhiteboardFeature.span,
+                      },
+                      WhiteboardFeature.chat,
+                    },
                     controller: controller,
                     hostID: widget.hostID,
-                    mode: widget.mode,
                     preloadImage:
                         const NetworkImage('https://picsum.photos/640/320'),
                     me: widget.me,
