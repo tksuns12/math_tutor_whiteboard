@@ -3,8 +3,16 @@ import 'package:math_tutor_whiteboard/types/types.dart';
 
 class ChatMessageStateNotifier
     extends StateNotifier<List<WhiteboardChatMessage>> {
-  ChatMessageStateNotifier() : super([
-  ]);
+  ChatMessageStateNotifier() : super([]);
+
+  DateTime? lastMessageTime;
+
+  bool get hasNewMessage {
+    if (lastMessageTime == null) {
+      return false;
+    }
+    return (state.lastOrNull?.sentAt.isAfter(lastMessageTime!)) ?? false;
+  }
 
   void addMessage(WhiteboardChatMessage message) {
     state = [...state, message];
@@ -16,5 +24,6 @@ class ChatMessageStateNotifier
   }
 }
 
-final chatMessageStateProvider = AutoDisposeStateNotifierProvider<ChatMessageStateNotifier,
+final chatMessageStateProvider = AutoDisposeStateNotifierProvider<
+    ChatMessageStateNotifier,
     List<WhiteboardChatMessage>>((ref) => ChatMessageStateNotifier());

@@ -285,7 +285,9 @@ class WhiteboardUser extends Equatable {
 class WhiteboardChatMessage extends Equatable {
   final String message;
   final String nickname;
+  final DateTime sentAt;
   const WhiteboardChatMessage({
+    required this.sentAt,
     required this.message,
     required this.nickname,
   });
@@ -297,6 +299,7 @@ class WhiteboardChatMessage extends Equatable {
     return {
       'message': message,
       'nickname': nickname,
+      'receivedAt': sentAt.toIso8601String(),
     };
   }
 
@@ -304,6 +307,7 @@ class WhiteboardChatMessage extends Equatable {
     return WhiteboardChatMessage(
       message: map['message'] ?? '',
       nickname: map['nickname'] ?? '',
+      sentAt: DateTime.parse(map['receivedAt']),
     );
   }
 

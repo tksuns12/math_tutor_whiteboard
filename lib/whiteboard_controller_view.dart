@@ -190,14 +190,26 @@ class _WhiteboardControllerState
                   builder: (context, ref, child) {
                     final chatMessageState =
                         ref.watch(chatMessageStateProvider);
+                    final chatMessageStateNotifier =
+                        ref.watch(chatMessageStateProvider.notifier);
                     if (chatMessageState.isEmpty) {
                       return const SizedBox();
                     } else {
-                      return InkWell(
-                        onTap: () => showChatModalBottomSheet(context),
-                        child: SvgPicture.asset(
-                          'assets/chat.svg',
-                          package: 'math_tutor_whiteboard',
+                      return Badge(
+                        isLabelVisible: chatMessageStateNotifier.hasNewMessage,
+                        label: const Text(
+                          'N',
+                          style: TextStyle(color: Colors.white, fontSize: 5),
+                        ),
+                        backgroundColor: Colors.red,
+                        alignment: Alignment.topRight,
+                        offset: const Offset(0, 0),
+                        child: InkWell(
+                          onTap: () => showChatModalBottomSheet(context),
+                          child: SvgPicture.asset(
+                            'assets/chat.svg',
+                            package: 'math_tutor_whiteboard',
+                          ),
                         ),
                       );
                     }
