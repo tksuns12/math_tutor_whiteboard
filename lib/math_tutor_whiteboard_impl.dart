@@ -93,12 +93,11 @@ class _MathTutorWhiteboardState extends ConsumerState<MathTutorWhiteboardImpl> {
           MediaQuery.of(context).size.width * (16 / 9));
       // boardSize = MediaQuery.of(context).size;
       if (widget.enabledFeatures.contains(WhiteboardFeature.chat)) {
-        ref
-            .read(chatMessageStateProvider.notifier)
-            .addMessage(const WhiteboardChatMessage(
-              nickname: '시스템',
-              message: '채팅방에 입장하셨습니다.',
-            ));
+        ref.read(chatMessageStateProvider.notifier).addMessage(
+            WhiteboardChatMessage(
+                nickname: '시스템',
+                message: '채팅방에 입장하셨습니다.',
+                sentAt: DateTime.now()));
       }
     });
     if (widget.inputStream != null) {
@@ -552,9 +551,19 @@ class _MathTutorWhiteboardState extends ConsumerState<MathTutorWhiteboardImpl> {
 
   void _onSendChatMessage(String message) {
     widget.onOutput?.call(
-        WhiteboardChatMessage(message: message, nickname: widget.me.nickname));
+      WhiteboardChatMessage(
+        message: message,
+        nickname: widget.me.nickname,
+        sentAt: DateTime.now(),
+      ),
+    );
     ref.read(chatMessageStateProvider.notifier).addMessage(
-        WhiteboardChatMessage(message: message, nickname: widget.me.nickname));
+          WhiteboardChatMessage(
+            message: message,
+            nickname: widget.me.nickname,
+            sentAt: DateTime.now(),
+          ),
+        );
   }
 
   void _onMicPermissionChanged(WhiteboardUser user, bool allow) {
@@ -781,15 +790,20 @@ class _WhiteboardPainter extends CustomPainter {
               center: Offset(points[0].x, points[0].y),
               radius: stroke.first.strokeWidth));
         } else {
-          path.moveTo(points[0].x, points[0].y);
-          for (int i = 1; i < points.length - 1; ++i) {
-            final p0 = points[i];
-            final p1 = points[i + 1];
-            path.quadraticBezierTo(
-                p0.x, p0.y, (p0.x + p1.x) / 2, (p0.y + p1.y) / 2);
+          if (drawingData.first.first.penType != PenType.highlighter) {
+            canvas.drawPoints(ui.PointMode.polygon,
+                points.map((e) => Offset(e.x, e.y)).toList(), paint);
+          } else {
+            path.moveTo(points[0].x, points[0].y);
+            for (int i = 1; i < points.length - 1; ++i) {
+              final p0 = points[i];
+              final p1 = points[i + 1];
+              path.quadraticBezierTo(
+                  p0.x, p0.y, (p0.x + p1.x) / 2, (p0.y + p1.y) / 2);
+            }
+            canvas.drawPath(path, paint);
           }
         }
-        canvas.drawPath(path, paint);
       }
     }
   }
