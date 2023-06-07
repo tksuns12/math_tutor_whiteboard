@@ -39,6 +39,7 @@ dependencies:
     path: ../
   permission_handler: 
   random_x: ^0.3.1
+  flutter_background: ^1.2.0
 dev_dependencies:
   flutter_test:
     sdk: flutter
