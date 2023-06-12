@@ -182,19 +182,5 @@ class _MyHomePageState extends State<MyHomePage> {
         ],
       ),
     ));
-    // return Scaffold(
-    //     body: MathTutorWhiteBoard(
-    //   mode: WhiteboardMode.record,
-    //   preloadImage: const NetworkImage('https://picsum.photos/640/320'),
-    //   myID: 'MyID',
-    //   onAttemptToClose: () async {
-    //     print('onAttemptToClose');
-    //     return true;
-    //   },
-    //   onAttemptToCompleteRecording: () async {
-    //     print('onAttemptToCompleteRecording');
-    //     return true;
-    //   },
-    // ));
   }
 }

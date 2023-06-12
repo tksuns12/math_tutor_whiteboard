@@ -8,26 +8,39 @@ class LivekitService {
   late final Room room;
   final StreamController roomStreamController = StreamController.broadcast();
   get incomingStream => roomStreamController.stream;
+  bool isConnected = false;
 
   Future<void> joinRoom(bool isStudent, WhiteboardUser me) async {
     room = Room();
     await room.connect(
         'wss://math-tutor-hgpqkkg2.livekit.cloud',
         isStudent
-            ? 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE2ODQ0NjIxMzUsImlzcyI6IkFQSURlWk5zYXkyRlE4ZCIsIm5hbWUiOiJzdHVkZW50IiwibmJmIjoxNjg0Mzc1NzM1LCJzdWIiOiJzdHVkZW50IiwidmlkZW8iOnsiY2FuVXBkYXRlT3duTWV0YWRhdGEiOnRydWUsInJvb20iOiJyZXN0cm9vbSIsInJvb21Kb2luIjp0cnVlfX0.RIv-X3nvn6qeoNtlOumEJ6Cgjhxx1OTQwEpHEGsuRHo'
-            : 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE2ODQ0NjIxMTEsImlzcyI6IkFQSURlWk5zYXkyRlE4ZCIsIm5hbWUiOiJ0dXRvciIsIm5iZiI6MTY4NDM3NTcxMSwic3ViIjoidHV0b3IiLCJ2aWRlbyI6eyJjYW5VcGRhdGVPd25NZXRhZGF0YSI6dHJ1ZSwicm9vbSI6InJlc3Ryb29tIiwicm9vbUFkbWluIjp0cnVlLCJyb29tQ3JlYXRlIjp0cnVlLCJyb29tSm9pbiI6dHJ1ZX19.bQEA8cHXCx0-IE02FoPUuetFE0t5gepO4j8WT11dN9o');
+            ? 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE2ODYyMDgwODIsImlzcyI6IkFQSURlWk5zYXkyRlE4ZCIsIm5hbWUiOiJzdHVkZW50IiwibmJmIjoxNjg2MTIxNjgyLCJzdWIiOiJzdHVkZW50IiwidmlkZW8iOnsiY2FuVXBkYXRlT3duTWV0YWRhdGEiOnRydWUsInJvb20iOiJyZXN0cm9vbSIsInJvb21Kb2luIjp0cnVlfX0.T9Ybf9HiEMfjyR8Jc8pUnD_ZL2kvs-91J02rSzrdqUg'
+            : 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE2ODYyMDgwMzQsImlzcyI6IkFQSURlWk5zYXkyRlE4ZCIsIm5hbWUiOiJ0dXRvciIsIm5iZiI6MTY4NjEyMTYzNCwic3ViIjoidHV0b3IiLCJ2aWRlbyI6eyJjYW5VcGRhdGVPd25NZXRhZGF0YSI6dHJ1ZSwicm9vbSI6InJlc3Ryb29tIiwicm9vbUFkbWluIjp0cnVlLCJyb29tQ3JlYXRlIjp0cnVlLCJyb29tSm9pbiI6dHJ1ZX19.FG00zwbEYEfSwEgTYXRhOcq1F_x1Um3CpgM3eziThy8');
+    isConnected = true;
+    if (room.metadata != null) {
+      final roomMetaData = jsonDecode(room.metadata!);
+      // if (roomMetaData['latestDrawingData'] != null) {
+      //   roomStreamController.add(SynchronizeWholeDrawingDataEvent(
+      //       roomMetaData['latestDrawingData']));
+      // }
+    }
     room.localParticipant?.setMetadata(me.toJson());
     await room.localParticipant?.setCameraEnabled(false);
     if (!isStudent) {
-      await room.localParticipant?.publishVideoTrack(
-        await LocalVideoTrack.createScreenShareTrack(
-          const ScreenShareCaptureOptions(
-            captureScreenAudio: false,
-          ),
-        ),
-      );
+      // await room.localParticipant?.publishVideoTrack(
+      //   await LocalVideoTrack.createScreenShareTrack(
+      //     const ScreenShareCaptureOptions(
+      //       captureScreenAudio: false,
+      //     ),
+      //   ),
+      // );
     }
-    await room.localParticipant?.setMicrophoneEnabled(true);
+
+    await room.localParticipant?.setMicrophoneEnabled(
+      true,
+      audioCaptureOptions: const AudioCaptureOptions(highPassFilter: true),
+    );
     room.createListener()
       ..on<ParticipantMetadataUpdatedEvent>(
         (event) {
@@ -66,11 +79,16 @@ class LivekitService {
               ),
             );
           } else if (event.topic == 'permission') {
-            roomStreamController.add(
-              PermissionChangeEvent.fromJson(
-                utf8.decoder.convert(event.data),
-              ),
+            final parsedEvent = PermissionChangeEvent.fromJson(
+              utf8.decoder.convert(event.data),
             );
+            roomStreamController.add(
+              parsedEvent,
+            );
+            if (parsedEvent.microphone != null) {
+              room.localParticipant
+                  ?.setMicrophoneEnabled(parsedEvent.microphone!);
+            }
           }
         },
       );
@@ -87,7 +105,9 @@ class LivekitService {
   }
 
   Future<void> leaveRoom() async {
-    await room.disconnect();
+    if (isConnected) {
+      await room.disconnect();
+    }
   }
 
   Future<void> sendChatMessage(WhiteboardChatMessage event) async {
@@ -114,6 +134,10 @@ class LivekitService {
       topic: 'drawing',
     );
   }
+
+  // void updateDrawingWholeDrawingData(SynchronizeWholeDrawingDataEvent event) {
+  //   room.
+  // }
 
   void sendViewportChangeData(ViewportChangeEvent event) {
     room.localParticipant?.publishData(

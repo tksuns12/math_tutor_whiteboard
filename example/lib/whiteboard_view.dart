@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:io';
 import 'package:example/livekit_service.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_background/flutter_background.dart';
 
 import 'package:math_tutor_whiteboard/math_tutor_whiteboard.dart';
 import 'package:math_tutor_whiteboard/types/features.dart';
@@ -42,13 +43,18 @@ class _WhiteboardViewState extends State<WhiteboardView> {
   late final LivekitService service;
   late final Future initFuture;
   late final WhiteboardController controller;
+  bool isConnected = false;
   @override
   void initState() {
     if (widget.mode.isUsingWebSocket) {
       service = LivekitService();
       initFuture = (() async {
         try {
+          if (Platform.isAndroid) {
+            await startService();
+          }
           await service.joinRoom(widget.hostID != widget.me.id, widget.me);
+          isConnected = true;
           controller.addUser(
             WhiteboardUser(
                 isHost: widget.hostID == widget.me.id,
@@ -97,12 +103,15 @@ class _WhiteboardViewState extends State<WhiteboardView> {
   }
 
   @override
-  void dispose() {
+  Future<void> dispose() async {
     if (widget.mode.isUsingWebSocket) {
       service.leaveRoom();
     }
     controller.removeListener(_controllerListener);
     super.dispose();
+    if (isConnected && Platform.isAndroid) {
+      await endService();
+    }
   }
 
   @override
@@ -117,7 +126,7 @@ class _WhiteboardViewState extends State<WhiteboardView> {
                 WhiteboardFeature.span
               },
               controller: controller,
-              preloadImage: const NetworkImage('https://picsum.photos/640/320'),
+              // preloadImage: const NetworkImage('https://picsum.photos/640/320'),
               me: widget.me,
               hostID: widget.hostID,
               onAttemptToClose: () async {
@@ -209,8 +218,8 @@ class _WhiteboardViewState extends State<WhiteboardView> {
                     },
                     controller: controller,
                     hostID: widget.hostID,
-                    preloadImage:
-                        const NetworkImage('https://picsum.photos/640/320'),
+                    // preloadImage:
+                    //     const NetworkImage('https://picsum.photos/640/320'),
                     me: widget.me,
                     inputStream: inputStream,
                     onLoadNewImage: (file) {
@@ -332,4 +341,25 @@ class _WhiteboardViewState extends State<WhiteboardView> {
   }
 
   void _controllerListener() {}
+
+  startService() async {
+    const androidConfig = FlutterBackgroundAndroidConfig(
+      notificationTitle: '매쓰튜터 개발용 화면 공유',
+      notificationText: '라이브 화면을 공유 중입니다.',
+      notificationImportance: AndroidNotificationImportance
+          .Default, // Default is ic_launcher from folder mipmap
+    );
+    await FlutterBackground.initialize(androidConfig: androidConfig);
+    final result = await FlutterBackground.enableBackgroundExecution();
+    if (!result) {
+      throw Exception('Background execution not enabled');
+    }
+  }
+
+  endService() async {
+    final result = await FlutterBackground.disableBackgroundExecution();
+    if (!result) {
+      throw Exception('Background execution not disabled');
+    }
+  }
 }

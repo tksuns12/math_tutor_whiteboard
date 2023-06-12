@@ -54,13 +54,13 @@ class MathTutorWhiteboardImpl extends ConsumerStatefulWidget {
 }
 
 class _MathTutorWhiteboardState extends ConsumerState<MathTutorWhiteboardImpl> {
-  Map<String, List<List<DrawingData>>> userDrawingData = {};
+  List<List<DrawingData>> drawingData = [];
   PenType penType = PenType.pen;
   double strokeWidth = 2;
   Color color = Colors.black;
-  late final Map<String, int> userLimitCursor;
+  int limitCursor = 0;
   Timer? timer;
-  final Map<String, Map<int, int>> userDeletedStrokes = {};
+  final Map<int, int> deletedStrokes = {};
   StreamSubscription<BroadcastPaintData>? _inputDrawingStreamSubscription;
   StreamSubscription<ImageChangeEvent>? _inputImageStreamSubscription;
   StreamSubscription<WhiteboardChatMessage>? _inputChatStreamSubscription;
@@ -75,9 +75,6 @@ class _MathTutorWhiteboardState extends ConsumerState<MathTutorWhiteboardImpl> {
 
   @override
   void initState() {
-    userLimitCursor = {widget.me.id: 0};
-    userDeletedStrokes.addAll({widget.me.id: {}});
-    userDrawingData.addAll({widget.me.id: []});
     controller = widget.controller ??
         WhiteboardController(
             recordDuration: widget.maxRecordingDuration,
@@ -157,39 +154,17 @@ class _MathTutorWhiteboardState extends ConsumerState<MathTutorWhiteboardImpl> {
     if (event.command == BroadcastCommand.clear) {
       _onReceiveClear(event.userID);
     } else {
-      if (userLimitCursor[event.userID] == null) {
-        userLimitCursor[event.userID] = 0;
-      }
-
-      if (userDeletedStrokes[event.userID] == null) {
-        userDeletedStrokes[event.userID] = {};
-      }
-
-      if (userDrawingData[event.userID] == null) {
-        userDrawingData[event.userID] = [[]];
-      }
-
-      /// 중간에 들어온 경우에는 현재의 limitCursor와 서버에서 내려준 limitCursor가 차이가 납니다.
-      /// 정합성을 위해서 부족한 limit Cursor 만큼 빈 스트로크를 추가합니다.
-      if (userLimitCursor[event.userID] == 0 && event.limitCursor > 1) {
-        userDrawingData[event.userID]!.addAll(List.generate(
-            event.limitCursor - userLimitCursor[event.userID]! - 1,
-            (index) => []));
-        userLimitCursor[event.userID] = event.limitCursor - 1;
-      }
-
       /// 선 지우기 인덱스가 null이 아닌 경우에는
       /// 선을 지우는 동작을 합니다.
       /// 이 경우에는 drawingData가 null입니다.
       if (event.removeStrokeIndex != null) {
-        if (userDeletedStrokes[event.userID] == null) {
-          userDeletedStrokes[event.userID] = {};
+        if (deletedStrokes[event.userID] == null) {
+          deletedStrokes.clear();
         }
         setState(() {
-          userDeletedStrokes[event.userID]![event.limitCursor] =
-              event.removeStrokeIndex!;
-          userLimitCursor[event.userID] = event.limitCursor;
-          userDrawingData[event.userID]!.add([]);
+          deletedStrokes[event.limitCursor] = event.removeStrokeIndex!;
+          limitCursor = event.limitCursor;
+          drawingData.add([]);
         });
       }
 
@@ -202,26 +177,24 @@ class _MathTutorWhiteboardState extends ConsumerState<MathTutorWhiteboardImpl> {
         final heightCoefficient = boardSize.height / event.boardSize.height;
         final widthCoefficient = boardSize.width / event.boardSize.width;
         setState(() {
-          if (event.limitCursor == userLimitCursor[event.userID]) {
+          if (event.limitCursor == limitCursor) {
             if (event.drawingData != null) {
-              userDrawingData[event.userID]!.last.add(
-                    event.drawingData!.copyWith(
-                      point: event.drawingData!.point.copyWith(
-                          x: event.drawingData!.point.x * widthCoefficient,
-                          y: event.drawingData!.point.y * heightCoefficient),
-                      userID: event.userID,
-                    ),
-                  );
+              drawingData.last.add(
+                event.drawingData!.copyWith(
+                  point: event.drawingData!.point.copyWith(
+                      x: event.drawingData!.point.x * widthCoefficient,
+                      y: event.drawingData!.point.y * heightCoefficient),
+                  userID: event.userID,
+                ),
+              );
             }
           } else {
-            userLimitCursor[event.userID] = event.limitCursor;
+            limitCursor = event.limitCursor;
             if (event.drawingData != null) {
-              if (userDrawingData[event.userID]!.length <
-                  userLimitCursor[event.userID]!) {
-                userDrawingData[event.userID]!.add([]);
+              if (drawingData.length < limitCursor) {
+                drawingData.add([]);
               }
-              userDrawingData[event.userID]![
-                  userLimitCursor[event.userID]! - 1] = [
+              drawingData[limitCursor - 1] = [
                 event.drawingData!.copyWith(
                   point: event.drawingData!.point.copyWith(
                       x: event.drawingData!.point.x * widthCoefficient,
@@ -280,9 +253,8 @@ class _MathTutorWhiteboardState extends ConsumerState<MathTutorWhiteboardImpl> {
                       onTapRedo: _onTapRedo,
                       penType: penType,
                       selectedColor: color,
-                      isRedoable: userLimitCursor[widget.me.id]! <
-                          userDrawingData[widget.me.id]!.length,
-                      isUndoable: userLimitCursor[widget.me.id]! > 0,
+                      isRedoable: limitCursor < drawingData.length,
+                      isUndoable: limitCursor > 0,
                       strokeWidth: strokeWidth,
                       onStrokeWidthChanged: _onStrokeWidthChanged,
                       onTapRecord: widget.onTapRecordButton,
@@ -300,12 +272,12 @@ class _MathTutorWhiteboardState extends ConsumerState<MathTutorWhiteboardImpl> {
             Expanded(
               child: _WhiteBoard(
                 onStartDrawing: _onStartDrawing,
-                userDeletedStrokes: userDeletedStrokes,
+                userDeletedStrokes: deletedStrokes,
                 transformationController: transformationController,
                 onDrawing: _onDrawing,
                 onEndDrawing: _onEndDrawing,
-                userDrawingData: userDrawingData,
-                userLimitCursor: userLimitCursor,
+                userDrawingData: drawingData,
+                userLimitCursor: limitCursor,
                 onViewportChange: _onViewportChange,
                 preloadImage: image,
                 drawable: drawable,
@@ -322,14 +294,11 @@ class _MathTutorWhiteboardState extends ConsumerState<MathTutorWhiteboardImpl> {
   void _onStartDrawing() {
     if (penType != PenType.strokeEraser) {
       // If there is redo data, delete all of them and start from there
-      if (userLimitCursor[widget.me.id]! <
-          userDrawingData[widget.me.id]!.length) {
-        userDrawingData[widget.me.id]!.removeRange(
-            userLimitCursor[widget.me.id]!,
-            userDrawingData[widget.me.id]!.length);
+      if (limitCursor < drawingData.length) {
+        drawingData.removeRange(limitCursor, drawingData.length);
       }
-      userDrawingData[widget.me.id]!.add([]);
-      userLimitCursor[widget.me.id] = userLimitCursor[widget.me.id]! + 1;
+      drawingData.add([]);
+      limitCursor = limitCursor + 1;
     }
   }
 
@@ -343,13 +312,13 @@ class _MathTutorWhiteboardState extends ConsumerState<MathTutorWhiteboardImpl> {
 
   void _onTapClear() {
     setState(() {
-      userDrawingData[widget.me.id]!.clear();
-      userDeletedStrokes[widget.me.id]!.clear();
-      userLimitCursor[widget.me.id] = 0;
+      drawingData.clear();
+      deletedStrokes.clear();
+      limitCursor = 0;
       widget.onOutput?.call(BroadcastPaintData(
           drawingData: null,
           command: BroadcastCommand.clear,
-          limitCursor: userLimitCursor[widget.me.id]!,
+          limitCursor: limitCursor,
           userID: widget.me.id,
           boardSize: boardSize));
       log('clear');
@@ -358,27 +327,27 @@ class _MathTutorWhiteboardState extends ConsumerState<MathTutorWhiteboardImpl> {
 
   void _onReceiveClear(String userID) {
     setState(() {
-      userDrawingData[userID]?.clear();
-      userDeletedStrokes[userID]?.clear();
-      userLimitCursor[userID] = 0;
+      drawingData.clear();
+      deletedStrokes.clear();
+      limitCursor = 0;
     });
   }
 
   void _onTapUndo() {
     setState(() {
-      if (userLimitCursor[widget.me.id]! > 0) {
-        userLimitCursor[widget.me.id] = userLimitCursor[widget.me.id]! - 1;
+      if (limitCursor > 0) {
+        limitCursor = limitCursor - 1;
         widget.onOutput?.call(
           BroadcastPaintData(
             drawingData: null,
             command: BroadcastCommand.draw,
-            limitCursor: userLimitCursor[widget.me.id]!,
+            limitCursor: limitCursor,
             userID: widget.me.id,
             boardSize: boardSize,
           ),
         );
       }
-      log('undo: $userLimitCursor');
+      log('undo: $limitCursor');
     });
   }
 
@@ -411,19 +380,21 @@ class _MathTutorWhiteboardState extends ConsumerState<MathTutorWhiteboardImpl> {
   }
 
   void _onTapRedo() {
-    if (userLimitCursor[widget.me.id]! <
-        userDrawingData[widget.me.id]!.length) {
+    if (limitCursor < drawingData.length) {
       setState(() {
-        userLimitCursor[widget.me.id] = userLimitCursor[widget.me.id]! + 1;
+        limitCursor = limitCursor + 1;
 
-        widget.onOutput?.call(BroadcastPaintData(
+        widget.onOutput?.call(
+          BroadcastPaintData(
             drawingData: null,
             command: BroadcastCommand.draw,
-            limitCursor: userLimitCursor[widget.me.id]!,
+            limitCursor: limitCursor,
             boardSize: boardSize,
-            userID: widget.me.id));
+            userID: widget.me.id,
+          ),
+        );
       });
-      log('redo: $userLimitCursor');
+      log('redo: $limitCursor');
     }
   }
 
@@ -439,7 +410,7 @@ class _MathTutorWhiteboardState extends ConsumerState<MathTutorWhiteboardImpl> {
       () {
         if (penType == PenType.penEraser) {
           // 펜 지우개 모드일 때에는 그냥 흰색으로 똑같이 그려줍니다.
-          userDrawingData[widget.me.id]!.last.add(DrawingData(
+          drawingData.last.add(DrawingData(
               point: Point(event.localPosition.dx, event.localPosition.dy,
                   event.pressure),
               color: Colors.white,
@@ -448,9 +419,9 @@ class _MathTutorWhiteboardState extends ConsumerState<MathTutorWhiteboardImpl> {
               strokeWidth: strokeWidth));
           widget.onOutput?.call(
             BroadcastPaintData(
-              drawingData: userDrawingData[widget.me.id]!.last.last,
+              drawingData: drawingData.last.last,
               command: BroadcastCommand.draw,
-              limitCursor: userLimitCursor[widget.me.id]!,
+              limitCursor: limitCursor,
               userID: widget.me.id,
               boardSize: boardSize,
             ),
@@ -463,26 +434,21 @@ class _MathTutorWhiteboardState extends ConsumerState<MathTutorWhiteboardImpl> {
           /// 그러나 deletedStrokes에 이미 지워진 stroke의 index가 있으면 지우지 않습니다.
           /// 또한 흰색은 펜 지우개 모드가 아니면 선택할 수가 없는 색상이므로
           /// 흰색은 지우개 모드에서 그린 선으로 간주하고 지우지 않습니다.
-          for (int i = 0; i < userDrawingData[widget.me.id]!.length; i++) {
-            for (int j = 0; j < userDrawingData[widget.me.id]![i].length; j++) {
-              if (userDeletedStrokes[widget.me.id]!.containsValue(i) ||
-                  userDrawingData[widget.me.id]![i][j].color == Colors.white) {
+          for (int i = 0; i < drawingData.length; i++) {
+            for (int j = 0; j < drawingData[i].length; j++) {
+              if (deletedStrokes.containsValue(i) ||
+                  drawingData[i][j].color == Colors.white) {
                 continue;
               }
               final distance = sqrt(pow(
-                      userDrawingData[widget.me.id]![i][j].point.x -
-                          event.localPosition.dx,
-                      2) +
-                  pow(
-                      userDrawingData[widget.me.id]![i][j].point.y -
-                          event.localPosition.dy,
-                      2));
+                      drawingData[i][j].point.x - event.localPosition.dx, 2) +
+                  pow(drawingData[i][j].point.y - event.localPosition.dy, 2));
               if (distance < strokeWidth) {
                 widget.onOutput?.call(
                   BroadcastPaintData(
                     drawingData: null,
                     command: BroadcastCommand.removeStroke,
-                    limitCursor: userLimitCursor[widget.me.id]!,
+                    limitCursor: limitCursor,
                     userID: widget.me.id,
                     boardSize: boardSize,
                     removeStrokeIndex: i,
@@ -491,34 +457,32 @@ class _MathTutorWhiteboardState extends ConsumerState<MathTutorWhiteboardImpl> {
 
                 setState(
                   () {
-                    userDrawingData[widget.me.id]!.add([]);
-                    userLimitCursor[widget.me.id] =
-                        userLimitCursor[widget.me.id]! + 1;
-                    userDeletedStrokes[widget.me.id]![
-                        userLimitCursor[widget.me.id]!] = i;
-                    log('Stroke Erased: $i, $userLimitCursor');
+                    drawingData.add([]);
+                    limitCursor = limitCursor + 1;
+                    deletedStrokes[limitCursor] = i;
+                    log('Stroke Erased: $i, $limitCursor');
                   },
                 );
               }
             }
           }
         } else {
-          userDrawingData[widget.me.id]!.last.add(
-                DrawingData(
-                  point: Point(event.localPosition.dx, event.localPosition.dy,
-                      penType == PenType.pen ? event.pressure : 0.5),
-                  color: color,
-                  userID: widget.me.id,
-                  penType: penType,
-                  strokeWidth: strokeWidth,
-                ),
-              );
+          drawingData.last.add(
+            DrawingData(
+              point: Point(event.localPosition.dx, event.localPosition.dy,
+                  penType == PenType.pen ? event.pressure : 0.5),
+              color: color,
+              userID: widget.me.id,
+              penType: penType,
+              strokeWidth: strokeWidth,
+            ),
+          );
           widget.onOutput?.call(
             BroadcastPaintData(
-              drawingData: userDrawingData[widget.me.id]!.last.last,
+              drawingData: drawingData.last.last,
               boardSize: boardSize,
               command: BroadcastCommand.draw,
-              limitCursor: userLimitCursor[widget.me.id]!,
+              limitCursor: limitCursor,
               userID: widget.me.id,
             ),
           );
@@ -591,9 +555,9 @@ class _WhiteBoard extends StatefulWidget {
   final void Function(PointerUpEvent event) onEndDrawing;
   final void Function(Matrix4 data) onViewportChange;
   final ImageProvider? preloadImage;
-  final Map<String, List<List<DrawingData>>> userDrawingData;
-  final Map<String, int> userLimitCursor;
-  final Map<String, Map<int, int>> userDeletedStrokes;
+  final List<List<DrawingData>> userDrawingData;
+  final int userLimitCursor;
+  final Map<int, int> userDeletedStrokes;
   final TransformationController transformationController;
   final bool drawable;
   final bool isSpannable;
@@ -736,26 +700,18 @@ class _WhiteBoardState extends State<_WhiteBoard> {
     /// limitCursor 이전의 스트로크들만 그리되
     /// limitCursor 이전의 key값이 [deletedStrokes]에 존재한다면
     /// [deletedStrokes]의 value값에 해당하는 index를 지워줍니다.
-    final Map<String, List<List<DrawingData>>> realDrawingData = {};
 
-    /// 유저 별로 그림을 따로 그려줍니다.
-    for (final drawingData in widget.userDrawingData.entries) {
-      /// 유저 ID를 먼저 가져옵니다.
-      final userID = drawingData.key;
-
-      /// 해당 유저의 limitCursor 이전의 스트로크들을 가져옵니다.
-      final drawingBeforeLimitCursor = widget.userDrawingData[userID]!
-          .sublist(0, widget.userLimitCursor[userID]!);
+      final drawingBeforeLimitCursor =
+          widget.userDrawingData.sublist(0, widget.userLimitCursor);
       for (int i = 0; i < drawingBeforeLimitCursor.length; i++) {
-        for (final deleteStroke in widget.userDeletedStrokes[userID]!.entries) {
-          if (deleteStroke.key <= widget.userLimitCursor[userID]!) {
+        for (final deleteStroke in widget.userDeletedStrokes.entries) {
+          if (deleteStroke.key <= widget.userLimitCursor) {
             drawingBeforeLimitCursor[deleteStroke.value] = [];
           }
         }
       }
-      realDrawingData[userID] = drawingBeforeLimitCursor;
-    }
-    return realDrawingData;
+      return drawingBeforeLimitCursor;
+    
   }
 }
 
@@ -790,15 +746,14 @@ class _WhiteboardPainter extends CustomPainter {
               center: Offset(points[0].x, points[0].y),
               radius: stroke.first.strokeWidth));
         } else {
-            path.moveTo(points[0].x, points[0].y);
-            for (int i = 1; i < points.length - 1; ++i) {
-              final p0 = points[i];
-              final p1 = points[i + 1];
-              path.quadraticBezierTo(
-                  p0.x, p0.y, (p0.x + p1.x) / 2, (p0.y + p1.y) / 2);
-            }
-            canvas.drawPath(path, paint);
-          
+          path.moveTo(points[0].x, points[0].y);
+          for (int i = 1; i < points.length - 1; ++i) {
+            final p0 = points[i];
+            final p1 = points[i + 1];
+            path.quadraticBezierTo(
+                p0.x, p0.y, (p0.x + p1.x) / 2, (p0.y + p1.y) / 2);
+          }
+          canvas.drawPath(path, paint);
         }
       }
     }
