@@ -65,7 +65,7 @@ class WhiteboardController extends ChangeNotifier {
   }
 
   void removeUser(WhiteboardUser user) {
-    users.remove(user);
+    users.removeWhere((element) => element.id == user.id);
     log('Removed user: ${user.id}');
     notifyListeners();
   }
