@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:developer';
 import 'dart:io';
 import 'package:example/livekit_service.dart';
 import 'package:flutter/material.dart';
@@ -44,24 +45,24 @@ class _WhiteboardViewState extends State<WhiteboardView> {
   late final Future initFuture;
   late final WhiteboardController controller;
   bool isConnected = false;
+  BatchDrawingData? preDrawnData;
   @override
   void initState() {
     if (widget.mode.isUsingWebSocket) {
-      service = LivekitService();
-      initFuture = (() async {
-        try {
-          if (Platform.isAndroid) {
-            await startService();
-          }
-          await service.joinRoom(widget.hostID != widget.me.id, widget.me);
-          isConnected = true;
+      service = LivekitService(
+        onConnected: (preDrawnData) {
+          setState(() {
+            this.preDrawnData = preDrawnData;
+            isConnected = true;
+          });
           controller.addUser(
             WhiteboardUser(
-                isHost: widget.hostID == widget.me.id,
-                nickname: widget.me.nickname,
-                micEnabled: true,
-                drawingEnabled: widget.hostID == widget.me.id,
-                id: widget.me.id),
+              isHost: widget.hostID == widget.me.id,
+              nickname: widget.me.nickname,
+              micEnabled: true,
+              drawingEnabled: widget.hostID == widget.me.id,
+              id: widget.me.id,
+            ),
           );
           final whiteboardUsers = service.getUserList();
           if (whiteboardUsers.isNotEmpty) {
@@ -69,7 +70,16 @@ class _WhiteboardViewState extends State<WhiteboardView> {
               controller.addUser(user);
             }
           }
-        } catch (e) {
+        },
+      );
+      initFuture = (() async {
+        try {
+          if (Platform.isAndroid) {
+            await startService();
+          }
+          await service.joinRoom(widget.hostID != widget.me.id, widget.me);
+        } catch (e, stackTrace) {
+          log(e.toString(), stackTrace: stackTrace);
           Navigator.of(context).pop();
         }
       })();
@@ -80,22 +90,45 @@ class _WhiteboardViewState extends State<WhiteboardView> {
     controller.addListener(_controllerListener);
     super.initState();
     if (widget.mode.isUsingWebSocket) {
+      inputStream = service.incomingStream;
       service.incomingStream.listen((event) {
-        if (event is PermissionChangeEvent) {
-          controller.adjustPermissionOfUser(
-              userID: widget.me.id, permissionEvent: event);
-          if (event.microphone != null) {
-            service.changeMyMicrophone(event.microphone!);
-          }
-        } else if (event is UserEvent) {
+        if (event is UserEvent) {
           if (event.isJoin) {
             if (controller.users
                 .any((element) => element.id == event.user.id)) {
               return;
             }
             controller.addUser(event.user);
+            showDialog(
+              context: context,
+              builder: (context) {
+                return AlertDialog(
+                  title: Text('${event.user.nickname} joined the room'),
+                  actions: [
+                    TextButton(
+                      onPressed: () => Navigator.pop(context),
+                      child: const Text('OK'),
+                    ),
+                  ],
+                );
+              },
+            );
           } else {
             controller.removeUser(event.user);
+            showDialog(
+              context: context,
+              builder: (context) {
+                return AlertDialog(
+                  title: Text('${event.user.nickname} left the room'),
+                  actions: [
+                    TextButton(
+                      onPressed: () => Navigator.pop(context),
+                      child: const Text('OK'),
+                    ),
+                  ],
+                );
+              },
+            );
           }
         }
       });
@@ -206,8 +239,71 @@ class _WhiteboardViewState extends State<WhiteboardView> {
           : FutureBuilder(
               future: initFuture,
               builder: (context, snapshot) {
-                if (snapshot.connectionState == ConnectionState.done) {
-                  inputStream = service.incomingStream;
+                if (snapshot.connectionState == ConnectionState.done &&
+                    isConnected) {
+                  inputStream?.listen((event) {
+                    if (event is DrawingPermissionRequest) {
+                      showDialog(
+                        context: context,
+                        builder: (context) {
+                          return AlertDialog(
+                            title: const Text('Drawing Permission Request'),
+                            content: Text(
+                                '${event.nickname} wants to draw on the whiteboard.'),
+                            actions: [
+                              TextButton(
+                                  onPressed: () {
+                                    service.changeDrawingPermission(
+                                        event.userID, true);
+                                    Navigator.of(context).pop();
+                                  },
+                                  child: const Text('Grant')),
+                              TextButton(
+                                  onPressed: Navigator.of(context).pop,
+                                  child: const Text('Deny')),
+                            ],
+                          );
+                        },
+                      );
+                    } else if (event is PermissionChangeEvent) {
+                      if (event.drawing != null &&
+                          widget.hostID != widget.me.id) {
+                        if (event.drawing!) {
+                          showDialog(
+                              context: context,
+                              builder: (context) {
+                                return AlertDialog(
+                                  title:
+                                      const Text('Drawing Permission Granted'),
+                                  content: const Text(
+                                      'You can now draw on the whiteboard.'),
+                                  actions: [
+                                    TextButton(
+                                        onPressed: Navigator.of(context).pop,
+                                        child: const Text('OK')),
+                                  ],
+                                );
+                              });
+                        } else {
+                          showDialog(
+                              context: context,
+                              builder: (context) {
+                                return AlertDialog(
+                                  title:
+                                      const Text('Drawing Permission Denied'),
+                                  content: const Text(
+                                      'You can no longer draw on the whiteboard.'),
+                                  actions: [
+                                    TextButton(
+                                        onPressed: Navigator.of(context).pop,
+                                        child: const Text('OK')),
+                                  ],
+                                );
+                              });
+                        }
+                      }
+                    }
+                  });
                   return MathTutorWhiteBoard(
                     enabledFeatures: {
                       if (widget.mode == WhiteboardMode.liveTeaching) ...{
@@ -225,6 +321,7 @@ class _WhiteboardViewState extends State<WhiteboardView> {
                     onLoadNewImage: (file) {
                       service.shareImageFile(file);
                     },
+                    preDrawnData: preDrawnData,
                     onOutput: (event) {
                       if (event is WhiteboardChatMessage) {
                         service.sendChatMessage(event);
@@ -243,6 +340,8 @@ class _WhiteboardViewState extends State<WhiteboardView> {
                           service.changeDrawingPermission(
                               event.userID!, event.drawing!);
                         }
+                      } else if (event is BatchDrawingData) {
+                        service.sendBatchDrawingData(data: event);
                       } else {
                         throw UnimplementedError();
                       }

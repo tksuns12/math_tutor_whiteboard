@@ -23,6 +23,7 @@ class MathTutorWhiteBoard extends StatelessWidget {
   final Duration maxDuration;
   final Set<WhiteboardFeature> enabledFeatures;
   final String? hostID;
+  final BatchDrawingData? preDrawnData;
   const MathTutorWhiteBoard({
     Key? key,
     this.controller,
@@ -36,22 +37,25 @@ class MathTutorWhiteBoard extends StatelessWidget {
     this.maxDuration = const Duration(minutes: 20),
     required this.enabledFeatures,
     this.hostID,
+    this.preDrawnData,
   }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
     return ProviderScope(
         child: MathTutorWhiteboardImpl(
-            onTapRecordButton: onTapRecordButton,
-            onLoadNewImage: onLoadNewImage,
-            maxRecordingDuration: maxDuration,
-            onOutput: onOutput,
-            preloadImage: preloadImage,
-            enabledFeatures: enabledFeatures,
-            me: me,
-            hostID: hostID,
-            inputStream: inputStream,
-            onAttemptToClose: onAttemptToClose,
-            controller: controller));
+      onTapRecordButton: onTapRecordButton,
+      onLoadNewImage: onLoadNewImage,
+      maxRecordingDuration: maxDuration,
+      onOutput: onOutput,
+      preloadImage: preloadImage,
+      enabledFeatures: enabledFeatures,
+      me: me,
+      hostID: hostID,
+      inputStream: inputStream,
+      onAttemptToClose: onAttemptToClose,
+      controller: controller,
+      preDrawnData: preDrawnData,
+    ));
   }
 }

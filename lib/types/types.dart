@@ -447,3 +447,105 @@ class LiveEndTimeChangeEvent extends Equatable {
   @override
   List<Object> get props => [duration];
 }
+
+class BatchDrawingData extends Equatable {
+  final List<List<DrawingData>> drawingData;
+  final int limitCursor;
+  final Map<int, int> deletedStrokes;
+  final String userID;
+  const BatchDrawingData({
+    required this.userID,
+    required this.drawingData,
+    required this.limitCursor,
+    required this.deletedStrokes,
+  });
+
+  @override
+  List<Object> get props => [
+        drawingData,
+        limitCursor,
+        deletedStrokes,
+      ];
+
+  Map<String, dynamic> toMap() {
+    return {
+      'drawingData':
+          drawingData.map((x) => x.map((e) => e.toMap()).toList()).toList(),
+      'limitCursor': limitCursor,
+      'deletedStrokes': deletedStrokes,
+      'sid': userID,
+    };
+  }
+
+  factory BatchDrawingData.fromMap(Map<String, dynamic> map) {
+    return BatchDrawingData(
+      userID: map['sid'] ?? '',
+      drawingData: List<List<DrawingData>>.from(map['drawingData']
+          ?.map<List<DrawingData>>((x) => x
+              .map<DrawingData>((e) => DrawingData.fromMap(e))
+              .toList() as List<DrawingData>)
+          .toList()),
+      limitCursor: map['limitCursor']?.toInt() ?? 0,
+      deletedStrokes: Map<int, int>.from(map['deletedStrokes']),
+    );
+  }
+
+  String toJson() => json.encode(toMap());
+
+  factory BatchDrawingData.fromJson(String source) =>
+      BatchDrawingData.fromMap(json.decode(source));
+}
+
+class RequestDrawingData {
+  final String participantID;
+
+  RequestDrawingData(this.participantID);
+
+  Map<String, dynamic> toMap() {
+    return {
+      'participantID': participantID,
+    };
+  }
+
+  factory RequestDrawingData.fromMap(Map<String, dynamic> map) {
+    return RequestDrawingData(
+      map['participantID'] ?? '',
+    );
+  }
+
+  String toJson() => json.encode(toMap());
+
+  factory RequestDrawingData.fromJson(String source) =>
+      RequestDrawingData.fromMap(json.decode(source));
+}
+
+class DrawingPermissionRequest extends Equatable {
+  final String userID;
+  final String nickname;
+  const DrawingPermissionRequest({
+    required this.nickname,
+    required this.userID,
+  });
+
+  @override
+  List<Object> get props => [userID, nickname];
+
+  Map<String, dynamic> toMap() {
+    return {
+      'userID': userID,
+      'nickname': nickname,
+    };
+  }
+
+  factory DrawingPermissionRequest.fromMap(Map<String, dynamic> map) {
+    return DrawingPermissionRequest(
+      userID: map['userID'] ?? '',
+      nickname: map['nickname'] ?? '',
+    );
+  }
+
+  String toJson() => json.encode(toMap());
+
+  factory DrawingPermissionRequest.fromJson(String source) =>
+      DrawingPermissionRequest.fromMap(json.decode(source));
+}

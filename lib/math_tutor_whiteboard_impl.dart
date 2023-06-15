@@ -33,7 +33,9 @@ class MathTutorWhiteboardImpl extends ConsumerStatefulWidget {
   final Duration maxRecordingDuration;
   final Set<WhiteboardFeature> enabledFeatures;
   final String? hostID;
+  final BatchDrawingData? preDrawnData;
   const MathTutorWhiteboardImpl({
+    this.preDrawnData,
     this.hostID,
     required this.enabledFeatures,
     required this.maxRecordingDuration,
@@ -67,6 +69,7 @@ class _MathTutorWhiteboardState extends ConsumerState<MathTutorWhiteboardImpl> {
   StreamSubscription<ViewportChangeEvent>? _viewportChangeStreamSubscription;
   StreamSubscription<PermissionChangeEvent>? _authorityChangeStreamSubscription;
   StreamSubscription<LiveEndTimeChangeEvent>? _durationChangeStreamSubscription;
+  StreamSubscription<RequestDrawingData>? _requestDrawingDataSubscription;
   final transformationController = TransformationController();
   late final Size boardSize;
   ImageProvider? image;
@@ -75,6 +78,7 @@ class _MathTutorWhiteboardState extends ConsumerState<MathTutorWhiteboardImpl> {
 
   @override
   void initState() {
+    drawable = widget.me.id == widget.hostID;
     controller = widget.controller ??
         WhiteboardController(
             recordDuration: widget.maxRecordingDuration,
@@ -86,6 +90,22 @@ class _MathTutorWhiteboardState extends ConsumerState<MathTutorWhiteboardImpl> {
     }
 
     WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
+      if (widget.preDrawnData != null) {
+        setState(() {
+          // 만약 더 뒤에 그려진 데이터를 이미 가지고 있다면 뒤의 빈 배열 대신에 받은 데이터를 넣어줍니다.
+          if (limitCursor > widget.preDrawnData!.limitCursor) {
+            for (int i = 0; i < widget.preDrawnData!.drawingData.length; i++) {
+              drawingData[i] = widget.preDrawnData!.drawingData[i];
+            }
+          } // 그게 아니라면 그대로 업데이트 해줍니다.
+          else {
+            drawingData = widget.preDrawnData!.drawingData;
+            limitCursor = widget.preDrawnData!.limitCursor;
+          }
+          deletedStrokes.clear();
+          deletedStrokes.addAll(widget.preDrawnData!.deletedStrokes);
+        });
+      }
       boardSize = Size(MediaQuery.of(context).size.width,
           MediaQuery.of(context).size.width * (16 / 9));
       // boardSize = MediaQuery.of(context).size;
@@ -145,6 +165,20 @@ class _MathTutorWhiteboardState extends ConsumerState<MathTutorWhiteboardImpl> {
           liveEndExtraDuration: event.duration,
         );
       });
+
+      _requestDrawingDataSubscription = widget.inputStream
+          ?.where((event) => event is RequestDrawingData)
+          .map((event) => event as RequestDrawingData)
+          .listen((event) {
+        widget.onOutput?.call(
+          BatchDrawingData(
+            drawingData: drawingData,
+            limitCursor: limitCursor,
+            deletedStrokes: deletedStrokes,
+            userID: event.participantID,
+          ),
+        );
+      });
     }
     super.initState();
   }
@@ -189,6 +223,7 @@ class _MathTutorWhiteboardState extends ConsumerState<MathTutorWhiteboardImpl> {
               );
             }
           } else {
+            // limit cursor가 일치하지 않는 경우에는 빈 만큼 빈 배열을 추가해줍니다.
             limitCursor = event.limitCursor;
             if (event.drawingData != null) {
               if (drawingData.length < limitCursor) {
@@ -221,6 +256,7 @@ class _MathTutorWhiteboardState extends ConsumerState<MathTutorWhiteboardImpl> {
     _viewportChangeStreamSubscription?.cancel();
     _authorityChangeStreamSubscription?.cancel();
     _durationChangeStreamSubscription?.cancel();
+    _requestDrawingDataSubscription?.cancel();
 
     transformationController.dispose();
     super.dispose();
@@ -696,65 +732,62 @@ class _WhiteBoardState extends State<_WhiteBoard> {
     });
   }
 
-  _makeRealDrawingData() {
+  List<List<DrawingData>> _makeRealDrawingData() {
     /// limitCursor 이전의 스트로크들만 그리되
     /// limitCursor 이전의 key값이 [deletedStrokes]에 존재한다면
     /// [deletedStrokes]의 value값에 해당하는 index를 지워줍니다.
 
-      final drawingBeforeLimitCursor =
-          widget.userDrawingData.sublist(0, widget.userLimitCursor);
-      for (int i = 0; i < drawingBeforeLimitCursor.length; i++) {
-        for (final deleteStroke in widget.userDeletedStrokes.entries) {
-          if (deleteStroke.key <= widget.userLimitCursor) {
-            drawingBeforeLimitCursor[deleteStroke.value] = [];
-          }
+    final drawingBeforeLimitCursor =
+        widget.userDrawingData.sublist(0, widget.userLimitCursor);
+    for (int i = 0; i < drawingBeforeLimitCursor.length; i++) {
+      for (final deleteStroke in widget.userDeletedStrokes.entries) {
+        if (deleteStroke.key <= widget.userLimitCursor) {
+          drawingBeforeLimitCursor[deleteStroke.value] = [];
         }
       }
-      return drawingBeforeLimitCursor;
-    
+    }
+    return drawingBeforeLimitCursor;
   }
 }
 
 class _WhiteboardPainter extends CustomPainter {
-  final Map<String, List<List<DrawingData>>> userDrawingData;
+  final List<List<DrawingData>> drawingData;
 
-  _WhiteboardPainter(this.userDrawingData);
+  _WhiteboardPainter(this.drawingData);
   @override
   void paint(Canvas canvas, Size size) {
-    for (final drawingData in userDrawingData.values) {
-      for (final stroke in drawingData) {
-        if (stroke.isEmpty) {
-          continue;
+    for (final stroke in drawingData) {
+      if (stroke.isEmpty) {
+        continue;
+      }
+      final paint = Paint()
+        ..color = stroke.first.penType != PenType.highlighter
+            ? stroke.first.color
+            : stroke.first.color.withOpacity(0.5)
+        ..strokeCap = stroke.first.penType == PenType.pen
+            ? StrokeCap.round
+            : StrokeCap.square
+        ..style = PaintingStyle.fill
+        ..strokeWidth = stroke.first.strokeWidth;
+      final points = getStroke(stroke.map((e) => e.point).toList(),
+          size: stroke.first.strokeWidth,
+          thinning: stroke.first.penType == PenType.pen ? 0.5 : 0.0);
+      final path = Path();
+      if (points.isEmpty) {
+        return;
+      } else if (points.length == 1) {
+        path.addOval(Rect.fromCircle(
+            center: Offset(points[0].x, points[0].y),
+            radius: stroke.first.strokeWidth));
+      } else {
+        path.moveTo(points[0].x, points[0].y);
+        for (int i = 1; i < points.length - 1; ++i) {
+          final p0 = points[i];
+          final p1 = points[i + 1];
+          path.quadraticBezierTo(
+              p0.x, p0.y, (p0.x + p1.x) / 2, (p0.y + p1.y) / 2);
         }
-        final paint = Paint()
-          ..color = stroke.first.penType != PenType.highlighter
-              ? stroke.first.color
-              : stroke.first.color.withOpacity(0.5)
-          ..strokeCap = stroke.first.penType == PenType.pen
-              ? StrokeCap.round
-              : StrokeCap.square
-          ..style = PaintingStyle.fill
-          ..strokeWidth = stroke.first.strokeWidth;
-        final points = getStroke(stroke.map((e) => e.point).toList(),
-            size: stroke.first.strokeWidth,
-            thinning: stroke.first.penType == PenType.pen ? 0.5 : 0.0);
-        final path = Path();
-        if (points.isEmpty) {
-          return;
-        } else if (points.length == 1) {
-          path.addOval(Rect.fromCircle(
-              center: Offset(points[0].x, points[0].y),
-              radius: stroke.first.strokeWidth));
-        } else {
-          path.moveTo(points[0].x, points[0].y);
-          for (int i = 1; i < points.length - 1; ++i) {
-            final p0 = points[i];
-            final p1 = points[i + 1];
-            path.quadraticBezierTo(
-                p0.x, p0.y, (p0.x + p1.x) / 2, (p0.y + p1.y) / 2);
-          }
-          canvas.drawPath(path, paint);
-        }
+        canvas.drawPath(path, paint);
       }
     }
   }
