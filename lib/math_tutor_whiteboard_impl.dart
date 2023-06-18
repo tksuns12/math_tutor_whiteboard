@@ -147,6 +147,7 @@ class _MathTutorWhiteboardState extends ConsumerState<MathTutorWhiteboardImpl> {
           liveEndAt: event.endAt,
           liveEndExtraDuration: event.duration,
         );
+        controller.startUpdatingLiveTime();
       });
     }
     super.initState();
