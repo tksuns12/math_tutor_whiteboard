@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:math_tutor_whiteboard/change_notifier_builder.dart';
 import 'package:math_tutor_whiteboard/states/chat_message_state.dart';
 import 'package:math_tutor_whiteboard/whiteboard_controller.dart';
 import 'popups/chat_message_bottom_sheet.dart';
@@ -96,9 +97,12 @@ class _WhiteboardControllerState
                   )
                 : widget.controller.liveEndAt == null
                     ? const SizedBox()
-                    : TimeIndicator(
-                        remainingTime: widget.controller.liveDuration ??
-                            const Duration(minutes: 20),
+                    : ChangeNotifierBuilder(
+                        notifier: widget.controller,
+                        builder: (context, notifier, child) => TimeIndicator(
+                          remainingTime: notifier?.liveDuration ??
+                              const Duration(minutes: 20),
+                        ),
                       ),
           ),
           Expanded(
