@@ -43,6 +43,10 @@ class WhiteboardController extends ChangeNotifier {
 
   void startUpdatingLiveTime() {
     assert(liveEndAt != null && liveEndExtraDuration != null);
+    if (_timer != null) {
+      _timer?.cancel();
+      _timer = null;
+    }
     _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
       final now = DateTime.now();
       final liveDuration = liveEndAt!
