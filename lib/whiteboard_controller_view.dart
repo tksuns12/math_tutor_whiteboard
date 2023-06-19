@@ -1,3 +1,5 @@
+import 'dart:developer';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/svg.dart';
@@ -192,22 +194,22 @@ class _WhiteboardControllerState
                 ),
                 Consumer(
                   builder: (context, ref, child) {
-                    final chatMessageState =
-                        ref.watch(chatMessageStateProvider);
-                    final chatMessageStateNotifier =
-                        ref.watch(chatMessageStateProvider.notifier);
+                    final chatMessageState = ref.watch(chatMessageStateProvider
+                        .select((value) => value.messages));
+                    final hasNew = ref.watch(chatMessageStateProvider
+                        .select((value) => value.hasNewMessage));
                     if (chatMessageState.isEmpty) {
                       return const SizedBox();
                     } else {
                       return Badge(
-                        isLabelVisible: chatMessageStateNotifier.hasNewMessage,
+                        isLabelVisible: hasNew,
                         label: const Text(
                           'N',
-                          style: TextStyle(color: Colors.white, fontSize: 5),
+                          style: TextStyle(color: Colors.white, fontSize: 7),
                         ),
                         backgroundColor: Colors.red,
                         alignment: Alignment.topRight,
-                        offset: const Offset(0, 0),
+                        offset: const Offset(3, -3),
                         child: InkWell(
                           onTap: () => showChatModalBottomSheet(context),
                           child: SvgPicture.asset(
@@ -286,8 +288,11 @@ class _WhiteboardControllerState
     );
   }
 
-  showChatModalBottomSheet(BuildContext context) {
-    showModalBottomSheet(
+  showChatModalBottomSheet(BuildContext context) async {
+    final notifier = ref.watch(chatMessageStateProvider.notifier);
+    notifier.checkLastMessageTime();
+    notifier.setSeeingChat(true);
+    await showModalBottomSheet(
       context: context,
       backgroundColor: Colors.transparent,
       builder: (c) => ProviderScope(
@@ -298,6 +303,7 @@ class _WhiteboardControllerState
       ),
       isScrollControlled: true,
     );
+    notifier.setSeeingChat(false);
   }
 }
 

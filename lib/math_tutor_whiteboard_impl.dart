@@ -155,6 +155,12 @@ class _MathTutorWhiteboardState extends ConsumerState<MathTutorWhiteboardImpl> {
             drawable = event.drawing!;
           });
         }
+        if (event.microphone != null) {
+          controller.adjustPermissionOfUser(
+              userID: event.userID!,
+              permissionEvent:
+                  PermissionChangeEvent(microphone: event.microphone!));
+        }
       });
       _durationChangeStreamSubscription = widget.inputStream
           ?.where((event) => event is LiveEndTimeChangeEvent)

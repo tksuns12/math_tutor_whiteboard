@@ -549,3 +549,89 @@ class DrawingPermissionRequest extends Equatable {
   factory DrawingPermissionRequest.fromJson(String source) =>
       DrawingPermissionRequest.fromMap(json.decode(source));
 }
+
+class DrawingPermissionTryGranting {
+  final String userID;
+  DrawingPermissionTryGranting({
+    required this.userID,
+  });
+
+  DrawingPermissionTryGranting copyWith({
+    String? userID,
+  }) {
+    return DrawingPermissionTryGranting(
+      userID: userID ?? this.userID,
+    );
+  }
+
+  Map<String, dynamic> toMap() {
+    return {
+      'userID': userID,
+    };
+  }
+
+  factory DrawingPermissionTryGranting.fromMap(Map<String, dynamic> map) {
+    return DrawingPermissionTryGranting(
+      userID: map['userID'] ?? '',
+    );
+  }
+
+  String toJson() => json.encode(toMap());
+
+  factory DrawingPermissionTryGranting.fromJson(String source) =>
+      DrawingPermissionTryGranting.fromMap(json.decode(source));
+
+  @override
+  String toString() => 'DrawingPermissionTryGranting(userID: $userID)';
+
+  @override
+  bool operator ==(Object other) {
+    if (identical(this, other)) return true;
+
+    return other is DrawingPermissionTryGranting && other.userID == userID;
+  }
+
+  @override
+  int get hashCode => userID.hashCode;
+}
+
+class DrawingPermissionGrantResponse extends Equatable {
+  final String userID;
+  final bool accepted;
+  const DrawingPermissionGrantResponse({
+    required this.userID,
+    required this.accepted,
+  });
+
+  @override
+  List<Object> get props => [userID, accepted];
+
+  Map<String, dynamic> toMap() {
+    return {
+      'userID': userID,
+      'accepted': accepted,
+    };
+  }
+
+  factory DrawingPermissionGrantResponse.fromMap(Map<String, dynamic> map) {
+    return DrawingPermissionGrantResponse(
+      userID: map['userID'] ?? '',
+      accepted: map['accepted'] ?? false,
+    );
+  }
+
+  String toJson() => json.encode(toMap());
+
+  factory DrawingPermissionGrantResponse.fromJson(String source) =>
+      DrawingPermissionGrantResponse.fromMap(json.decode(source));
+
+  DrawingPermissionGrantResponse copyWith({
+    String? userID,
+    bool? accepted,
+  }) {
+    return DrawingPermissionGrantResponse(
+      userID: userID ?? this.userID,
+      accepted: accepted ?? this.accepted,
+    );
+  }
+}
