@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:convert';
 import 'dart:developer';
 import 'dart:io';
 import 'dart:math' hide log;
@@ -238,8 +239,9 @@ class _MathTutorWhiteboardState extends ConsumerState<MathTutorWhiteboardImpl> {
             // limit cursor가 일치하지 않는 경우에는 빈 만큼 빈 배열을 추가해줍니다.
             limitCursor = event.limitCursor;
             if (event.drawingData != null) {
-              if (drawingData.length < limitCursor) {
-                drawingData.add([]);
+              if (drawingData.length < event.limitCursor) {
+                drawingData.addAll(
+                    List.filled(event.limitCursor - drawingData.length, []));
               }
               drawingData[limitCursor - 1] = [
                 event.drawingData!.copyWith(
