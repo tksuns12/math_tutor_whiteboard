@@ -161,6 +161,11 @@ class _MathTutorWhiteboardState extends ConsumerState<MathTutorWhiteboardImpl> {
               permissionEvent:
                   PermissionChangeEvent(microphone: event.microphone!));
         }
+        if (event.drawing != null) {
+          controller.adjustPermissionOfUser(
+              userID: event.userID!,
+              permissionEvent: PermissionChangeEvent(drawing: event.drawing!));
+        }
       });
       _durationChangeStreamSubscription = widget.inputStream
           ?.where((event) => event is LiveEndTimeChangeEvent)
@@ -307,6 +312,7 @@ class _MathTutorWhiteboardState extends ConsumerState<MathTutorWhiteboardImpl> {
                       drawable: drawable,
                       onDrawingPermissionChanged: _onDrawingPermissionChanged,
                       onMicPermissionChanged: _onMicPermissionChanged,
+                      onRequestDrawingPermission: _onRequestDrawingPermission,
                     );
                   } else {
                     return const SizedBox();
@@ -589,6 +595,15 @@ class _MathTutorWhiteboardState extends ConsumerState<MathTutorWhiteboardImpl> {
         userID: user.id,
         permissionEvent:
             PermissionChangeEvent(drawing: allow, userID: user.id));
+  }
+
+  void _onRequestDrawingPermission() {
+    widget.onOutput?.call(
+      DrawingPermissionRequest(
+        nickname: widget.me.nickname,
+        userID: widget.me.id,
+      ),
+    );
   }
 }
 

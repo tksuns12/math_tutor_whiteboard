@@ -1,5 +1,3 @@
-import 'dart:developer';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/svg.dart';
@@ -41,9 +39,11 @@ class WhiteboardControllerView extends ConsumerStatefulWidget {
   final WhiteboardController controller;
   final bool recordable;
   final String? hostID;
+  final VoidCallback onRequestDrawingPermission;
 
   const WhiteboardControllerView(
-      {this.hostID,
+      {required this.onRequestDrawingPermission,
+      this.hostID,
       required this.recordable,
       required this.controller,
       required this.me,
@@ -171,7 +171,11 @@ class _WhiteboardControllerState
                         ],
                       ),
                     ),
-                  ),
+                  )
+                else if (widget.hostID != widget.me.id)
+                  TextButton(
+                      onPressed: widget.onRequestDrawingPermission,
+                      child: const Text('그리기 권한 요청')),
                 Padding(
                   padding: EdgeInsets.symmetric(
                       horizontal: 7 / 360 * MediaQuery.of(context).size.width),
