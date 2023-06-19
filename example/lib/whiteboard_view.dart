@@ -1,7 +1,9 @@
 import 'dart:async';
+import 'dart:developer';
 import 'dart:io';
 import 'package:example/livekit_service.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_background/flutter_background.dart';
 
 import 'package:math_tutor_whiteboard/math_tutor_whiteboard.dart';
 import 'package:math_tutor_whiteboard/types/features.dart';
@@ -42,20 +44,25 @@ class _WhiteboardViewState extends State<WhiteboardView> {
   late final LivekitService service;
   late final Future initFuture;
   late final WhiteboardController controller;
+  bool isConnected = false;
+  BatchDrawingData? preDrawnData;
   @override
   void initState() {
     if (widget.mode.isUsingWebSocket) {
-      service = LivekitService();
-      initFuture = (() async {
-        try {
-          await service.joinRoom(widget.hostID != widget.me.id, widget.me);
+      service = LivekitService(
+        onConnected: (preDrawnData) {
+          setState(() {
+            this.preDrawnData = preDrawnData;
+            isConnected = true;
+          });
           controller.addUser(
             WhiteboardUser(
-                isHost: widget.hostID == widget.me.id,
-                nickname: widget.me.nickname,
-                micEnabled: true,
-                drawingEnabled: widget.hostID == widget.me.id,
-                id: widget.me.id),
+              isHost: widget.hostID == widget.me.id,
+              nickname: widget.me.nickname,
+              micEnabled: true,
+              drawingEnabled: widget.hostID == widget.me.id,
+              id: widget.me.id,
+            ),
           );
           final whiteboardUsers = service.getUserList();
           if (whiteboardUsers.isNotEmpty) {
@@ -63,7 +70,16 @@ class _WhiteboardViewState extends State<WhiteboardView> {
               controller.addUser(user);
             }
           }
-        } catch (e) {
+        },
+      );
+      initFuture = (() async {
+        try {
+          if (Platform.isAndroid) {
+            await startService();
+          }
+          await service.joinRoom(widget.hostID != widget.me.id, widget.me);
+        } catch (e, stackTrace) {
+          log(e.toString(), stackTrace: stackTrace);
           Navigator.of(context).pop();
         }
       })();
@@ -74,22 +90,45 @@ class _WhiteboardViewState extends State<WhiteboardView> {
     controller.addListener(_controllerListener);
     super.initState();
     if (widget.mode.isUsingWebSocket) {
+      inputStream = service.incomingStream;
       service.incomingStream.listen((event) {
-        if (event is PermissionChangeEvent) {
-          controller.adjustPermissionOfUser(
-              userID: widget.me.id, permissionEvent: event);
-          if (event.microphone != null) {
-            service.changeMyMicrophone(event.microphone!);
-          }
-        } else if (event is UserEvent) {
+        if (event is UserEvent) {
           if (event.isJoin) {
             if (controller.users
                 .any((element) => element.id == event.user.id)) {
               return;
             }
             controller.addUser(event.user);
+            showDialog(
+              context: context,
+              builder: (context) {
+                return AlertDialog(
+                  title: Text('${event.user.nickname} joined the room'),
+                  actions: [
+                    TextButton(
+                      onPressed: () => Navigator.pop(context),
+                      child: const Text('OK'),
+                    ),
+                  ],
+                );
+              },
+            );
           } else {
             controller.removeUser(event.user);
+            showDialog(
+              context: context,
+              builder: (context) {
+                return AlertDialog(
+                  title: Text('${event.user.nickname} left the room'),
+                  actions: [
+                    TextButton(
+                      onPressed: () => Navigator.pop(context),
+                      child: const Text('OK'),
+                    ),
+                  ],
+                );
+              },
+            );
           }
         }
       });
@@ -97,12 +136,15 @@ class _WhiteboardViewState extends State<WhiteboardView> {
   }
 
   @override
-  void dispose() {
+  Future<void> dispose() async {
     if (widget.mode.isUsingWebSocket) {
       service.leaveRoom();
     }
     controller.removeListener(_controllerListener);
     super.dispose();
+    if (isConnected && Platform.isAndroid) {
+      await endService();
+    }
   }
 
   @override
@@ -117,7 +159,7 @@ class _WhiteboardViewState extends State<WhiteboardView> {
                 WhiteboardFeature.span
               },
               controller: controller,
-              preloadImage: const NetworkImage('https://picsum.photos/640/320'),
+              // preloadImage: const NetworkImage('https://picsum.photos/640/320'),
               me: widget.me,
               hostID: widget.hostID,
               onAttemptToClose: () async {
@@ -197,8 +239,101 @@ class _WhiteboardViewState extends State<WhiteboardView> {
           : FutureBuilder(
               future: initFuture,
               builder: (context, snapshot) {
-                if (snapshot.connectionState == ConnectionState.done) {
-                  inputStream = service.incomingStream;
+                if (snapshot.connectionState == ConnectionState.done &&
+                    isConnected) {
+                  inputStream?.listen((event) {
+                    if (event is DrawingPermissionRequest) {
+                      showDialog(
+                        context: context,
+                        builder: (context) {
+                          return AlertDialog(
+                            title: const Text('Drawing Permission Request'),
+                            content: Text(
+                                '${event.nickname} wants to draw on the whiteboard.'),
+                            actions: [
+                              TextButton(
+                                  onPressed: () {
+                                    service.changeDrawingPermission(
+                                        event.userID, true);
+                                    Navigator.of(context).pop();
+                                  },
+                                  child: const Text('Grant')),
+                              TextButton(
+                                  onPressed: Navigator.of(context).pop,
+                                  child: const Text('Deny')),
+                            ],
+                          );
+                        },
+                      );
+                    } else if (event is PermissionChangeEvent) {
+                      if (event.drawing != null &&
+                          widget.hostID != widget.me.id &&
+                          event.userID == widget.me.id) {
+                        if (event.drawing!) {
+                          showDialog(
+                              context: context,
+                              builder: (context) {
+                                return AlertDialog(
+                                  title:
+                                      const Text('Drawing Permission Granted'),
+                                  content: const Text(
+                                      'You can now draw on the whiteboard.'),
+                                  actions: [
+                                    TextButton(
+                                        onPressed: Navigator.of(context).pop,
+                                        child: const Text('OK')),
+                                  ],
+                                );
+                              });
+                        } else {
+                          showDialog(
+                              context: context,
+                              builder: (context) {
+                                return AlertDialog(
+                                  title:
+                                      const Text('Drawing Permission Denied'),
+                                  content: const Text(
+                                      'You can no longer draw on the whiteboard.'),
+                                  actions: [
+                                    TextButton(
+                                        onPressed: Navigator.of(context).pop,
+                                        child: const Text('OK')),
+                                  ],
+                                );
+                              });
+                        }
+                      }
+                    } else if (event is DrawingPermissionTryGranting) {
+                      // Host is trying to grant drawing permission to a user
+                      // Would you accept it?
+                      showDialog(
+                        context: context,
+                        builder: (context) {
+                          return AlertDialog(
+                            title: const Text('Drawing Permission Granted'),
+                            content: const Text(
+                                'Tutor wants to draw on the whiteboard.'),
+                            actions: [
+                              TextButton(
+                                  onPressed: () {
+                                    service
+                                        .respondToDrawingPermissionGrant(true);
+                                    Navigator.of(context).pop();
+                                  },
+                                  child: const Text('Grant')),
+                              TextButton(
+                                  onPressed: () {
+                                    service
+                                        .respondToDrawingPermissionGrant(false);
+                                    Navigator.of(context).pop();
+                                  },
+                                  child: const Text('Deny')),
+                            ],
+                          );
+                        },
+                      );
+                    }
+                  });
                   return MathTutorWhiteBoard(
                     enabledFeatures: {
                       if (widget.mode == WhiteboardMode.liveTeaching) ...{
@@ -209,13 +344,14 @@ class _WhiteboardViewState extends State<WhiteboardView> {
                     },
                     controller: controller,
                     hostID: widget.hostID,
-                    preloadImage:
-                        const NetworkImage('https://picsum.photos/640/320'),
+                    // preloadImage:
+                    //     const NetworkImage('https://picsum.photos/640/320'),
                     me: widget.me,
                     inputStream: inputStream,
                     onLoadNewImage: (file) {
                       service.shareImageFile(file);
                     },
+                    preDrawnData: preDrawnData,
                     onOutput: (event) {
                       if (event is WhiteboardChatMessage) {
                         service.sendChatMessage(event);
@@ -227,13 +363,27 @@ class _WhiteboardViewState extends State<WhiteboardView> {
                         service.sendViewportChangeData(event);
                       } else if (event is PermissionChangeEvent) {
                         if (event.microphone != null) {
-                          service.changeMicrophonePermission(
-                              event.userID!, event.microphone!);
+                          if (event.userID! != widget.me.id) {
+                            service.changeMicrophonePermission(
+                                event.userID!, event.microphone!);
+                          } else {
+                            service.changeMyMicrophone(event.microphone!);
+                          }
                         }
                         if (event.drawing != null) {
-                          service.changeDrawingPermission(
-                              event.userID!, event.drawing!);
+                          if (event.drawing == true) {
+                            service.tryGrantingDrawingPermission(
+                              event.userID!,
+                            );
+                          } else {
+                            service.changeDrawingPermission(
+                                event.userID!, event.drawing!);
+                          }
                         }
+                      } else if (event is BatchDrawingData) {
+                        service.sendBatchDrawingData(data: event);
+                      } else if (event is DrawingPermissionRequest) {
+                        service.requestPermissionChange(event);
                       } else {
                         throw UnimplementedError();
                       }
@@ -332,4 +482,25 @@ class _WhiteboardViewState extends State<WhiteboardView> {
   }
 
   void _controllerListener() {}
+
+  startService() async {
+    const androidConfig = FlutterBackgroundAndroidConfig(
+      notificationTitle: '매쓰튜터 개발용 화면 공유',
+      notificationText: '라이브 화면을 공유 중입니다.',
+      notificationImportance: AndroidNotificationImportance
+          .Default, // Default is ic_launcher from folder mipmap
+    );
+    await FlutterBackground.initialize(androidConfig: androidConfig);
+    final result = await FlutterBackground.enableBackgroundExecution();
+    if (!result) {
+      throw Exception('Background execution not enabled');
+    }
+  }
+
+  endService() async {
+    final result = await FlutterBackground.disableBackgroundExecution();
+    if (!result) {
+      throw Exception('Background execution not disabled');
+    }
+  }
 }

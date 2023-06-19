@@ -447,3 +447,191 @@ class LiveEndTimeChangeEvent extends Equatable {
   @override
   List<Object> get props => [duration];
 }
+
+class BatchDrawingData extends Equatable {
+  final List<List<DrawingData>> drawingData;
+  final int limitCursor;
+  final Map<int, int> deletedStrokes;
+  final String userID;
+  const BatchDrawingData({
+    required this.userID,
+    required this.drawingData,
+    required this.limitCursor,
+    required this.deletedStrokes,
+  });
+
+  @override
+  List<Object> get props => [
+        drawingData,
+        limitCursor,
+        deletedStrokes,
+      ];
+
+  Map<String, dynamic> toMap() {
+    return {
+      'drawingData':
+          drawingData.map((x) => x.map((e) => e.toMap()).toList()).toList(),
+      'limitCursor': limitCursor,
+      'deletedStrokes': deletedStrokes,
+      'sid': userID,
+    };
+  }
+
+  factory BatchDrawingData.fromMap(Map<String, dynamic> map) {
+    return BatchDrawingData(
+      userID: map['sid'] ?? '',
+      drawingData: List<List<DrawingData>>.from(map['drawingData']
+          ?.map<List<DrawingData>>((x) => x
+              .map<DrawingData>((e) => DrawingData.fromMap(e))
+              .toList() as List<DrawingData>)
+          .toList()),
+      limitCursor: map['limitCursor']?.toInt() ?? 0,
+      deletedStrokes: Map<int, int>.from(map['deletedStrokes']),
+    );
+  }
+
+  String toJson() => json.encode(toMap());
+
+  factory BatchDrawingData.fromJson(String source) =>
+      BatchDrawingData.fromMap(json.decode(source));
+}
+
+class RequestDrawingData {
+  final String participantID;
+
+  RequestDrawingData(this.participantID);
+
+  Map<String, dynamic> toMap() {
+    return {
+      'participantID': participantID,
+    };
+  }
+
+  factory RequestDrawingData.fromMap(Map<String, dynamic> map) {
+    return RequestDrawingData(
+      map['participantID'] ?? '',
+    );
+  }
+
+  String toJson() => json.encode(toMap());
+
+  factory RequestDrawingData.fromJson(String source) =>
+      RequestDrawingData.fromMap(json.decode(source));
+}
+
+class DrawingPermissionRequest extends Equatable {
+  final String userID;
+  final String nickname;
+  const DrawingPermissionRequest({
+    required this.nickname,
+    required this.userID,
+  });
+
+  @override
+  List<Object> get props => [userID, nickname];
+
+  Map<String, dynamic> toMap() {
+    return {
+      'userID': userID,
+      'nickname': nickname,
+    };
+  }
+
+  factory DrawingPermissionRequest.fromMap(Map<String, dynamic> map) {
+    return DrawingPermissionRequest(
+      userID: map['userID'] ?? '',
+      nickname: map['nickname'] ?? '',
+    );
+  }
+
+  String toJson() => json.encode(toMap());
+
+  factory DrawingPermissionRequest.fromJson(String source) =>
+      DrawingPermissionRequest.fromMap(json.decode(source));
+}
+
+class DrawingPermissionTryGranting {
+  final String userID;
+  DrawingPermissionTryGranting({
+    required this.userID,
+  });
+
+  DrawingPermissionTryGranting copyWith({
+    String? userID,
+  }) {
+    return DrawingPermissionTryGranting(
+      userID: userID ?? this.userID,
+    );
+  }
+
+  Map<String, dynamic> toMap() {
+    return {
+      'userID': userID,
+    };
+  }
+
+  factory DrawingPermissionTryGranting.fromMap(Map<String, dynamic> map) {
+    return DrawingPermissionTryGranting(
+      userID: map['userID'] ?? '',
+    );
+  }
+
+  String toJson() => json.encode(toMap());
+
+  factory DrawingPermissionTryGranting.fromJson(String source) =>
+      DrawingPermissionTryGranting.fromMap(json.decode(source));
+
+  @override
+  String toString() => 'DrawingPermissionTryGranting(userID: $userID)';
+
+  @override
+  bool operator ==(Object other) {
+    if (identical(this, other)) return true;
+
+    return other is DrawingPermissionTryGranting && other.userID == userID;
+  }
+
+  @override
+  int get hashCode => userID.hashCode;
+}
+
+class DrawingPermissionGrantResponse extends Equatable {
+  final String userID;
+  final bool accepted;
+  const DrawingPermissionGrantResponse({
+    required this.userID,
+    required this.accepted,
+  });
+
+  @override
+  List<Object> get props => [userID, accepted];
+
+  Map<String, dynamic> toMap() {
+    return {
+      'userID': userID,
+      'accepted': accepted,
+    };
+  }
+
+  factory DrawingPermissionGrantResponse.fromMap(Map<String, dynamic> map) {
+    return DrawingPermissionGrantResponse(
+      userID: map['userID'] ?? '',
+      accepted: map['accepted'] ?? false,
+    );
+  }
+
+  String toJson() => json.encode(toMap());
+
+  factory DrawingPermissionGrantResponse.fromJson(String source) =>
+      DrawingPermissionGrantResponse.fromMap(json.decode(source));
+
+  DrawingPermissionGrantResponse copyWith({
+    String? userID,
+    bool? accepted,
+  }) {
+    return DrawingPermissionGrantResponse(
+      userID: userID ?? this.userID,
+      accepted: accepted ?? this.accepted,
+    );
+  }
+}

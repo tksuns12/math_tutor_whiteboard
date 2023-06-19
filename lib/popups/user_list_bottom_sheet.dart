@@ -27,11 +27,6 @@ class _UserListBottomSheetState extends State<UserListBottomSheet> {
   List<WhiteboardUser> userList = [];
 
   @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-  }
-
-  @override
   Widget build(BuildContext context) {
     return Container(
       height: MediaQuery.of(context).size.height * 0.3,
@@ -94,6 +89,9 @@ class _UserListBottomSheetState extends State<UserListBottomSheet> {
               widget.onChangeDrawPermission(user, !user.drawingEnabled);
             },
           ),
+        ],
+        if (widget.hostID != widget.me.id && widget.me.id == user.id ||
+            widget.hostID == widget.me.id)
           IconButton(
             icon: SvgPicture.asset(
               user.micEnabled
@@ -104,8 +102,7 @@ class _UserListBottomSheetState extends State<UserListBottomSheet> {
             onPressed: () {
               widget.onChangeMicPermission(user, !user.micEnabled);
             },
-          )
-        ],
+          ),
       ],
     );
   }

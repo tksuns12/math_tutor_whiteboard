@@ -39,9 +39,11 @@ class WhiteboardControllerView extends ConsumerStatefulWidget {
   final WhiteboardController controller;
   final bool recordable;
   final String? hostID;
+  final VoidCallback onRequestDrawingPermission;
 
   const WhiteboardControllerView(
-      {this.hostID,
+      {required this.onRequestDrawingPermission,
+      this.hostID,
       required this.recordable,
       required this.controller,
       required this.me,
@@ -169,7 +171,11 @@ class _WhiteboardControllerState
                         ],
                       ),
                     ),
-                  ),
+                  )
+                else if (widget.hostID != widget.me.id)
+                  TextButton(
+                      onPressed: widget.onRequestDrawingPermission,
+                      child: const Text('그리기 권한 요청')),
                 Padding(
                   padding: EdgeInsets.symmetric(
                       horizontal: 7 / 360 * MediaQuery.of(context).size.width),
@@ -192,22 +198,22 @@ class _WhiteboardControllerState
                 ),
                 Consumer(
                   builder: (context, ref, child) {
-                    final chatMessageState =
-                        ref.watch(chatMessageStateProvider);
-                    final chatMessageStateNotifier =
-                        ref.watch(chatMessageStateProvider.notifier);
+                    final chatMessageState = ref.watch(chatMessageStateProvider
+                        .select((value) => value.messages));
+                    final hasNew = ref.watch(chatMessageStateProvider
+                        .select((value) => value.hasNewMessage));
                     if (chatMessageState.isEmpty) {
                       return const SizedBox();
                     } else {
                       return Badge(
-                        isLabelVisible: chatMessageStateNotifier.hasNewMessage,
+                        isLabelVisible: hasNew,
                         label: const Text(
                           'N',
-                          style: TextStyle(color: Colors.white, fontSize: 5),
+                          style: TextStyle(color: Colors.white, fontSize: 7),
                         ),
                         backgroundColor: Colors.red,
                         alignment: Alignment.topRight,
-                        offset: const Offset(0, 0),
+                        offset: const Offset(3, -3),
                         child: InkWell(
                           onTap: () => showChatModalBottomSheet(context),
                           child: SvgPicture.asset(
@@ -286,8 +292,11 @@ class _WhiteboardControllerState
     );
   }
 
-  showChatModalBottomSheet(BuildContext context) {
-    showModalBottomSheet(
+  showChatModalBottomSheet(BuildContext context) async {
+    final notifier = ref.watch(chatMessageStateProvider.notifier);
+    notifier.checkLastMessageTime();
+    notifier.setSeeingChat(true);
+    await showModalBottomSheet(
       context: context,
       backgroundColor: Colors.transparent,
       builder: (c) => ProviderScope(
@@ -298,6 +307,7 @@ class _WhiteboardControllerState
       ),
       isScrollControlled: true,
     );
+    notifier.setSeeingChat(false);
   }
 }
 

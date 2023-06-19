@@ -62,7 +62,8 @@ class _ChatMessageBottomSheetState
             const Text('채팅', style: TextStyle(fontSize: 20)),
             Expanded(
               child: Consumer(builder: (context, ref, _) {
-                chatMessages = ref.watch(chatMessageStateProvider);
+                chatMessages = ref.watch(
+                    chatMessageStateProvider.select((value) => value.messages));
                 ref.listen(chatMessageStateProvider, (messages, message) {
                   Future.delayed(
                     const Duration(milliseconds: 300),

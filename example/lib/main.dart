@@ -151,11 +151,12 @@ class _MyHomePageState extends State<MyHomePage> {
                       mode: WhiteboardMode.liveTeaching,
                       hostID: 'tutor119',
                       me: WhiteboardUser(
-                          nickname: '튜터',
-                          isHost: true,
-                          micEnabled: true,
-                          drawingEnabled: true,
-                          id: 'tutor119'),
+                        nickname: '튜터',
+                        isHost: true,
+                        micEnabled: true,
+                        drawingEnabled: true,
+                        id: 'tutor119',
+                      ),
                     ),
                   ),
                 );
@@ -168,33 +169,21 @@ class _MyHomePageState extends State<MyHomePage> {
               onPressed: () async {
                 Navigator.of(context).push(MaterialPageRoute(
                   builder: (context) => const WhiteboardView(
-                      mode: WhiteboardMode.participant,
-                      hostID: 'tutor119',
-                      me: WhiteboardUser(
-                          nickname: '학생',
-                          isHost: true,
-                          micEnabled: true,
-                          drawingEnabled: true,
-                          id: 'student119')),
+                    mode: WhiteboardMode.participant,
+                    hostID: 'tutor119',
+                    me: WhiteboardUser(
+                      nickname: '학생',
+                      isHost: false,
+                      micEnabled: true,
+                      drawingEnabled: false,
+                      id: 'student119',
+                    ),
+                  ),
                 ));
               },
               child: const Text('Realtime Mode as Student')),
         ],
       ),
     ));
-    // return Scaffold(
-    //     body: MathTutorWhiteBoard(
-    //   mode: WhiteboardMode.record,
-    //   preloadImage: const NetworkImage('https://picsum.photos/640/320'),
-    //   myID: 'MyID',
-    //   onAttemptToClose: () async {
-    //     print('onAttemptToClose');
-    //     return true;
-    //   },
-    //   onAttemptToCompleteRecording: () async {
-    //     print('onAttemptToCompleteRecording');
-    //     return true;
-    //   },
-    // ));
   }
 }
