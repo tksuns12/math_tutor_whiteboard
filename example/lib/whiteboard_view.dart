@@ -267,7 +267,8 @@ class _WhiteboardViewState extends State<WhiteboardView> {
                       );
                     } else if (event is PermissionChangeEvent) {
                       if (event.drawing != null &&
-                          widget.hostID != widget.me.id) {
+                          widget.hostID != widget.me.id &&
+                          event.userID == widget.me.id) {
                         if (event.drawing!) {
                           showDialog(
                               context: context,
@@ -302,6 +303,35 @@ class _WhiteboardViewState extends State<WhiteboardView> {
                               });
                         }
                       }
+                    } else if (event is DrawingPermissionTryGranting) {
+                      // Host is trying to grant drawing permission to a user
+                      // Would you accept it?
+                      showDialog(
+                        context: context,
+                        builder: (context) {
+                          return AlertDialog(
+                            title: const Text('Drawing Permission Granted'),
+                            content: const Text(
+                                'Tutor wants to draw on the whiteboard.'),
+                            actions: [
+                              TextButton(
+                                  onPressed: () {
+                                    service
+                                        .respondToDrawingPermissionGrant(true);
+                                    Navigator.of(context).pop();
+                                  },
+                                  child: const Text('Grant')),
+                              TextButton(
+                                  onPressed: () {
+                                    service
+                                        .respondToDrawingPermissionGrant(false);
+                                    Navigator.of(context).pop();
+                                  },
+                                  child: const Text('Deny')),
+                            ],
+                          );
+                        },
+                      );
                     }
                   });
                   return MathTutorWhiteBoard(
@@ -333,15 +363,27 @@ class _WhiteboardViewState extends State<WhiteboardView> {
                         service.sendViewportChangeData(event);
                       } else if (event is PermissionChangeEvent) {
                         if (event.microphone != null) {
-                          service.changeMicrophonePermission(
-                              event.userID!, event.microphone!);
+                          if (event.userID! != widget.me.id) {
+                            service.changeMicrophonePermission(
+                                event.userID!, event.microphone!);
+                          } else {
+                            service.changeMyMicrophone(event.microphone!);
+                          }
                         }
                         if (event.drawing != null) {
-                          service.changeDrawingPermission(
-                              event.userID!, event.drawing!);
+                          if (event.drawing == true) {
+                            service.tryGrantingDrawingPermission(
+                              event.userID!,
+                            );
+                          } else {
+                            service.changeDrawingPermission(
+                                event.userID!, event.drawing!);
+                          }
                         }
                       } else if (event is BatchDrawingData) {
                         service.sendBatchDrawingData(data: event);
+                      } else if (event is DrawingPermissionRequest) {
+                        service.requestPermissionChange(event);
                       } else {
                         throw UnimplementedError();
                       }

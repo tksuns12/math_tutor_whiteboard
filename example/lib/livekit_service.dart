@@ -22,8 +22,8 @@ class LivekitService {
     await room.connect(
         'wss://math-tutor-hgpqkkg2.livekit.cloud',
         isStudent
-            ? 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE2ODY4NzY4NjEsImlzcyI6IkFQSURlWk5zYXkyRlE4ZCIsIm5hbWUiOiJzdHVkZW50IiwibmJmIjoxNjg2NzkwNDYxLCJzdWIiOiJzdHVkZW50IiwidmlkZW8iOnsiY2FuVXBkYXRlT3duTWV0YWRhdGEiOnRydWUsInJvb20iOiJyZXN0cm9vbSIsInJvb21Kb2luIjp0cnVlfX0.J4UkjTomUTcaywNaD-DCBMhBV7oh8I7DqYQxNQMTin0'
-            : 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE2ODY4NzY4ODYsImlzcyI6IkFQSURlWk5zYXkyRlE4ZCIsIm5hbWUiOiJ0dXRvciIsIm5iZiI6MTY4Njc5MDQ4Niwic3ViIjoidHV0b3IiLCJ2aWRlbyI6eyJjYW5VcGRhdGVPd25NZXRhZGF0YSI6dHJ1ZSwicm9vbSI6InJlc3Ryb29tIiwicm9vbUFkbWluIjp0cnVlLCJyb29tQ3JlYXRlIjp0cnVlLCJyb29tSm9pbiI6dHJ1ZX19.f1XHUYSf7QP23Hu5ArsShHJwlnhJmYeSgtmqF6K2-ps');
+            ? 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE2ODcyMzI4NzUsImlzcyI6IkFQSURlWk5zYXkyRlE4ZCIsIm5hbWUiOiJzdHVkZW50IiwibmJmIjoxNjg3MTQ2NDc1LCJzdWIiOiJzdHVkZW50IiwidmlkZW8iOnsiY2FuVXBkYXRlT3duTWV0YWRhdGEiOnRydWUsInJvb20iOiJyZXN0cm9vbSIsInJvb21Kb2luIjp0cnVlfX0.nUsb4_EcS8A45aXTsDsagbpBX_Adjk8UisvGnsGTRGI'
+            : 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE2ODcyMzI4OTYsImlzcyI6IkFQSURlWk5zYXkyRlE4ZCIsIm5hbWUiOiJ0dXRvciIsIm5iZiI6MTY4NzE0NjQ5Niwic3ViIjoidHV0b3IiLCJ2aWRlbyI6eyJjYW5VcGRhdGVPd25NZXRhZGF0YSI6dHJ1ZSwicm9vbSI6InJlc3Ryb29tIiwicm9vbUFkbWluIjp0cnVlLCJyb29tQ3JlYXRlIjp0cnVlLCJyb29tSm9pbiI6dHJ1ZX19.iu_IxUCAJnY8zWmlwmZ3P8eqL01dCsAcLFdq51Getos');
 
     room.localParticipant?.setMetadata(me.toJson());
     isConnected = true;
@@ -32,7 +32,7 @@ class LivekitService {
       room.localParticipant?.publishData(
         [],
         destinationSids: [anyParticipant.sid],
-        topic: 'request_drawing_data',
+        topic: LivekitDataTopic.requestDrawingData.toString(),
         reliability: Reliability.reliable,
       );
       batchDrawingDataTimer = Timer(
@@ -77,25 +77,26 @@ class LivekitService {
       })
       ..on<DataReceivedEvent>(
         (event) {
-          if (event.topic == 'chat') {
+          final topic = LivekitDataTopic.fromString(event.topic!);
+          if (topic == LivekitDataTopic.chat) {
             roomStreamController.add(
               WhiteboardChatMessage.fromJson(
                 utf8.decoder.convert(event.data),
               ),
             );
-          } else if (event.topic == 'drawing') {
+          } else if (topic == LivekitDataTopic.drawing) {
             roomStreamController.add(
               BroadcastPaintData.fromJson(
                 utf8.decoder.convert(event.data),
               ),
             );
-          } else if (event.topic == 'viewport') {
+          } else if (topic == LivekitDataTopic.viewport) {
             roomStreamController.add(
               ViewportChangeEvent.fromJson(
                 utf8.decoder.convert(event.data),
               ),
             );
-          } else if (event.topic == 'permission') {
+          } else if (topic == LivekitDataTopic.permission) {
             final parsedEvent = PermissionChangeEvent.fromJson(
               utf8.decoder.convert(event.data),
             );
@@ -106,13 +107,13 @@ class LivekitService {
               room.localParticipant
                   ?.setMicrophoneEnabled(parsedEvent.microphone!);
             }
-          } else if (event.topic == 'request_drawing_data') {
+          } else if (topic == LivekitDataTopic.requestDrawingData) {
             if (event.participant != null) {
               final user =
                   WhiteboardUser.fromJson(event.participant!.metadata!);
               roomStreamController.add(RequestDrawingData(user.id));
             }
-          } else if (event.topic == 'batch_drawing_data') {
+          } else if (topic == LivekitDataTopic.batchDrawingData) {
             try {
               batchDrawingDataTimer?.cancel();
               final batchDrawingData = BatchDrawingData.fromJson(
@@ -122,12 +123,25 @@ class LivekitService {
             } catch (e, stackTrace) {
               log(e.toString(), stackTrace: stackTrace);
             }
-          } else if (event.topic == 'request_permission') {
+          } else if (topic == LivekitDataTopic.requestPermission) {
             if (me.isHost) {
               final req = DrawingPermissionRequest.fromJson(
                 utf8.decoder.convert(event.data),
               );
               roomStreamController.add(req);
+            }
+          } else if (topic == LivekitDataTopic.permissionGrant) {
+            if (!me.isHost) {
+              roomStreamController.add(DrawingPermissionTryGranting.fromJson(
+                utf8.decoder.convert(event.data),
+              ));
+            }
+          } else if (topic == LivekitDataTopic.permissionResponseForGrant) {
+            if (me.isHost) {
+              final req = DrawingPermissionGrantResponse.fromJson(
+                utf8.decoder.convert(event.data),
+              );
+              changeDrawingPermission(req.userID, req.accepted);
             }
           }
         },
@@ -167,7 +181,7 @@ class LivekitService {
     );
   }
 
-  Future<void> requestPermissionChange(PermissionChangeEvent event) async {
+  Future<void> requestPermissionChange(DrawingPermissionRequest event) async {
     room.localParticipant?.publishData(
       utf8.encode(
         event.toJson(),
@@ -178,6 +192,15 @@ class LivekitService {
 
   Future<void> changeMyMicrophone(bool bool) async {
     await room.localParticipant?.setMicrophoneEnabled(bool);
+    room.localParticipant?.publishData(
+      utf8.encode(
+        PermissionChangeEvent(
+          microphone: bool,
+          userID: me.id,
+        ).toJson(),
+      ),
+      topic: 'permission',
+    );
   }
 
   Future<void> leaveRoom() async {
@@ -233,9 +256,6 @@ class LivekitService {
   }
 
   void changeDrawingPermission(String userID, bool bool) {
-    final sid = room.participants.values
-        .firstWhere((element) => jsonDecode(element.metadata!)['id'] == userID)
-        .sid;
     room.localParticipant?.publishData(
         utf8.encoder.convert(
           PermissionChangeEvent(
@@ -243,20 +263,98 @@ class LivekitService {
             userID: userID,
           ).toJson(),
         ),
-        destinationSids: [sid],
         topic: 'permission');
-    if (bool) {
-      roomStreamController.add(
-        const PermissionChangeEvent(
-          drawing: false,
-        ),
-      );
-    } else {
-      roomStreamController.add(
-        const PermissionChangeEvent(
-          drawing: true,
-        ),
-      );
+    roomStreamController.add(
+      PermissionChangeEvent(
+        drawing: bool,
+        userID: userID,
+      ),
+    );
+    if (me.isHost && userID != me.id) {
+      roomStreamController.add(PermissionChangeEvent(
+        drawing: !bool,
+        userID: me.id,
+      ));
+    }
+  }
+
+  void respondToDrawingPermissionGrant(bool accepted) {
+    room.localParticipant?.publishData(
+      utf8.encoder.convert(
+        DrawingPermissionGrantResponse(
+          accepted: accepted,
+          userID: me.id,
+        ).toJson(),
+      ),
+      topic: LivekitDataTopic.permissionResponseForGrant.toString(),
+    );
+  }
+
+  void tryGrantingDrawingPermission(String s) {
+    room.localParticipant?.publishData(
+      utf8.encoder.convert(DrawingPermissionTryGranting(userID: s).toJson()),
+      topic: LivekitDataTopic.permissionGrant.toString(),
+    );
+  }
+}
+
+enum LivekitDataTopic {
+  chat,
+  drawing,
+  viewport,
+  permission,
+  requestDrawingData,
+  batchDrawingData,
+  requestPermission,
+  permissionGrant,
+  permissionResponseForGrant;
+
+  static LivekitDataTopic fromString(String string) {
+    switch (string) {
+      case 'chat':
+        return LivekitDataTopic.chat;
+      case 'drawing':
+        return LivekitDataTopic.drawing;
+      case 'viewport':
+        return LivekitDataTopic.viewport;
+      case 'permission':
+        return LivekitDataTopic.permission;
+      case 'request_drawing_data':
+        return LivekitDataTopic.requestDrawingData;
+      case 'batch_drawing_data':
+        return LivekitDataTopic.batchDrawingData;
+      case 'request_permission':
+        return LivekitDataTopic.requestPermission;
+      case 'permission_grant':
+        return LivekitDataTopic.permissionGrant;
+      case 'permission_response_for_grant':
+        return LivekitDataTopic.permissionResponseForGrant;
+      default:
+        throw Exception('Invalid topic');
+    }
+  }
+
+  @override
+  String toString() {
+    switch (this) {
+      case LivekitDataTopic.chat:
+        return 'chat';
+      case LivekitDataTopic.drawing:
+        return 'drawing';
+      case LivekitDataTopic.viewport:
+        return 'viewport';
+      case LivekitDataTopic.permission:
+        return 'permission';
+      case LivekitDataTopic.requestDrawingData:
+        return 'request_drawing_data';
+      case LivekitDataTopic.batchDrawingData:
+        return 'batch_drawing_data';
+      case LivekitDataTopic.requestPermission:
+        return 'request_permission';
+      case LivekitDataTopic.permissionGrant:
+        return 'permission_grant';
+      case LivekitDataTopic.permissionResponseForGrant:
+        return 'permission_response_for_grant';
     }
   }
 }
