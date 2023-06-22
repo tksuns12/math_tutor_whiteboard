@@ -151,12 +151,12 @@ class _MathTutorWhiteboardState extends ConsumerState<MathTutorWhiteboardImpl> {
           ?.where((event) => event is PermissionChangeEvent)
           .map((event) => event as PermissionChangeEvent)
           .listen((event) {
-        if (event.drawing != null) {
+        if (event.drawing != null && widget.me.id == event.userID) {
           setState(() {
             drawable = event.drawing!;
           });
         }
-        if (event.microphone != null) {
+        if (event.microphone != null && widget.me.id == event.userID) {
           controller.adjustPermissionOfUser(
               userID: event.userID!,
               permissionEvent:
