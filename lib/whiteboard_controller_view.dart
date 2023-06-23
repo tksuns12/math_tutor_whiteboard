@@ -172,7 +172,7 @@ class _WhiteboardControllerState
                       ),
                     ),
                   )
-                else if (widget.hostID != widget.me.id)
+                else if (widget.hostID != null && widget.hostID != widget.me.id)
                   TextButton(
                       onPressed: widget.onRequestDrawingPermission,
                       child: const Text('그리기 권한 요청')),

@@ -79,7 +79,7 @@ class _MathTutorWhiteboardState extends ConsumerState<MathTutorWhiteboardImpl> {
 
   @override
   void initState() {
-    drawable = widget.me.id == widget.hostID;
+    drawable = widget.hostID == null || widget.me.id == widget.hostID;
     controller = widget.controller ??
         WhiteboardController(
             recordDuration: widget.maxRecordingDuration,
