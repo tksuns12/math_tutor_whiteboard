@@ -22,8 +22,8 @@ class LivekitService {
     await room.connect(
         'wss://math-tutor-hgpqkkg2.livekit.cloud',
         isStudent
-            ? 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE2ODcyMzI4NzUsImlzcyI6IkFQSURlWk5zYXkyRlE4ZCIsIm5hbWUiOiJzdHVkZW50IiwibmJmIjoxNjg3MTQ2NDc1LCJzdWIiOiJzdHVkZW50IiwidmlkZW8iOnsiY2FuVXBkYXRlT3duTWV0YWRhdGEiOnRydWUsInJvb20iOiJyZXN0cm9vbSIsInJvb21Kb2luIjp0cnVlfX0.nUsb4_EcS8A45aXTsDsagbpBX_Adjk8UisvGnsGTRGI'
-            : 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE2ODcyMzI4OTYsImlzcyI6IkFQSURlWk5zYXkyRlE4ZCIsIm5hbWUiOiJ0dXRvciIsIm5iZiI6MTY4NzE0NjQ5Niwic3ViIjoidHV0b3IiLCJ2aWRlbyI6eyJjYW5VcGRhdGVPd25NZXRhZGF0YSI6dHJ1ZSwicm9vbSI6InJlc3Ryb29tIiwicm9vbUFkbWluIjp0cnVlLCJyb29tQ3JlYXRlIjp0cnVlLCJyb29tSm9pbiI6dHJ1ZX19.iu_IxUCAJnY8zWmlwmZ3P8eqL01dCsAcLFdq51Getos');
+            ? 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE2ODc5MTI4MzMsImlzcyI6IkFQSUJHaFI4V1pvRWJveiIsIm5hbWUiOiJzdHVkZW50MTE5IiwibmJmIjoxNjg3ODI2NDMzLCJzdWIiOiJzdHVkZW50MTE5IiwidmlkZW8iOnsiY2FuVXBkYXRlT3duTWV0YWRhdGEiOnRydWUsInJvb20iOiJ0ZXN0cm9vbSIsInJvb21Kb2luIjp0cnVlfX0.ZmTpMbrLTTzXS0u5wVc4vlyYSZDZ7uCLf8xtwQNfpCM'
+            : 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE2ODc5MTI4MTMsImlzcyI6IkFQSUJHaFI4V1pvRWJveiIsIm5hbWUiOiJ0dXRvcjExOSIsIm5iZiI6MTY4NzgyNjQxMywic3ViIjoidHV0b3IxMTkiLCJ2aWRlbyI6eyJjYW5VcGRhdGVPd25NZXRhZGF0YSI6dHJ1ZSwicm9vbSI6InRlc3Ryb29tIiwicm9vbUFkbWluIjp0cnVlLCJyb29tQ3JlYXRlIjp0cnVlLCJyb29tSm9pbiI6dHJ1ZX19.aBn6L5gK4QSkRwX-AHjUiEtl0DcheEdaMa43J8_oy5g');
 
     room.localParticipant?.setMetadata(me.toJson());
     isConnected = true;
@@ -117,7 +117,7 @@ class LivekitService {
             try {
               batchDrawingDataTimer?.cancel();
               final batchDrawingData = BatchDrawingData.fromJson(
-                utf8.decoder.convert(event.data),
+                jsonDecode(utf8.decoder.convert(event.data)),
               );
               onConnected(batchDrawingData);
             } catch (e, stackTrace) {
@@ -162,7 +162,7 @@ class LivekitService {
           )
           .sid;
       room.localParticipant?.publishData(
-        utf8.encode(data.toJson()),
+        utf8.encode(jsonEncode(data.toJson())),
         destinationSids: [sid],
         reliability: Reliability.reliable,
         topic: 'batch_drawing_data',
@@ -270,12 +270,6 @@ class LivekitService {
         userID: userID,
       ),
     );
-    if (me.isHost && userID != me.id) {
-      roomStreamController.add(PermissionChangeEvent(
-        drawing: !bool,
-        userID: me.id,
-      ));
-    }
   }
 
   void respondToDrawingPermissionGrant(bool accepted) {

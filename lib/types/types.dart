@@ -1,10 +1,15 @@
+// ignore_for_file: public_member_api_docs, sort_constructors_first
 import 'dart:convert';
 import 'dart:typed_data';
 
 import 'package:equatable/equatable.dart';
 import 'package:flutter/material.dart';
+import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:perfect_freehand/perfect_freehand.dart';
 import 'package:vector_math/vector_math_64.dart' show Vector3;
+import 'package:flutter/foundation.dart';
+part 'types.freezed.dart';
+part 'types.g.dart';
 
 class DrawingData extends Equatable {
   final Point point;
@@ -448,52 +453,17 @@ class LiveEndTimeChangeEvent extends Equatable {
   List<Object> get props => [duration];
 }
 
-class BatchDrawingData extends Equatable {
-  final List<List<DrawingData>> drawingData;
-  final int limitCursor;
-  final Map<int, int> deletedStrokes;
-  final String userID;
-  const BatchDrawingData({
-    required this.userID,
-    required this.drawingData,
-    required this.limitCursor,
-    required this.deletedStrokes,
-  });
+@freezed
+sealed class BatchDrawingData with _$BatchDrawingData {
+  const factory BatchDrawingData({
+    required String userID,
+    required Map<String, List<List<DrawingData>>> drawingData,
+    required Map<String, int> limitCursor,
+    required Map<String, Map<int, int>> deletedStrokes,
+  }) = _BatchDrawingData;
 
-  @override
-  List<Object> get props => [
-        drawingData,
-        limitCursor,
-        deletedStrokes,
-      ];
-
-  Map<String, dynamic> toMap() {
-    return {
-      'drawingData':
-          drawingData.map((x) => x.map((e) => e.toMap()).toList()).toList(),
-      'limitCursor': limitCursor,
-      'deletedStrokes': deletedStrokes,
-      'sid': userID,
-    };
-  }
-
-  factory BatchDrawingData.fromMap(Map<String, dynamic> map) {
-    return BatchDrawingData(
-      userID: map['sid'] ?? '',
-      drawingData: List<List<DrawingData>>.from(map['drawingData']
-          ?.map<List<DrawingData>>((x) => x
-              .map<DrawingData>((e) => DrawingData.fromMap(e))
-              .toList() as List<DrawingData>)
-          .toList()),
-      limitCursor: map['limitCursor']?.toInt() ?? 0,
-      deletedStrokes: Map<int, int>.from(map['deletedStrokes']),
-    );
-  }
-
-  String toJson() => json.encode(toMap());
-
-  factory BatchDrawingData.fromJson(String source) =>
-      BatchDrawingData.fromMap(json.decode(source));
+  factory BatchDrawingData.fromJson(Map<String, dynamic> json) =>
+      _$_BatchDrawingData.fromJson(json);
 }
 
 class RequestDrawingData {

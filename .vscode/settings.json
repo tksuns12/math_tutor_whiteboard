@@ -1,12 +1,103 @@
 {
-    "java.configuration.updateBuildConfiguration": "interactive",
-    "dart.flutterSdkPath": ".fvm/flutter_sdk",
-    // Remove .fvm files from search
-    "search.exclude": {
-      "**/.fvm": true
-    },
-    // Remove from file watching
-    "files.watcherExclude": {
-      "**/.fvm": true
+  "workbench.colorTheme": "Kimbie Dark",
+  "workbench.iconTheme": "vscode-icons",
+  "editor.fontFamily": "'JetBrains Mono','NanumGothicCoding','Noto Mono', 'Hack', 'Droid Sans Mono', 'monospace', monospace, 'Droid Sans Fallback'",
+  "editor.fontLigatures": true,
+  "[dart]": {
+    "editor.formatOnSave": true,
+    "editor.formatOnType": true,
+    "editor.rulers": [150],
+    "editor.selectionHighlight": false,
+    "editor.suggest.snippetsPreventQuickSuggestions": false,
+    "editor.suggestSelection": "first",
+    "editor.tabCompletion": "onlySnippets",
+    "editor.wordBasedSuggestions": false
+  },
+  "explorer.confirmDragAndDrop": false,
+  "files.autoSave": "afterDelay",
+  "explorer.confirmDelete": false,
+  "todo-tree.tree.showScanModeButton": false,
+  "dart.openDevTools": "flutter",
+  "[yaml]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+  "vsicons.dontShowNewVersionMessage": true,
+  "[json]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+  "workbench.editorAssociations": {
+    "*.ipynb": "jupyter.notebook.ipynb"
+  },
+  "editor.suggestSelection": "first",
+  "vsintellicode.modify.editor.suggestSelection": "automaticallyOverrodeDefaultValue",
+  "git.autofetch": true,
+  "git.enableSmartCommit": true,
+  "dart.devToolsBrowser": "default",
+  "dart.debugExternalLibraries": true,
+  "dart.debugSdkLibraries": true,
+  "editor.inlineSuggest.enabled": true,
+  "bracket-pair-colorizer-2.depreciation-notice": false,
+  "java.jdt.ls.java.home": "/Library/Java/JavaVirtualMachines/zulu-17.jdk/Contents/Home",
+  "files.exclude": {
+    "**/.classpath": true,
+    "**/.project": true,
+    "**/.settings": true,
+    "**/.factorypath": true
+  },
+  "editor.fontSize": 15,
+  "terminal.integrated.fontFamily": "monospace",
+  "gitlens.advanced.messages": {
+    "suppressLineUncommittedWarning": true
+  },
+  "github.copilot.enable": {
+    "*": true,
+    "plaintext": false,
+    "markdown": false,
+    "scminput": false,
+    "yaml": true,
+    "rust": false
+  },
+  "editor.accessibilitySupport": "off",
+  "svelte.enable-ts-plugin": true,
+  "git.confirmSync": false,
+  "diffEditor.ignoreTrimWhitespace": false,
+  "kite.showWelcomeNotificationOnStartup": false,
+  "git.ignoreRebaseWarning": true,
+  "terminal.integrated.enableMultiLinePasteWarning": false,
+  "[javascript]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+  "dart.debugExternalPackageLibraries": true,
+  "[typescript]": {
+    "editor.defaultFormatter": "denoland.vscode-deno"
+  },
+  "[html]": {
+    "editor.defaultFormatter": "vscode.html-language-features"
+  },
+  "[css]": {
+    "editor.defaultFormatter": "vscode.css-language-features"
+  },
+  "svg.preview.mode": "svg",
+  "json.schemas": [
+    {
+      "fileMatch": ["codemagic.yaml"],
+      "url": "https://static.codemagic.io/codemagic-schema.json"
     }
+  ],
+  "go.toolsManagement.autoUpdate": true,
+  "[jsonc]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+  "[python]": {
+    "editor.formatOnType": true
+  },
+  "dart.flutterSdkPath": ".fvm/flutter_sdk",
+  // Remove .fvm files from search
+  "search.exclude": {
+    "**/.fvm": true
+  },
+  // Remove from file watching
+  "files.watcherExclude": {
+    "**/.fvm": true
+  }
 }
