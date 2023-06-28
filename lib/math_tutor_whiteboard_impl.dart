@@ -7,6 +7,7 @@ import 'dart:ui' as ui;
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/services.dart';
 import 'package:math_tutor_whiteboard/types/features.dart';
+import 'package:math_tutor_whiteboard/types/pointer_manager.dart';
 // ignore: depend_on_referenced_packages
 import 'package:vector_math/vector_math_64.dart' show Quad;
 
@@ -268,6 +269,14 @@ class _MathTutorWhiteboardState extends ConsumerState<MathTutorWhiteboardImpl> {
             if (event.drawingData != null) {
               if (userDrawingData[event.userID]!.length <
                   userLimitCursor[event.userID]!) {
+                userDrawingData[event.userID]!.add([]);
+              }
+
+              /// 간혹 멀티 터치 오류로 limitCursor가 더하기 1을 건너뛰고 들어오는 경우가 있습니다.
+              /// 원리 상 . 하나일 수밖에 없기 때문에 생략을 해도 상관이 없어서 정합성을 위해 그냥 빈 스트로크 하나를 추가하고
+              /// 그 다음에 들어오는 데이터를 추가합니다.
+              if (userLimitCursor[event.userID]! >
+                  userDrawingData[event.userID]!.length) {
                 userDrawingData[event.userID]!.add([]);
               }
               userDrawingData[event.userID]![
@@ -576,6 +585,13 @@ class _MathTutorWhiteboardState extends ConsumerState<MathTutorWhiteboardImpl> {
               userID: widget.me.id,
             ),
           );
+          log('Drawn: ${BroadcastPaintData(
+            drawingData: userDrawingData[widget.me.id]!.last.last,
+            boardSize: boardSize,
+            command: BroadcastCommand.draw,
+            limitCursor: userLimitCursor[widget.me.id]!,
+            userID: widget.me.id,
+          ).toString()}');
         }
       },
     );
@@ -681,7 +697,7 @@ class _WhiteBoard extends StatefulWidget {
 
 class _WhiteBoardState extends State<_WhiteBoard> {
   bool panMode = false;
-  Set<int> pointers = {};
+  final pointerManager = PointerManager();
   late final TransformationController transformationController;
 
   @override
@@ -737,7 +753,7 @@ class _WhiteBoardState extends State<_WhiteBoard> {
             return Listener(
               onPointerDown: (event) {
                 if (widget.drawable) {
-                  pointers.add(event.pointer);
+                  pointerManager.addPointer(event.pointer);
                   if (panMode) {
                     return;
                   }
@@ -746,7 +762,7 @@ class _WhiteBoardState extends State<_WhiteBoard> {
               },
               onPointerMove: (event) {
                 if (widget.drawable) {
-                  if (panMode || pointers.length > 1) {
+                  if (panMode || pointerManager.isInMultiplePointers) {
                     return;
                   }
                   widget.onDrawing(event);
@@ -754,7 +770,7 @@ class _WhiteBoardState extends State<_WhiteBoard> {
               },
               onPointerUp: (event) {
                 if (widget.drawable) {
-                  pointers.clear();
+                  pointerManager.popPointer();
                   if (panMode) {
                     return;
                   }

@@ -212,6 +212,11 @@ class BroadcastPaintData extends Equatable {
       boardSize,
     ];
   }
+
+  @override
+  String toString() {
+    return 'BroadcastPaintData(drawingData: $drawingData, limitCursor: $limitCursor, command: $command, removeStrokeIndex: $removeStrokeIndex, boardSize: $boardSize)';
+  }
 }
 
 class WhiteboardUser extends Equatable {
