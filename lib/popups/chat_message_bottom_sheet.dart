@@ -89,26 +89,38 @@ class _ChatMessageBottomSheetState
                 );
               }),
             ),
-            TextField(
-                controller: textEditingController,
-                onSubmitted: (value) {
-                  widget.onSend(value);
-                  textEditingController.clear();
-                  Future.delayed(
-                    const Duration(milliseconds: 300),
-                    () => scrollContrller.animateTo(
-                      scrollContrller.position.maxScrollExtent,
-                      duration: const Duration(milliseconds: 300),
-                      curve: Curves.easeOut,
-                    ),
-                  );
-                },
-                decoration: InputDecoration(
-                    hintText: '메시지 입력',
-                    filled: true,
-                    fillColor: Colors.grey[200])),
+            Row(
+              children: [
+                Expanded(
+                  child: TextField(
+                      controller: textEditingController,
+                      onSubmitted: _onSubmitted,
+                      decoration: InputDecoration(
+                          hintText: '메시지 입력',
+                          filled: true,
+                          fillColor: Colors.grey[200])),
+                ),
+                TextButton(
+                  onPressed: () => _onSubmitted(textEditingController.text),
+                  child: const Text('전송'),
+                ),
+              ],
+            ),
           ],
         ),
+      ),
+    );
+  }
+
+  void _onSubmitted(value) {
+    widget.onSend(value);
+    textEditingController.clear();
+    Future.delayed(
+      const Duration(milliseconds: 300),
+      () => scrollContrller.animateTo(
+        scrollContrller.position.maxScrollExtent,
+        duration: const Duration(milliseconds: 300),
+        curve: Curves.easeOut,
       ),
     );
   }
