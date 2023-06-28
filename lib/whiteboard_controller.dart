@@ -156,6 +156,12 @@ class WhiteboardController extends ChangeNotifier {
     notifyListeners();
     log('Resumed recording');
   }
+
+  @override
+  void dispose() {
+    _timer?.cancel();
+    super.dispose();
+  }
 }
 
 abstract class WhiteboardRecorder {
