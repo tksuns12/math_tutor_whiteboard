@@ -22,8 +22,8 @@ class LivekitService {
     await room.connect(
         'wss://math-tutor-hgpqkkg2.livekit.cloud',
         isStudent
-            ? 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE2ODgwMDEzMzcsImlzcyI6IkFQSUJHaFI4V1pvRWJveiIsIm5hbWUiOiJzdHVkZW50MTE5IiwibmJmIjoxNjg3OTE0OTM3LCJzdWIiOiJzdHVkZW50MTE5IiwidmlkZW8iOnsiY2FuVXBkYXRlT3duTWV0YWRhdGEiOnRydWUsInJvb20iOiJ0ZXN0cm9vbSIsInJvb21Kb2luIjp0cnVlfX0.RLkpyIlx3y2qTK-tIos7S_d0U55fGV5-RZ2-ozW3xv8'
-            : 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE2ODgwMDEzNjUsImlzcyI6IkFQSUJHaFI4V1pvRWJveiIsIm5hbWUiOiJ0dXRvcjExOSIsIm5iZiI6MTY4NzkxNDk2NSwic3ViIjoidHV0b3IxMTkiLCJ2aWRlbyI6eyJjYW5VcGRhdGVPd25NZXRhZGF0YSI6dHJ1ZSwicm9vbSI6InRlc3Ryb29tIiwicm9vbUFkbWluIjp0cnVlLCJyb29tQ3JlYXRlIjp0cnVlLCJyb29tSm9pbiI6dHJ1ZX19.P_Xnij8mi1lejvr__XCckVQ77mVnxHE7c5fH6yQy6Rc');
+            ? 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE2ODgxNzE2NzEsImlzcyI6IkFQSUJHaFI4V1pvRWJveiIsIm5hbWUiOiJzdHVkZW50MTE5IiwibmJmIjoxNjg4MDg1MjcxLCJzdWIiOiJzdHVkZW50MTE5IiwidmlkZW8iOnsiY2FuVXBkYXRlT3duTWV0YWRhdGEiOnRydWUsInJvb20iOiJ0ZXN0cm9vbSIsInJvb21Kb2luIjp0cnVlfX0.wKAnylrg7W6CFkHBvUNVNxVJR-31YDLiWYSXN08fDwE'
+            : 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE2ODgxNzE2MjUsImlzcyI6IkFQSUJHaFI4V1pvRWJveiIsIm5hbWUiOiJ0dXRvcjExOSIsIm5iZiI6MTY4ODA4NTIyNSwic3ViIjoidHV0b3IxMTkiLCJ2aWRlbyI6eyJjYW5VcGRhdGVPd25NZXRhZGF0YSI6dHJ1ZSwicm9vbSI6InRlc3Ryb29tIiwicm9vbUFkbWluIjp0cnVlLCJyb29tQ3JlYXRlIjp0cnVlLCJyb29tSm9pbiI6dHJ1ZX19.tTeGbdfPYAKMk4LYIyvUNH9jVeaky0KQoQOhaSD5XaM');
 
     room.localParticipant?.setMetadata(me.toJson());
     isConnected = true;

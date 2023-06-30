@@ -615,8 +615,12 @@ class _MathTutorWhiteboardState extends ConsumerState<MathTutorWhiteboardImpl> {
   }
 
   void _onViewportChange(Matrix4 matrix) {
-    widget.onOutput
-        ?.call(ViewportChangeEvent(matrix: matrix, boardSize: boardSize));
+    widget.onOutput?.call(
+      ViewportChangeEvent(
+        matrix: matrix,
+        boardSize: boardSize,
+      ),
+    );
   }
 
   void _onSendChatMessage(String message) {
@@ -704,7 +708,7 @@ class _WhiteBoardState extends State<_WhiteBoard> {
   void initState() {
     transformationController = widget.transformationController;
     transformationController.addListener(() {
-      if (panMode) {
+      if (panMode && pointerManager.pointers.isNotEmpty) {
         widget.onViewportChange(transformationController.value);
       }
     });

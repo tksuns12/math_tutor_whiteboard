@@ -338,8 +338,8 @@ class _WhiteboardViewState extends State<WhiteboardView> {
                     enabledFeatures: {
                       if (widget.mode == WhiteboardMode.liveTeaching) ...{
                         WhiteboardFeature.modifyPhoto,
-                        WhiteboardFeature.span,
                       },
+                      WhiteboardFeature.span,
                       WhiteboardFeature.chat,
                     },
                     controller: controller,
