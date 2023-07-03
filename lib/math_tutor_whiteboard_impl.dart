@@ -76,6 +76,7 @@ class _MathTutorWhiteboardState extends ConsumerState<MathTutorWhiteboardImpl> {
   ImageProvider? image;
   bool drawable = true;
   late final WhiteboardController controller;
+  Map<String, List<List<DrawingData>>> hydratedUserDrawingData = {};
 
   @override
   void initState() {
@@ -862,6 +863,7 @@ class _WhiteboardPainter extends CustomPainter {
               : StrokeCap.square
           ..style = PaintingStyle.fill
           ..strokeWidth = stroke.first.strokeWidth;
+
         final points = getStroke(stroke.map((e) => e.point).toList(),
             size: stroke.first.strokeWidth,
             thinning: stroke.first.penType == PenType.pen ? 0.5 : 0.0);
@@ -877,8 +879,7 @@ class _WhiteboardPainter extends CustomPainter {
           for (int i = 1; i < points.length - 1; ++i) {
             final p0 = points[i];
             final p1 = points[i + 1];
-            path.quadraticBezierTo(
-                p0.x, p0.y, (p0.x + p1.x) / 2, (p0.y + p1.y) / 2);
+            path.lineTo(p0.x, p0.y);
           }
           canvas.drawPath(path, paint);
         }
