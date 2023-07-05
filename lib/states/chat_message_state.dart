@@ -43,7 +43,7 @@ class ChatState extends Equatable {
     this.lastMessageTime,
   });
   bool get hasNewMessage {
-    if (lastMessageTime == null) {
+    if (lastMessageTime == null && messages.length > 2) {
       return true;
     }
     return (messages.lastOrNull?.sentAt.isAfter(lastMessageTime!)) ?? true;
