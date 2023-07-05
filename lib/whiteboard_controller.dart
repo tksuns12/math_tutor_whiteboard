@@ -160,6 +160,14 @@ class WhiteboardController extends ChangeNotifier {
   @override
   void dispose() {
     _timer?.cancel();
+    users.clear();
+    recorder = null;
+    recordingPath = null;
+    recordingState = RecordingState.idle;
+    currentSecond = 0;
+    liveEndAt = null;
+    liveEndExtraDuration = null;
+    liveDuration = null;
     super.dispose();
   }
 }
