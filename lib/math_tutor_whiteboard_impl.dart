@@ -5,6 +5,7 @@ import 'dart:math' hide log;
 import 'dart:ui' as ui;
 
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:flutter/gestures.dart';
 import 'package:flutter/services.dart';
 import 'package:math_tutor_whiteboard/types/features.dart';
 import 'package:math_tutor_whiteboard/types/pointer_manager.dart';
@@ -758,11 +759,21 @@ class _WhiteBoardState extends State<_WhiteBoard> {
             return Listener(
               onPointerDown: (event) {
                 if (widget.drawable) {
-                  pointerManager.addPointer(event.pointer);
+                  pointerManager.addPointer(
+                    pointer: event.pointer,
+                    deviceKind: event.kind,
+                  );
                   if (panMode) {
                     return;
                   }
-                  widget.onStartDrawing();
+                  if (!pointerManager.isStylusMode) {
+                    widget.onStartDrawing();
+                  } else {
+                    if (event.kind == PointerDeviceKind.invertedStylus ||
+                        event.kind == PointerDeviceKind.stylus) {
+                      widget.onStartDrawing();
+                    }
+                  }
                 }
               },
               onPointerMove: (event) {
@@ -770,16 +781,31 @@ class _WhiteBoardState extends State<_WhiteBoard> {
                   if (panMode || pointerManager.isInMultiplePointers) {
                     return;
                   }
-                  widget.onDrawing(event);
+                  if (!pointerManager.isStylusMode) {
+                    widget.onDrawing(event);
+                  } else {
+                    if (event.kind == PointerDeviceKind.invertedStylus ||
+                        event.kind == PointerDeviceKind.stylus) {
+                      widget.onDrawing(event);
+                    }
+                  }
                 }
               },
               onPointerUp: (event) {
                 if (widget.drawable) {
-                  pointerManager.popPointer();
+                  pointerManager.popPointer(
+                      pointer: event.pointer, deviceKind: event.kind);
                   if (panMode) {
                     return;
                   }
-                  widget.onEndDrawing(event);
+                  if (!pointerManager.isStylusMode) {
+                    widget.onEndDrawing(event);
+                  } else {
+                    if (event.kind == PointerDeviceKind.invertedStylus ||
+                        event.kind == PointerDeviceKind.stylus) {
+                      widget.onEndDrawing(event);
+                    }
+                  }
                 }
               },
               child: SizedBox(
