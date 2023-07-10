@@ -63,6 +63,10 @@ class WhiteboardController extends ChangeNotifier {
   }
 
   void addUser(WhiteboardUser user) {
+    if (users.any((element) => user.id == element.id)) {
+      log('User already exists: ${user.id}');
+      return;
+    }
     users.add(user);
     log('Added user: ${user.id}');
     notifyListeners();
