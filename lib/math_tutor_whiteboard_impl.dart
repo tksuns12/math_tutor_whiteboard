@@ -711,6 +711,7 @@ class _WhiteBoardState extends State<_WhiteBoard> {
     transformationController = widget.transformationController;
     transformationController.addListener(() {
       if (panMode && pointerManager.pointers.isNotEmpty) {
+        log("View Point Changed:");
         widget.onViewportChange(transformationController.value);
       }
     });
@@ -820,11 +821,12 @@ class _WhiteBoardState extends State<_WhiteBoard> {
                     ),
                     if (widget.preloadImage != null)
                       Positioned.fill(
-                          child: Image(
-                        image: widget.preloadImage!,
-                        fit: BoxFit.fitWidth,
-                        alignment: Alignment.topCenter,
-                      )),
+                        child: Image(
+                          image: widget.preloadImage!,
+                          fit: BoxFit.fitWidth,
+                          alignment: Alignment.topCenter,
+                        ),
+                      ),
                     Positioned.fill(
                         child: CustomPaint(
                       painter: _WhiteboardPainter(_makeRealDrawingData()),

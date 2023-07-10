@@ -15,7 +15,7 @@ class PointerManager {
     }
 
     if (isStylusMode &&
-        (deviceKind != PointerDeviceKind.stylus ||
+        (deviceKind != PointerDeviceKind.stylus &&
             deviceKind != PointerDeviceKind.invertedStylus)) {
       return;
     }
