@@ -23,15 +23,11 @@ class _ImageCropPage extends State<ImageCropPage> {
     () async {
       var decodedImage =
           await decodeImageFromList(widget.sourceFile.readAsBytesSync());
-      double initialHeight =
-          (decodedImage.width * 0.9 * 9.0 / 16.0) / decodedImage.height;
       setState(() {
         controller = CropController(
             aspectRatio: null,
             defaultCrop: Rect.fromCenter(
-                center: const Offset(0.5, 0.5),
-                width: 0.9,
-                height: initialHeight));
+                center: const Offset(0.5, 0.5), width: 0.9, height: 0.5));
       });
     }();
   }
