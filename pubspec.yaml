@@ -34,7 +34,6 @@ dependencies:
   freezed_annotation: ^2.2.0
   uuid: 
   easy_debounce: ^2.0.3
-  light_compressor: ^2.1.0
 dependency_overrides:
   camera_android:
     git:
