@@ -218,11 +218,17 @@ class DefaultRecorder implements WhiteboardRecorder {
       await savingDirectory.create(recursive: true);
     }
     await _recorder.startRecordScreen(
-        audioEnable: true, fileName: const Uuid().v4(), dirPathToSave: path);
+      audioEnable: true,
+      fileName: const Uuid().v4(),
+      dirPathToSave: path,
+      videoBitrate: 1000000,
+    );
   }
 
   @override
   Future<String> stopRecording() async {
-    return (await _recorder.stopRecord())['file'].path;
+    final file = (await _recorder.stopRecord())['file'] as File;
+    log('${file.lengthSync()}');
+    return file.path;
   }
 }
