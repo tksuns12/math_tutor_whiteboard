@@ -18,7 +18,6 @@ enum RecordingState {
 }
 
 class WhiteboardController extends ChangeNotifier {
-
   List<(int, PointerDeviceKind)> pointers = [];
   bool isInMultiplePointers = false;
 
@@ -43,6 +42,12 @@ class WhiteboardController extends ChangeNotifier {
     }
   }
 
+  void initPointer() {
+    pointers = [];
+    isInMultiplePointers = false;
+    isStylusMode = false;
+  }
+
   void popPointer(
       {required int pointer, required PointerDeviceKind deviceKind}) {
     pointers.removeWhere(
@@ -58,6 +63,7 @@ class WhiteboardController extends ChangeNotifier {
       isStylusMode = false;
     }
   }
+
   WhiteboardRecorder? recorder;
   Timer? _timer;
   RecordingState recordingState = RecordingState.idle;
