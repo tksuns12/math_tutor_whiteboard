@@ -221,7 +221,7 @@ class DefaultRecorder implements WhiteboardRecorder {
       audioEnable: true,
       fileName: const Uuid().v4(),
       dirPathToSave: path,
-      videoBitrate: 1000000,
+      videoBitrate: 500000,
     );
   }
 
