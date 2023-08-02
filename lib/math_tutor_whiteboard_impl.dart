@@ -370,6 +370,7 @@ class _MathTutorWhiteboardState extends ConsumerState<MathTutorWhiteboardImpl> {
                 userDrawingData: userDrawingData,
                 userLimitCursor: userLimitCursor,
                 onViewportChange: _onViewportChange,
+                controller: controller,
                 preloadImage: image,
                 drawable: drawable,
                 isSpannable:
@@ -682,6 +683,7 @@ class _WhiteBoard extends StatefulWidget {
   final TransformationController transformationController;
   final bool drawable;
   final bool isSpannable;
+  final WhiteboardController controller;
   const _WhiteBoard(
       {Key? key,
       required this.onStartDrawing,
@@ -694,7 +696,8 @@ class _WhiteBoard extends StatefulWidget {
       required this.onViewportChange,
       required this.transformationController,
       required this.drawable,
-      required this.isSpannable})
+      required this.isSpannable,
+      required this.controller})
       : super(key: key);
 
   @override
@@ -703,14 +706,13 @@ class _WhiteBoard extends StatefulWidget {
 
 class _WhiteBoardState extends State<_WhiteBoard> {
   bool panMode = false;
-  final pointerManager = PointerManager();
   late final TransformationController transformationController;
 
   @override
   void initState() {
     transformationController = widget.transformationController;
     transformationController.addListener(() {
-      if (panMode && pointerManager.pointers.isNotEmpty) {
+      if (panMode && widget.controller.pointers.isNotEmpty) {
         log("View Point Changed:");
         widget.onViewportChange(transformationController.value);
       }
@@ -760,14 +762,14 @@ class _WhiteBoardState extends State<_WhiteBoard> {
             return Listener(
               onPointerDown: (event) {
                 if (widget.drawable) {
-                  pointerManager.addPointer(
+                  widget.controller.addPointer(
                     pointer: event.pointer,
                     deviceKind: event.kind,
                   );
                   if (panMode) {
                     return;
                   }
-                  if (!pointerManager.isStylusMode) {
+                  if (!widget.controller.isStylusMode) {
                     widget.onStartDrawing();
                   } else {
                     if (event.kind == PointerDeviceKind.invertedStylus ||
@@ -779,10 +781,10 @@ class _WhiteBoardState extends State<_WhiteBoard> {
               },
               onPointerMove: (event) {
                 if (widget.drawable) {
-                  if (panMode || pointerManager.isInMultiplePointers) {
+                  if (panMode || widget.controller.isInMultiplePointers) {
                     return;
                   }
-                  if (!pointerManager.isStylusMode) {
+                  if (!widget.controller.isStylusMode) {
                     widget.onDrawing(event);
                   } else {
                     if (event.kind == PointerDeviceKind.invertedStylus ||
@@ -794,12 +796,12 @@ class _WhiteBoardState extends State<_WhiteBoard> {
               },
               onPointerUp: (event) {
                 if (widget.drawable) {
-                  pointerManager.popPointer(
+                  widget.controller.popPointer(
                       pointer: event.pointer, deviceKind: event.kind);
                   if (panMode) {
                     return;
                   }
-                  if (!pointerManager.isStylusMode) {
+                  if (!widget.controller.isStylusMode) {
                     widget.onEndDrawing(event);
                   } else {
                     if (event.kind == PointerDeviceKind.invertedStylus ||
