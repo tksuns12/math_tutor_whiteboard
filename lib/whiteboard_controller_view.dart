@@ -125,48 +125,58 @@ class _WhiteboardControllerState
                         mainAxisSize: MainAxisSize.min,
                         children: [
                           if (widget.canLoadImage)
-                            InkWell(
-                              onTap: () {
-                                // Show modal bottom sheet to choose camera or gallery
-                                showModalBottomSheet(
-                                  context: context,
-                                  backgroundColor: Colors.transparent,
-                                  builder: (context) =>
-                                      MediaSourceSelectionBottomSheet(
-                                          onImageSelected: widget.onLoadImage),
-                                );
-                              },
+                           Expanded(
+                              child: InkWell(
+                                onTap: () {
+                                  // Show modal bottom sheet to choose camera or gallery
+                                  showModalBottomSheet(
+                                    context: context,
+                                    backgroundColor: Colors.transparent,
+                                    builder: (context) =>
+                                        MediaSourceSelectionBottomSheet(
+                                            onImageSelected: widget.onLoadImage),
+                                  );
+                                },
+                                child: SvgPicture.asset(
+                                  'assets/file.svg',
+                                  package: 'math_tutor_whiteboard',
+                                ),
+                              ),
+                            ),
+                          Expanded(
+                            child: GestureDetector(
+                              behavior: HitTestBehavior.opaque,
+                              child: _toolButtonBuilder(),
+                              onTapUp: (detail) => showToolSelectionPopup(
+                                  context, detail.globalPosition),
+                            ),
+                          ),
+                          Expanded(
+                            child: InkWell(
+                              onTap: widget.onTapClear,
                               child: SvgPicture.asset(
-                                'assets/file.svg',
+                                'assets/clear_all.svg',
                                 package: 'math_tutor_whiteboard',
                               ),
                             ),
-                          GestureDetector(
-                            behavior: HitTestBehavior.opaque,
-                            child: _toolButtonBuilder(),
-                            onTapUp: (detail) => showToolSelectionPopup(
-                                context, detail.globalPosition),
                           ),
-                          InkWell(
-                            onTap: widget.onTapClear,
-                            child: SvgPicture.asset(
-                              'assets/clear_all.svg',
-                              package: 'math_tutor_whiteboard',
+                          Expanded(
+                            child: InkWell(
+                              onTap: widget.onTapUndo,
+                              child: Icon(Icons.undo,
+                                  color: widget.isUndoable
+                                      ? Colors.black
+                                      : Colors.grey),
                             ),
                           ),
-                          InkWell(
-                            onTap: widget.onTapUndo,
-                            child: Icon(Icons.undo,
-                                color: widget.isUndoable
-                                    ? Colors.black
-                                    : Colors.grey),
-                          ),
-                          InkWell(
-                            onTap: widget.onTapRedo,
-                            child: Icon(Icons.redo,
-                                color: widget.isRedoable
-                                    ? Colors.black
-                                    : Colors.grey),
+                          Expanded(
+                            child: InkWell(
+                              onTap: widget.onTapRedo,
+                              child: Icon(Icons.redo,
+                                  color: widget.isRedoable
+                                      ? Colors.black
+                                      : Colors.grey),
+                            ),
                           ),
                         ],
                       ),
