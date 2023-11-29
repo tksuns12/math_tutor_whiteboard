@@ -5,7 +5,7 @@ homepage:
 publish_to: none
 
 environment:
-  sdk: '>=3.0.0 <4.0.0'
+  sdk: '>=3.2.0 <4.0.0'
   flutter: ">=1.17.0"
 
 dependencies:
@@ -34,17 +34,11 @@ dependencies:
   freezed_annotation: ^2.2.0
   uuid: 
   easy_debounce: ^2.0.3
-dependency_overrides:
-  camera_android:
-    git:
-      url: https://github.com/OmarHatem28/plugins.git
-      path: packages/camera/camera_android
-      ref: 8550e0e698f3d358f42d60b090320dea7c3c0775  
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
-  flutter_lints: ^2.0.0
+  flutter_lints: ^3.0.1
   build_runner: ^2.3.3
   json_serializable: ^6.7.0
 

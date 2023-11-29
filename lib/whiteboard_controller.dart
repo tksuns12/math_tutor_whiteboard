@@ -1,13 +1,16 @@
+// ignore_for_file: public_member_api_docs, sort_constructors_first
 import 'dart:async';
 import 'dart:developer';
 import 'dart:io';
+
 import 'package:ed_screen_recorder/ed_screen_recorder.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
-import 'package:math_tutor_whiteboard/types/types.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:uuid/uuid.dart';
+
+import 'package:math_tutor_whiteboard/types/types.dart';
 
 enum RecordingState {
   idle,
@@ -232,6 +235,10 @@ abstract class WhiteboardRecorder {
 
 class DefaultRecorder implements WhiteboardRecorder {
   final EdScreenRecorder _recorder = EdScreenRecorder();
+  final int bitrate;
+  DefaultRecorder({
+    this.bitrate = 3000000,
+  });
   @override
   Future<void> pauseRecording() async {
     if (Platform.isAndroid) {
@@ -268,7 +275,7 @@ class DefaultRecorder implements WhiteboardRecorder {
       audioEnable: true,
       fileName: const Uuid().v4(),
       dirPathToSave: path,
-      videoBitrate: 500000,
+      videoBitrate: bitrate,
     );
   }
 
