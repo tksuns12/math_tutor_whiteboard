@@ -27,13 +27,14 @@ dependencies:
   perfect_freehand: ^1.0.4
   permission_handler: ^11.0.1
   riverpod: ^2.1.3
-  wechat_assets_picker: ^8.4.2
+  wechat_assets_picker: ^9.0.0-dev.2
   crop_image: ^1.0.3
   camera: ^0.10.0
   freezed: ^2.3.2
   freezed_annotation: ^2.2.0
   uuid: 
   easy_debounce: ^2.0.3
+
 
 dev_dependencies:
   flutter_test:
