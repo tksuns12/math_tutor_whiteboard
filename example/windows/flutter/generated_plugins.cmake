@@ -5,7 +5,6 @@
 list(APPEND FLUTTER_PLUGIN_LIST
   connectivity_plus
   flutter_webrtc
-  flutter_window_close
   livekit_client
   permission_handler_windows
 )
