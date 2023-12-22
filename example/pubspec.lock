@@ -278,7 +278,7 @@ packages:
     description:
       path: "."
       ref: main
-      resolved-ref: e594db7a10a13a9adc2fe502f951cdbc8581c969
+      resolved-ref: "61d6a5854d091b7eb0e0108c4c75d5e2745ffcfc"
       url: "https://github.com/tksuns12/ed_screen_recorder.git"
     source: git
     version: "0.1.0"
@@ -517,10 +517,10 @@ packages:
     dependency: "direct main"
     description:
       name: livekit_client
-      sha256: "240b58bbc9fc02587465ad8e0d4ad04021d0460ac0e4c98e2b2d51e13e058e82"
+      sha256: f794ab0b48f811d9cd11bfe73304ccd7ad2a58453879b384ee1646c674f2d412
       url: "https://pub.dev"
     source: hosted
-    version: "1.5.4"
+    version: "1.5.5"
   logging:
     dependency: transitive
     description:

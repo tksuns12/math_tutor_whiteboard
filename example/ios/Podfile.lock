@@ -18,7 +18,7 @@ PODS:
   - FMDB (2.7.5):
     - FMDB/standard (= 2.7.5)
   - FMDB/standard (2.7.5)
-  - livekit_client (1.5.2):
+  - livekit_client (1.5.5):
     - Flutter
     - WebRTC-SDK (= 114.5735.08)
   - path_provider_foundation (0.0.1):
@@ -91,23 +91,23 @@ EXTERNAL SOURCES:
 
 SPEC CHECKSUMS:
   camera_avfoundation: 3125e8cd1a4387f6f31c6c63abb8a55892a9eeeb
-  connectivity_plus: 07c49e96d7fc92bc9920617b83238c4d178b446a
+  connectivity_plus: bf0076dd84a130856aa636df1c71ccaff908fa1d
   device_info_plus: c6fb39579d0f423935b0c9ce7ee2f44b71b9fce6
   ed_screen_recorder: fe73c457bbe30746a593c79bcf1fb19c844f791c
   Flutter: f04841e97a9d0b0a8025694d0796dd46242b2854
   flutter_webrtc: 55df3aaa802114dad390191a46c2c8d535751268
   fluttertoast: 31b00dabfa7fb7bacd9e7dbee580d7a2ff4bf265
   FMDB: 2ce00b547f966261cd18927a3ddb07cb6f3db82a
-  livekit_client: 76a289cbc73a95978cb4092470df43f100a85700
+  livekit_client: ba1a9a620f8d8397de36b69a66b9203704132468
   path_provider_foundation: 29f094ae23ebbca9d3d0cec13889cd9060c0e943
   permission_handler_apple: e76247795d700c14ea09e3a2d8855d41ee80a2e6
   photo_manager: 4f6810b7dfc4feb03b461ac1a70dacf91fba7604
   ReachabilitySwift: 985039c6f7b23a1da463388634119492ff86c825
   sqflite: 31f7eba61e3074736dff8807a9b41581e4f7f15a
   Toast: 91b396c56ee72a5790816f40d3a94dd357abc196
-  video_player_avfoundation: 8563f13d8fc8b2c29dc2d09e60b660e4e8128837
+  video_player_avfoundation: e9e6f9cae7d7a6d9b43519b0aab382bca60fcfd1
   WebRTC-SDK: c24d2a6c9f571f2ed42297cb8ffba9557093142b
 
 PODFILE CHECKSUM: 05e4e2b9a9d98568618b16c04423ed171c9ffbbd
 
-COCOAPODS: 1.13.0
+COCOAPODS: 1.14.3

@@ -236,8 +236,10 @@ abstract class WhiteboardRecorder {
 class DefaultRecorder implements WhiteboardRecorder {
   final EdScreenRecorder _recorder = EdScreenRecorder();
   final int bitrate;
+  final double scale;
   DefaultRecorder({
     this.bitrate = 3000000,
+    this.scale = 1.0,
   });
   @override
   Future<void> pauseRecording() async {
@@ -276,6 +278,7 @@ class DefaultRecorder implements WhiteboardRecorder {
       fileName: const Uuid().v4(),
       dirPathToSave: path,
       videoBitrate: bitrate,
+      scale: scale,
     );
   }
 
