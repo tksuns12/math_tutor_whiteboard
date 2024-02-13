@@ -342,11 +342,11 @@ class RecordButton extends StatelessWidget {
   final VoidCallback onTap;
   final int? remainingTime;
   const RecordButton({
-    Key? key,
+    super.key,
     required this.isRecording,
     required this.onTap,
     this.remainingTime,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

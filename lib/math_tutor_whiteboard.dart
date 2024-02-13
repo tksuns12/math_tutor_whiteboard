@@ -25,7 +25,7 @@ class MathTutorWhiteBoard extends StatelessWidget {
   final String? hostID;
   final BatchDrawingData? preDrawnData;
   const MathTutorWhiteBoard({
-    Key? key,
+    super.key,
     this.controller,
     this.preloadImage,
     this.inputStream,
@@ -38,7 +38,7 @@ class MathTutorWhiteBoard extends StatelessWidget {
     required this.enabledFeatures,
     this.hostID,
     this.preDrawnData,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

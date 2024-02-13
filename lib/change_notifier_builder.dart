@@ -2,11 +2,11 @@ import 'package:flutter/material.dart';
 
 class ChangeNotifierBuilder<T extends ChangeNotifier> extends AnimatedWidget {
   ChangeNotifierBuilder({
-    Key? key,
+    super.key,
     required this.notifier,
     required this.builder,
     this.child,
-  }) : super(key: key, listenable: notifier ?? ChangeNotifier());
+  }) : super(listenable: notifier ?? ChangeNotifier());
 
   final T? notifier;
   final Widget Function(

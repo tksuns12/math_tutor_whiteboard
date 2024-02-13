@@ -21,8 +21,6 @@ class _ImageCropPage extends State<ImageCropPage> {
     super.initState();
 
     () async {
-      var decodedImage =
-          await decodeImageFromList(widget.sourceFile.readAsBytesSync());
       setState(() {
         controller = CropController(
             aspectRatio: null,

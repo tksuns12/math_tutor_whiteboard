@@ -9,7 +9,7 @@ import 'package:permission_handler/permission_handler.dart';
 import 'image_crop_page.dart';
 
 class CameraCapturePage extends StatefulWidget {
-  const CameraCapturePage({Key? key}) : super(key: key);
+  const CameraCapturePage({super.key});
 
   @override
   State<CameraCapturePage> createState() => _CameraCapturePage();

@@ -12,7 +12,7 @@ part 'types.freezed.dart';
 part 'types.g.dart';
 
 class DrawingData extends Equatable {
-  final Point point;
+  final PointVector point;
   final PenType penType;
   final double strokeWidth;
   final Color color;
@@ -40,7 +40,7 @@ class DrawingData extends Equatable {
 
   factory DrawingData.fromMap(Map map) {
     return DrawingData(
-      point: Point(map['point']['x'], map['point']['y'], map['point']['p']),
+      point: PointVector(map['point']['x'], map['point']['y'], map['point']['p']),
       penType: PenType.fromMap(map['penType']),
       strokeWidth: map['strokeWidth']?.toDouble() ?? 0.0,
       color: Color(map['color']),
@@ -54,7 +54,7 @@ class DrawingData extends Equatable {
       DrawingData.fromMap(json.decode(source));
 
   DrawingData copyWith({
-    Point? point,
+    PointVector? point,
     PenType? penType,
     double? strokeWidth,
     Color? color,
@@ -83,24 +83,24 @@ enum WhiteboardMode {
       this == WhiteboardMode.participant;
 }
 
-extension PointSede on Point {
+extension PointSede on PointVector {
   Map<String, dynamic> toMap() {
     return {
       'x': x,
       'y': y,
-      'p': p,
+      'p': pressure,
     };
   }
 
-  Point copyWith({
+  PointVector copyWith({
     double? x,
     double? y,
     double? p,
   }) {
-    return Point(
+    return PointVector(
       x ?? this.x,
       y ?? this.y,
-      p ?? this.p,
+      p ?? pressure,
     );
   }
 }

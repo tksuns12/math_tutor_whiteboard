@@ -8,7 +8,6 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/services.dart';
 import 'package:math_tutor_whiteboard/types/features.dart';
-import 'package:math_tutor_whiteboard/types/pointer_manager.dart';
 // ignore: depend_on_referenced_packages
 import 'package:vector_math/vector_math_64.dart' show Quad;
 
@@ -506,7 +505,7 @@ class _MathTutorWhiteboardState extends ConsumerState<MathTutorWhiteboardImpl> {
         if (penType == PenType.penEraser) {
           // 펜 지우개 모드일 때에는 그냥 흰색으로 똑같이 그려줍니다.
           userDrawingData[widget.me.id]!.last.add(DrawingData(
-              point: Point(event.localPosition.dx, event.localPosition.dy,
+              point: PointVector(event.localPosition.dx, event.localPosition.dy,
                   event.pressure),
               color: Colors.white,
               userID: widget.me.id,
@@ -571,7 +570,9 @@ class _MathTutorWhiteboardState extends ConsumerState<MathTutorWhiteboardImpl> {
         } else {
           userDrawingData[widget.me.id]!.last.add(
                 DrawingData(
-                  point: Point(event.localPosition.dx, event.localPosition.dy,
+                  point: PointVector(
+                      event.localPosition.dx,
+                      event.localPosition.dy,
                       penType == PenType.pen ? event.pressure : 0.5),
                   color: color,
                   userID: widget.me.id,
@@ -685,8 +686,7 @@ class _WhiteBoard extends StatefulWidget {
   final bool isSpannable;
   final WhiteboardController controller;
   const _WhiteBoard(
-      {Key? key,
-      required this.onStartDrawing,
+      {required this.onStartDrawing,
       required this.onDrawing,
       required this.onEndDrawing,
       this.preloadImage,
@@ -697,8 +697,7 @@ class _WhiteBoard extends StatefulWidget {
       required this.transformationController,
       required this.drawable,
       required this.isSpannable,
-      required this.controller})
-      : super(key: key);
+      required this.controller});
 
   @override
   State<_WhiteBoard> createState() => _WhiteBoardState();
@@ -894,22 +893,25 @@ class _WhiteboardPainter extends CustomPainter {
           ..style = PaintingStyle.fill
           ..strokeWidth = stroke.first.strokeWidth;
 
-        final points = getStroke(stroke.map((e) => e.point).toList(),
+        final points = getStroke(
+          stroke.map((e) => e.point).toList(),
+          options: StrokeOptions(
             size: stroke.first.strokeWidth,
-            thinning: stroke.first.penType == PenType.pen ? 0.5 : 0.0);
+            thinning: stroke.first.penType == PenType.pen ? 0.5 : 0.0,
+          ),
+        );
         final path = Path();
         if (points.isEmpty) {
           return;
         } else if (points.length == 1) {
           path.addOval(Rect.fromCircle(
-              center: Offset(points[0].x, points[0].y),
+              center: Offset(points[0].dx, points[0].dy),
               radius: stroke.first.strokeWidth));
         } else {
-          path.moveTo(points[0].x, points[0].y);
+          path.moveTo(points[0].dx, points[0].dy);
           for (int i = 1; i < points.length - 1; ++i) {
             final p0 = points[i];
-            final p1 = points[i + 1];
-            path.lineTo(p0.x, p0.y);
+            path.lineTo(p0.dx, p0.dy);
           }
           canvas.drawPath(path, paint);
         }
