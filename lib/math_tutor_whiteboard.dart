@@ -11,9 +11,11 @@ import 'package:math_tutor_whiteboard/types/features.dart';
 import 'package:math_tutor_whiteboard/types/types.dart';
 import 'package:math_tutor_whiteboard/whiteboard_controller.dart';
 
+import 'dart:ui' as ui;
+
 class MathTutorWhiteBoard extends StatelessWidget {
   final WhiteboardController? controller;
-  final ImageProvider? preloadImage;
+  final ui.Image? preloadImage;
   final Stream? inputStream;
   final void Function(dynamic data)? onOutput;
   final WhiteboardUser me;

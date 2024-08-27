@@ -22,6 +22,7 @@ class MyApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
         primarySwatch: Colors.blue,
+        canvasColor: Colors.white,
       ),
       home: const MyHomePage(title: 'Math Tutor Whiteboard Demo'),
     );

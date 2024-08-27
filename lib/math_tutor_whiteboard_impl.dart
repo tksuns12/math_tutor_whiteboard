@@ -4,14 +4,12 @@ import 'dart:io';
 import 'dart:math' hide log;
 import 'dart:ui' as ui;
 
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/services.dart';
 import 'package:math_tutor_whiteboard/types/features.dart';
 // ignore: depend_on_referenced_packages
 import 'package:vector_math/vector_math_64.dart' show Quad;
 
-import 'package:crop_image/crop_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:math_tutor_whiteboard/states/chat_message_state.dart';
@@ -24,7 +22,7 @@ import 'whiteboard_controller_view.dart';
 
 class MathTutorWhiteboardImpl extends ConsumerStatefulWidget {
   final WhiteboardController? controller;
-  final ImageProvider? preloadImage;
+  final ui.Image? preloadImage;
   final Stream? inputStream;
   final void Function(dynamic data)? onOutput;
   final WhiteboardUser me;
@@ -73,7 +71,7 @@ class _MathTutorWhiteboardState extends ConsumerState<MathTutorWhiteboardImpl> {
   StreamSubscription<RequestDrawingData>? _requestDrawingDataSubscription;
   final transformationController = TransformationController();
   late final Size boardSize;
-  ImageProvider? image;
+  ui.Image? image;
   bool drawable = true;
   late final WhiteboardController controller;
   Map<String, List<List<DrawingData>>> hydratedUserDrawingData = {};
@@ -370,7 +368,7 @@ class _MathTutorWhiteboardState extends ConsumerState<MathTutorWhiteboardImpl> {
                 userLimitCursor: userLimitCursor,
                 onViewportChange: _onViewportChange,
                 controller: controller,
-                preloadImage: image,
+                backgroundImage: image,
                 drawable: drawable,
                 isSpannable:
                     widget.enabledFeatures.contains(WhiteboardFeature.span),
@@ -503,11 +501,11 @@ class _MathTutorWhiteboardState extends ConsumerState<MathTutorWhiteboardImpl> {
     setState(
       () {
         if (penType == PenType.penEraser) {
-          // 펜 지우개 모드일 때에는 그냥 흰색으로 똑같이 그려줍니다.
+          // 펜 지우개 모드일 때에는 그냥 투명색으로 똑같이 그려줍니다.
           userDrawingData[widget.me.id]!.last.add(DrawingData(
               point: PointVector(event.localPosition.dx, event.localPosition.dy,
                   event.pressure),
-              color: Colors.white,
+              color: Colors.transparent,
               userID: widget.me.id,
               penType: penType,
               strokeWidth: strokeWidth));
@@ -526,12 +524,13 @@ class _MathTutorWhiteboardState extends ConsumerState<MathTutorWhiteboardImpl> {
           /// 대신 [deletedStrokes] 라는 [Map]에 key-value로 {지워진 cursor}-{지워진 stroke의 index}를 저장합니다.
           /// 그리고 limitCursor의 정합성을 위해 [limitCursor]를 1 증가시키면서 drawingData에는 빈 스트로크를 채워줍니다.
           /// 그러나 deletedStrokes에 이미 지워진 stroke의 index가 있으면 지우지 않습니다.
-          /// 또한 흰색은 펜 지우개 모드가 아니면 선택할 수가 없는 색상이므로
-          /// 흰색은 지우개 모드에서 그린 선으로 간주하고 지우지 않습니다.
+          /// 또한 투명색은 펜 지우개 모드가 아니면 선택할 수가 없는 색상이므로
+          /// 투명색은 지우개 모드에서 그린 선으로 간주하고 지우지 않습니다.
           for (int i = 0; i < userDrawingData[widget.me.id]!.length; i++) {
             for (int j = 0; j < userDrawingData[widget.me.id]![i].length; j++) {
               if (userDeletedStrokes[widget.me.id]!.containsValue(i) ||
-                  userDrawingData[widget.me.id]![i][j].color == Colors.white) {
+                  userDrawingData[widget.me.id]![i][j].color ==
+                      Colors.transparent) {
                 continue;
               }
               final distance = sqrt(pow(
@@ -603,7 +602,7 @@ class _MathTutorWhiteboardState extends ConsumerState<MathTutorWhiteboardImpl> {
 
   Future<void> _onLoadImage(ui.Image uiImage) async {
     setState(() {
-      image = UiImageProvider(uiImage);
+      image = uiImage;
     });
     final file = File('${(await getTemporaryDirectory()).path}/image.png');
     final imageFile = await file.create();
@@ -612,10 +611,10 @@ class _MathTutorWhiteboardState extends ConsumerState<MathTutorWhiteboardImpl> {
     widget.onLoadNewImage?.call(imageFile);
   }
 
-  void _inputImageStreamListener(ImageChangeEvent event) {
-    setState(() {
-      image = CachedNetworkImageProvider(event.imageUrl);
-    });
+  Future<void> _inputImageStreamListener(ImageChangeEvent event) async {
+    await _turnImageUrlToUiImage(event.imageUrl).then((image) => setState(() {
+          this.image = image;
+        }));
   }
 
   void _onViewportChange(Matrix4 matrix) {
@@ -670,6 +669,23 @@ class _MathTutorWhiteboardState extends ConsumerState<MathTutorWhiteboardImpl> {
       ),
     );
   }
+
+  Future<ui.Image?> _turnImageUrlToUiImage(String imageUrl) async {
+    if (imageUrl.isNotEmpty) {
+      final completer = Completer<ImageInfo>();
+      final img = NetworkImage(imageUrl);
+      img.resolve(ImageConfiguration.empty).addListener(
+        ImageStreamListener((info, _) {
+          completer.complete(info);
+        }),
+      );
+      final imageInfo = await completer.future;
+
+      return imageInfo.image;
+    } else {
+      return null;
+    }
+  }
 }
 
 class _WhiteBoard extends StatefulWidget {
@@ -677,7 +693,7 @@ class _WhiteBoard extends StatefulWidget {
   final void Function(PointerMoveEvent event) onDrawing;
   final void Function(PointerUpEvent event) onEndDrawing;
   final void Function(Matrix4 data) onViewportChange;
-  final ImageProvider? preloadImage;
+  final ui.Image? backgroundImage;
   final Map<String, List<List<DrawingData>>> userDrawingData;
   final Map<String, int> userLimitCursor;
   final Map<String, Map<int, int>> userDeletedStrokes;
@@ -689,7 +705,7 @@ class _WhiteBoard extends StatefulWidget {
       {required this.onStartDrawing,
       required this.onDrawing,
       required this.onEndDrawing,
-      this.preloadImage,
+      this.backgroundImage,
       required this.userDrawingData,
       required this.userLimitCursor,
       required this.userDeletedStrokes,
@@ -816,24 +832,16 @@ class _WhiteBoardState extends State<_WhiteBoard> {
                 child: Stack(
                   children: [
                     Positioned.fill(
-                      child: Container(
-                        color: Colors.white,
-                      ),
-                    ),
-                    if (widget.preloadImage != null)
-                      Positioned.fill(
-                        child: Image(
-                          image: widget.preloadImage!,
-                          fit: BoxFit.fitWidth,
-                          alignment: Alignment.topCenter,
-                        ),
-                      ),
-                    Positioned.fill(
                         child: CustomPaint(
-                      painter: _WhiteboardPainter(_makeRealDrawingData()),
+                      isComplex: true,
+                      foregroundPainter: _WhiteboardPainter(
+                          _makeRealDrawingData(), widget.backgroundImage),
                       size: Size(
                           MediaQuery.of(context).size.height * 9 / (16 * 4),
                           MediaQuery.of(context).size.height),
+                      child: Container(
+                        color: Colors.transparent,
+                      ),
                     ))
                   ],
                 ),
@@ -874,10 +882,22 @@ class _WhiteBoardState extends State<_WhiteBoard> {
 
 class _WhiteboardPainter extends CustomPainter {
   final Map<String, List<List<DrawingData>>> userDrawingData;
+  final ui.Image? backgroundImage;
 
-  _WhiteboardPainter(this.userDrawingData);
+  _WhiteboardPainter(this.userDrawingData, [this.backgroundImage]);
   @override
   void paint(Canvas canvas, Size size) {
+    if (backgroundImage != null) {
+      paintImage(
+        canvas: canvas,
+        rect: Offset.zero & size,
+        image: backgroundImage!,
+        alignment: Alignment.topLeft,
+        fit: BoxFit.fitWidth,
+      );
+    }
+
+    canvas.saveLayer(Offset.zero & size, Paint());
     for (final drawingData in userDrawingData.values) {
       for (final stroke in drawingData) {
         if (stroke.isEmpty) {
@@ -892,6 +912,11 @@ class _WhiteboardPainter extends CustomPainter {
               : StrokeCap.square
           ..style = PaintingStyle.fill
           ..strokeWidth = stroke.first.strokeWidth;
+
+        if (stroke.first.penType == PenType.penEraser) {
+          paint.blendMode = BlendMode.clear;
+          paint.style = PaintingStyle.stroke;
+        }
 
         final points = getStroke(
           stroke.map((e) => e.point).toList(),
@@ -917,6 +942,8 @@ class _WhiteboardPainter extends CustomPainter {
         }
       }
     }
+
+    canvas.restore();
   }
 
   @override

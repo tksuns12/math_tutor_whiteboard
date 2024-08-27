@@ -27,13 +27,13 @@ class LivekitService {
 
     room.localParticipant?.setMetadata(me.toJson());
     isConnected = true;
-    final anyParticipant = room.participants.values.firstOrNull;
+    final anyParticipant = room.remoteParticipants.values.firstOrNull;
     if (anyParticipant != null) {
       room.localParticipant?.publishData(
         [],
-        destinationSids: [anyParticipant.sid],
+        destinationIdentities: [anyParticipant.sid],
         topic: LivekitDataTopic.requestDrawingData.toString(),
-        reliability: Reliability.reliable,
+        reliable: true,
       );
       batchDrawingDataTimer = Timer(
         const Duration(seconds: 3),
@@ -149,22 +149,22 @@ class LivekitService {
   }
 
   List<WhiteboardUser> getUserList() {
-    return room.participants.values
+    return room.remoteParticipants.values
         .map<WhiteboardUser>((e) => WhiteboardUser.fromJson(e.metadata!))
         .toList();
   }
 
   Future<void> sendBatchDrawingData({required BatchDrawingData data}) async {
     try {
-      final sid = room.participants.values
+      final sid = room.remoteParticipants.values
           .firstWhere(
             (element) => jsonDecode(element.metadata!)['id'] == data.userID,
           )
           .sid;
       room.localParticipant?.publishData(
         utf8.encode(jsonEncode(data.toJson())),
-        destinationSids: [sid],
-        reliability: Reliability.reliable,
+        destinationIdentities: [sid],
+        reliable: true,
         topic: 'batch_drawing_data',
       );
     } catch (e, stackTrace) {
@@ -244,14 +244,14 @@ class LivekitService {
   }
 
   void changeMicrophonePermission(String userID, bool bool) {
-    final sid = room.participants.values
+    final sid = room.remoteParticipants.values
         .firstWhere((element) => jsonDecode(element.metadata!)['id'] == userID)
         .sid;
     room.localParticipant?.publishData(
         utf8.encoder.convert(
           PermissionChangeEvent(microphone: bool, userID: userID).toJson(),
         ),
-        destinationSids: [sid],
+        destinationIdentities: [sid],
         topic: 'permission');
   }
 

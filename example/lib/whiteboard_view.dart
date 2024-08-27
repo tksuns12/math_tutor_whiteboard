@@ -488,7 +488,7 @@ class _WhiteboardViewState extends State<WhiteboardView> {
       notificationTitle: '매쓰튜터 개발용 화면 공유',
       notificationText: '라이브 화면을 공유 중입니다.',
       notificationImportance: AndroidNotificationImportance
-          .Default, // Default is ic_launcher from folder mipmap
+          .normal, // Default is ic_launcher from folder mipmap
     );
     await FlutterBackground.initialize(androidConfig: androidConfig);
     final result = await FlutterBackground.enableBackgroundExecution();

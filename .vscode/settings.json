@@ -6,7 +6,9 @@
   "[dart]": {
     "editor.formatOnSave": true,
     "editor.formatOnType": true,
-    "editor.rulers": [150],
+    "editor.rulers": [
+      150
+    ],
     "editor.selectionHighlight": false,
     "editor.suggest.snippetsPreventQuickSuggestions": false,
     "editor.suggestSelection": "first",
@@ -80,7 +82,9 @@
   "svg.preview.mode": "svg",
   "json.schemas": [
     {
-      "fileMatch": ["codemagic.yaml"],
+      "fileMatch": [
+        "codemagic.yaml"
+      ],
       "url": "https://static.codemagic.io/codemagic-schema.json"
     }
   ],
@@ -91,12 +95,10 @@
   "[python]": {
     "editor.formatOnType": true
   },
-  "dart.flutterSdkPath": ".fvm/flutter_sdk",
-  // Remove .fvm files from search
+  "dart.flutterSdkPath": ".fvm/versions/3.24.1",
   "search.exclude": {
     "**/.fvm": true
   },
-  // Remove from file watching
   "files.watcherExclude": {
     "**/.fvm": true
   }
