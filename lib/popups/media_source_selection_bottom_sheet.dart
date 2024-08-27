@@ -48,7 +48,12 @@ class MediaSourceSelectionBottomSheet extends StatelessWidget {
             leading: const Icon(Icons.photo_library),
             title: const Text('갤러리'),
             onTap: () async {
-              final permission = await AssetPicker.permissionCheck();
+              final permission = await AssetPicker.permissionCheck(
+                  requestOption: const PermissionRequestOption(
+                androidPermission: AndroidPermission(
+                    type: RequestType.image, mediaLocation: false),
+                iosAccessLevel: IosAccessLevel.readWrite,
+              ));
               if (permission != PermissionState.authorized) {
                 Fluttertoast.showToast(msg: '갤러리 권한이 없습니다.');
                 return;
