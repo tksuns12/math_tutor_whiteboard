@@ -87,12 +87,13 @@ class _MathTutorWhiteboardState extends ConsumerState<MathTutorWhiteboardImpl> {
             recordDuration: widget.maxRecordingDuration,
             recorder: DefaultRecorder());
 
-    /// 만약 미리 주입된 이미지가 있다면, 그 이미지를 미리 불러옵니다.
-    if (widget.preloadImage != null) {
-      image = widget.preloadImage;
-    }
-
     WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
+      /// 만약 미리 주입된 이미지가 있다면, 그 이미지를 미리 불러옵니다.
+      if (widget.preloadImage != null) {
+        setState(() {
+          image = widget.preloadImage;
+        });
+      }
       if (widget.preDrawnData != null) {
         setState(() {
           userDrawingData = Map<String, List<List<DrawingData>>>.from(
