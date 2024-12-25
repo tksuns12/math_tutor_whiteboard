@@ -11,7 +11,7 @@ import flutter_webrtc
 import livekit_client
 import path_provider_foundation
 import photo_manager
-import sqflite
+import sqflite_darwin
 import video_player_avfoundation
 
 func RegisterGeneratedPlugins(registry: FlutterPluginRegistry) {
